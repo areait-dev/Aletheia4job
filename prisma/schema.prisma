@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  completed Boolean  @default(false)
+}
+
+model Candidate {
+  id              String   @id @default(uuid())
+  userId         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Dati Anagrafici
+  firstName       String
+  lastName        String
+  email           String   @unique
+  phone           String?
+  city            String
+  province        String?
+  
+  // Profilo Professionale
+  role            String   // Mansione/Ruolo
+  seniority       String   // Junior, Mid, Senior
+  education       String?  // Titolo di Studio
+  sector          String   // Settore
+  expectedSalary  Int?     // RAL
+  
+  // Competenze e Stato
+  skills          String?  // Hard Skills (tag o parole chiave)
+  status          String   // In cerca, Colloquiato, Inserito, Non idoneo
+  
+  // Documentazione e Note
+  cvUrl           String?
+  notes           String?  @db.Text // Note Recruiter
+}
+
+model Tour {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  city        String
+  country     String
+  title       String
+  description String   @db.Text
+  image       String?  @db.Text
+  stops       Json
+  @@unique([city, country])
+}
+
+model Token {
+  userId String @id
+  tokens  Int    @default(1000)
+}

@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 184 60% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 184 60% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 184 60% 10%;
+    
+    /* Primary: #008C95 -> HSL(184, 100%, 29%) */
+    --primary: 184 100% 29%;
+    --primary-foreground: 184 100% 98%;
+    
+    --secondary: 184 20% 92%;
+    --secondary-foreground: 184 100% 20%;
+    --muted: 184 10% 94%;
+    --muted-foreground: 184 15% 40%;
+    --accent: 184 80% 45%;
+    --accent-foreground: 184 100% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 184 20% 88%;
+    --input: 184 20% 88%;
+    --ring: 184 100% 29%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 184 40% 4%;
+    --foreground: 184 10% 96%;
+    --card: 184 40% 6%;
+    --card-foreground: 184 10% 96%;
+    --popover: 184 40% 6%;
+    --popover-foreground: 184 10% 96%;
+    --primary: 184 100% 40%;
+    --primary-foreground: 184 10% 4%;
+    --secondary: 184 30% 12%;
+    --secondary-foreground: 184 10% 96%;
+    --muted: 184 30% 12%;
+    --muted-foreground: 184 15% 65%;
+    --accent: 184 100% 40%;
+    --accent-foreground: 184 10% 96%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 184 10% 96%;
+    --border: 184 30% 12%;
+    --input: 184 30% 12%;
+    --ring: 184 100% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: radial-gradient(at 0% 0%, hsla(184, 100%, 29%, 0.05) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, hsla(184, 100%, 29%, 0.03) 0px, transparent 50%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-xl;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

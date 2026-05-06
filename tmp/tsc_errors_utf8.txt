@@ -1,0 +1,24 @@
+﻿components/CreateJobForm.tsx(20,3): error TS2305: Module '"@/utils/types"' has no exported member 'JobStatus'.
+components/CreateJobForm.tsx(21,3): error TS2305: Module '"@/utils/types"' has no exported member 'JobMode'.
+components/CreateJobForm.tsx(22,3): error TS2305: Module '"@/utils/types"' has no exported member 'createAndEditJobSchema'.
+components/CreateJobForm.tsx(23,3): error TS2305: Module '"@/utils/types"' has no exported member 'CreateAndEditJobType'.
+components/CreateJobForm.tsx(31,10): error TS2305: Module '"@/utils/actions"' has no exported member 'createJobAction'.
+components/EditJobForm.tsx(122,30): error TS2345: Argument of type '{ url: string | null; error: string | null; }' is not assignable to parameter of type 'string'.
+components/Example.tsx(7,3): error TS2305: Module '"@/utils/types"' has no exported member 'JobStatus'.
+components/Example.tsx(8,3): error TS2305: Module '"@/utils/types"' has no exported member 'JobMode'.
+components/Example.tsx(9,3): error TS2305: Module '"@/utils/types"' has no exported member 'createAndEditJobSchema'.
+components/Example.tsx(10,3): error TS2305: Module '"@/utils/types"' has no exported member 'CreateAndEditJobType'.
+prisma/seed.ts(69,20): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/db-fix-future-dates.ts(32,35): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/db-fix-future-dates.ts(46,18): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/db-fix-status.ts(30,29): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/db-fix-status.ts(55,18): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/db-inspect.ts(16,29): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/db-inspect.ts(27,62): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+scripts/db-inspect.ts(27,67): error TS7006: Parameter 'job' implicitly has an 'any' type.
+scripts/db-inspect.ts(39,61): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+scripts/db-inspect.ts(39,66): error TS7006: Parameter 'job' implicitly has an 'any' type.
+scripts/db-inspect.ts(50,77): error TS18046: 'c' is of type 'unknown'.
+scripts/db-migrate-clerkid.ts(23,30): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/seed-test-user-jobs.ts(81,32): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/seed-test-user-jobs.ts(131,18): error TS2339: Property 'job' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
