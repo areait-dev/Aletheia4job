@@ -19,5 +19,21 @@ export default function PipelineContent() {
 
   if (isPending) return <div className="text-muted-foreground animate-pulse text-center py-20 font-bold">Caricamento Pipeline...</div>;
 
+  const hasActiveFilters = search || candidateStatus !== "tutti" || province !== "tutte" || sector !== "tutti";
+  const hasResults = data?.candidates && data.candidates.length > 0;
+
+  if (hasActiveFilters && !isPending && !hasResults) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-muted-foreground/60 text-lg mb-4">
+          🔍 Nessun candidato trovato
+        </div>
+        <div className="text-sm text-muted-foreground/40">
+          Prova a modificare i filtri di ricerca
+        </div>
+      </div>
+    );
+  }
+
   return <KanbanBoard candidates={data?.candidates || []} />;
 }

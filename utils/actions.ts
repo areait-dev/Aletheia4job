@@ -39,8 +39,11 @@ export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes
       whereClause.OR = [
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
         { city: { contains: search, mode: "insensitive" } },
         { role: { contains: search, mode: "insensitive" } },
+        { sector: { contains: search, mode: "insensitive" } },
+        { skills: { contains: search, mode: "insensitive" } },
       ];
     }
 
