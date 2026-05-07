@@ -8,10 +8,13 @@ import { useSearchParams } from "next/navigation";
 export default function PipelineContent() {
   const searchParams = useSearchParams();
   const sector = searchParams.get("sector") || "tutti";
+  const candidateStatus = searchParams.get("candidateStatus") || "tutti";
+  const province = searchParams.get("province") || "tutte";
+  const search = searchParams.get("search") || "";
 
   const { data, isPending } = useQuery({
-    queryKey: ["candidates", "pipeline", sector],
-    queryFn: () => getAllCandidatesAction({ sector, limit: 2000 }),
+    queryKey: ["candidates", "pipeline", search, candidateStatus, province, sector],
+    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, sector, limit: 2000 }),
   });
 
   if (isPending) return <div className="text-muted-foreground animate-pulse text-center py-20 font-bold">Caricamento Pipeline...</div>;

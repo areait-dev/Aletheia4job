@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -129,7 +129,7 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className='flex gap-6 overflow-x-auto pb-8 no-scrollbar min-h-[calc(100vh-250px)] items-stretch'>
+      <div className='flex flex-col gap-4 pb-6'>
         {columns.map((status) => (
           <KanbanColumn 
             key={status} 
@@ -141,7 +141,7 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
 
       <DragOverlay>
         {activeCandidate ? (
-          <div className='glass p-4 rounded-xl border-primary/50 shadow-2xl w-[280px] opacity-90 cursor-grabbing rotate-3 scale-105'>
+          <div className='glass p-3 rounded-xl border-primary/50 shadow-2xl w-[260px] opacity-90 cursor-grabbing rotate-3 scale-105'>
             <div className='font-bold text-sm mb-1'>{activeCandidate.firstName} {activeCandidate.lastName}</div>
             <div className='text-[10px] text-muted-foreground'>{activeCandidate.role}</div>
           </div>
@@ -160,12 +160,12 @@ function KanbanColumn({ status, candidates }: { status: string, candidates: Cand
     <div 
       ref={setNodeRef}
       className={cn(
-        'min-w-[300px] max-w-[350px] flex-1 flex flex-col gap-4 p-3 rounded-3xl transition-all duration-300 border-2 border-transparent',
+        'w-full flex flex-col gap-3 rounded-3xl transition-all duration-300 border-2 border-transparent p-3',
         isOver && 'bg-primary/[0.04] border-primary/20 shadow-inner'
       )}
     >
       <div className={cn(
-        'flex items-center justify-between p-4 backdrop-blur-md rounded-2xl border transition-all duration-300 shadow-sm',
+        'flex items-center justify-between p-2 backdrop-blur-md rounded-2xl border transition-all duration-300 shadow-sm',
         isOver ? 'bg-primary/20 border-primary shadow-lg' : 'bg-background/40 border-primary/10'
       )}>
         <div className='flex items-center gap-3'>
@@ -180,11 +180,11 @@ function KanbanColumn({ status, candidates }: { status: string, candidates: Cand
       <SortableContext 
         id={status}
         items={candidates.map(c => c.id)} 
-        strategy={verticalListSortingStrategy}
+        strategy={horizontalListSortingStrategy}
       >
         <div 
           className={cn(
-            'flex-1 flex flex-col gap-3 min-h-[250px] p-2 rounded-2xl border border-dashed transition-all duration-300',
+            'flex gap-3 overflow-x-auto max-h-[240px] p-2 rounded-2xl border border-dashed transition-all duration-300 overflow-y-hidden',
             isOver ? 'bg-primary/[0.08] border-primary/40' : 'bg-primary/[0.02] border-primary/5'
           )}
         >
@@ -226,11 +226,11 @@ function SortableCandidateCard({ candidate }: { candidate: CandidateType }) {
       style={style}
       className='relative group outline-none'
     >
-      <div className='glass p-4 rounded-xl border-white/20 hover:border-primary/40 hover:shadow-lg transition-all duration-300'>
+      <div className='glass p-2 rounded-xl border-white/10 hover:border-primary/30 hover:shadow-md transition-all duration-300 w-[220px] shrink-0'>
         <div className='flex justify-between items-start mb-2'>
           <Link 
             href={`/jobs/${candidate.id}`}
-            className='font-bold text-sm hover:text-primary transition-colors line-clamp-1 flex-1 pr-2'
+            className='font-bold text-[12px] hover:text-primary transition-colors line-clamp-1 flex-1 pr-2'
           >
             {candidate.firstName} {candidate.lastName}
           </Link>
@@ -243,39 +243,39 @@ function SortableCandidateCard({ candidate }: { candidate: CandidateType }) {
           </div>
         </div>
         
-        <div className='text-[11px] text-muted-foreground space-y-1.5'>
-          <div className='flex items-center gap-1 font-semibold text-primary/70'>
+        <div className='text-[10px] text-muted-foreground space-y-1'>
+          <div className='flex flex-wrap items-center gap-2 font-semibold text-primary/70'>
             <Briefcase className='w-3 h-3' />
-            {candidate.role}
+            <span className='truncate'>{candidate.role}</span>
           </div>
           <div className='flex items-center gap-1'>
             <MapPin className='w-3 h-3' />
-            {candidate.city} {candidate.province ? `(${candidate.province.toUpperCase()})` : ''}
+            <span className='truncate'>{candidate.city} {candidate.province ? `(${candidate.province.toUpperCase()})` : ''}</span>
           </div>
         </div>
 
-        <div className='mt-3 pt-3 border-t border-white/5 flex justify-between items-center'>
+        <div className='mt-2 pt-2 border-t border-white/5 flex justify-between items-center'>
           <div className='flex gap-2 relative z-10'>
             {candidate.phone && (
               <a 
                 href={`tel:${candidate.phone}`} 
-                className='w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all pointer-events-auto'
+                className='w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all pointer-events-auto'
                 title='Chiama Candidato'
                 onClick={(e) => e.stopPropagation()}
               >
-                <Phone className='w-3.5 h-3.5' />
+                <Phone className='w-3 h-3' />
               </a>
             )}
             <a 
               href={`mailto:${candidate.email}`} 
-              className='w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all pointer-events-auto'
+              className='w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all pointer-events-auto'
               title='Invia Email'
               onClick={(e) => e.stopPropagation()}
             >
-              <Mail className='w-3.5 h-3.5' />
+              <Mail className='w-3 h-3' />
             </a>
           </div>
-          <span className='text-[9px] uppercase font-bold text-muted-foreground/40'>
+          <span className='text-[8px] uppercase font-bold text-muted-foreground/40'>
             {new Date(candidate.createdAt).toLocaleDateString('it-IT')}
           </span>
         </div>

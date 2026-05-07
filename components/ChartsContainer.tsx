@@ -18,14 +18,14 @@ function ChartsContainer() {
   });
 
   if (isPending) return <h2 className='text-xl font-medium'>Please wait...</h2>;
-  if (!data || data.length < 1) return null;
+  if (!data || !data.monthlyData || data.monthlyData.length < 1) return null;
   return (
     <section className='mt-16 glass p-8 rounded-3xl shadow-xl border-white/20'>
       <h1 className='text-3xl font-bold text-center mb-10 text-primary'>
         Andamento Inserimenti
       </h1>
       <ResponsiveContainer width='100%' height={350}>
-        <BarChart data={data}>
+        <BarChart data={data.monthlyData}>
           <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#e2e8f0' opacity={0.5} />
           <XAxis 
             dataKey='date' 

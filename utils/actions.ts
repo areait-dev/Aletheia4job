@@ -6,319 +6,310 @@ import {
   CandidateType, 
   CreateAndEditCandidateType, 
   createAndEditCandidateSchema,
-  GetAllCandidatesActionTypes
+  GetAllCandidatesActionTypes,
+  JobType,
+  CreateAndEditJobType,
+  createAndEditJobSchema,
 } from "./types";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import dayjs from "dayjs";
-import 'dayjs/locale/it';
-dayjs.locale('it');
 
+// Funzione di utilità per proteggere le rotte
 async function authenticateAndRedirect(): Promise<string> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.id) {
-    redirect("/login");
-  }
+  if (!user?.id) redirect("/login");
   return user.id;
 }
 
-export async function createCandidateAction(
-  values: CreateAndEditCandidateType
-): Promise<CandidateType | null> {
-  const userId = await authenticateAndRedirect();
-
-  try {
-    createAndEditCandidateSchema.parse(values);
-
-    const candidate: CandidateType = await prisma.candidate.create({
-      data: {
-        ...values,
-        userId: userId,
-      },
-    });
-    return candidate;
-  } catch (error) {
-    console.error("Errore creazione candidato:", error);
-    return null;
-  }
-}
-
-export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes): Promise<{
-  candidates: CandidateType[];
-  count: number;
-  page: number;
-  totalPages: number;
-}> {
+/**
+ * Recupera i candidati filtrati e gestisce il conteggio totale
+ * Questo risolve la discrepanza tra il numero visibile e i risultati reali.
+ */
+export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes) {
   const userId = await authenticateAndRedirect();
   const { search, candidateStatus, province, sector, page = 1, limit = 10 } = params;
 
   try {
-    let whereClause: Prisma.CandidateWhereInput = {};
+    let whereClause: Prisma.CandidateWhereInput = {
+      userId: userId // Filtra sempre per l'utente loggato
+    };
 
     if (search) {
-      whereClause = {
-        ...whereClause,
-        OR: [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-          { city: { contains: search, mode: "insensitive" } },
-          { role: { contains: search, mode: "insensitive" } },
-        ],
-      };
+      whereClause.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { city: { contains: search, mode: "insensitive" } },
+        { role: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     if (candidateStatus && candidateStatus !== "tutti") {
-      whereClause = {
-        ...whereClause,
-        status: candidateStatus,
-      };
+      whereClause.status = candidateStatus;
     }
 
     if (province && province !== "tutte") {
-      whereClause = {
-        ...whereClause,
-        province: { contains: province, mode: "insensitive" },
-      };
+      whereClause.province = { contains: province, mode: "insensitive" };
     }
 
+    // Usa un confronto case-insensitive per evitare mismatch tra valori settore
     if (sector && sector !== "tutti") {
-      whereClause = {
-        ...whereClause,
-        sector: { contains: sector, mode: "insensitive" },
-      };
+      whereClause.sector = { equals: sector, mode: "insensitive" };
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * limit;
 
-    const candidates: CandidateType[] = await prisma.candidate.findMany({
-      where: whereClause,
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    // Eseguiamo conteggio e ricerca in parallelo per massime prestazioni
+    const [candidates, count] = await Promise.all([
+      prisma.candidate.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.candidate.count({ where: whereClause }),
+    ]);
 
-    const count: number = await prisma.candidate.count({
-      where: whereClause,
-    });
-
-    const totalPages = Math.ceil(count / limit);
-
-    return { candidates, count, page, totalPages };
+    return { 
+      candidates, 
+      count, 
+      page: Number(page), 
+      totalPages: Math.ceil(count / limit) 
+    };
   } catch (error) {
-    console.error("Errore recupero candidati:", error);
+    console.error("Errore Database:", error);
     return { candidates: [], count: 0, page: 1, totalPages: 0 };
   }
 }
 
-export async function deleteCandidateAction(id: string): Promise<CandidateType | null> {
+/**
+ * Recupera i settori e il numero di candidati per ciascuno (Sidebar/Cards)
+ */
+export async function getSectorsAction() {
   const userId = await authenticateAndRedirect();
-
   try {
-    const candidate: CandidateType = await prisma.candidate.delete({
-      where: {
-        id,
-      },
+    const sectors = await prisma.candidate.groupBy({
+      where: { userId },
+      by: ["sector"],
+      _count: { sector: true },
+      orderBy: { sector: "asc" },
     });
-    return candidate;
-  } catch (error) {
-    return null;
+    return sectors.map((s) => ({ sector: s.sector, count: s._count.sector }));
+  } catch (error) { 
+    return []; 
   }
 }
 
+/**
+ * Recupera un singolo candidato per ID
+ */
 export async function getSingleCandidateAction(id: string): Promise<CandidateType | null> {
   const userId = await authenticateAndRedirect();
-  let candidate: CandidateType | null = null;
-
   try {
-    candidate = await prisma.candidate.findUnique({
+    const candidate = await prisma.candidate.findFirst({
       where: {
         id,
-      },
-    });
-  } catch (error) {
-    candidate = null;
-  }
-  if (!candidate) {
-    redirect("/jobs");
-  }
-  return candidate;
-}
-
-export async function updateCandidateAction(
-  id: string,
-  values: CreateAndEditCandidateType
-): Promise<CandidateType | null> {
-  const userId = await authenticateAndRedirect();
-
-  try {
-    console.log("Tentativo aggiornamento ID:", id);
-    const validatedValues = createAndEditCandidateSchema.parse(values);
-    
-    const candidate: CandidateType = await prisma.candidate.update({
-      where: {
-        id,
-      },
-      data: {
-        firstName: validatedValues.firstName,
-        lastName: validatedValues.lastName,
-        email: validatedValues.email,
-        phone: validatedValues.phone || null,
-        city: validatedValues.city,
-        province: validatedValues.province || null,
-        role: validatedValues.role,
-        seniority: validatedValues.seniority,
-        education: validatedValues.education || null,
-        sector: validatedValues.sector,
-        expectedSalary: validatedValues.expectedSalary !== undefined ? validatedValues.expectedSalary : null,
-        skills: validatedValues.skills || null,
-        status: validatedValues.status,
-        cvUrl: validatedValues.cvUrl || null,
-        notes: validatedValues.notes || null,
+        userId,
       },
     });
     return candidate;
   } catch (error) {
-    console.error("ERRORE AGGIORNAMENTO DETTAGLIATO:", error);
+    console.error("Errore nel recupero del candidato:", error);
     return null;
   }
 }
 
-export async function updateCandidateStatusAction(
-  id: string,
-  status: string
-): Promise<CandidateType | null> {
+/**
+ * Crea un nuovo candidato
+ */
+export async function createCandidateAction(values: CreateAndEditCandidateType): Promise<CandidateType | null> {
   const userId = await authenticateAndRedirect();
-
   try {
-    console.log(`Aggiornamento stato DB per ${id} -> ${status}`);
-    const candidate: CandidateType = await prisma.candidate.update({
-      where: {
-        id,
-      },
+    const candidate = await prisma.candidate.create({
       data: {
-        status,
+        ...values,
+        userId,
       },
     });
     return candidate;
   } catch (error) {
-    console.error("Errore aggiornamento stato:", error);
+    console.error("Errore nella creazione del candidato:", error);
     return null;
   }
 }
 
-export async function getCandidateStatsAction(): Promise<{
-  "In cerca": number;
-  Colloquiato: number;
-  Inserito: number;
-  "Non idoneo": number;
-}> {
-  const userId = await authenticateAndRedirect();
-
-  try {
-    const stats = await prisma.candidate.groupBy({
-      where: {},
-      by: ["status"],
-      _count: {
-        status: true,
-      },
-    });
-
-    const statsObject = stats.reduce((acc, curr) => {
-      acc[curr.status] = curr._count.status;
-      return acc;
-    }, {} as any);
-
-    return {
-      "In cerca": statsObject["In cerca"] || 0,
-      Colloquiato: statsObject.Colloquiato || 0,
-      Inserito: statsObject.Inserito || 0,
-      "Non idoneo": statsObject["Non idoneo"] || 0,
-    };
-  } catch (error) {
-    return {
-      "In cerca": 0,
-      Colloquiato: 0,
-      Inserito: 0,
-      "Non idoneo": 0,
-    };
-  }
-}
-
-export async function getChartsDataAction(): Promise<
-  Array<{ date: string; count: number }>
-> {
-  const userId = await authenticateAndRedirect();
-  const sixMonthsAgo = dayjs().subtract(6, "month").toDate();
-
-  try {
-    const candidates = await prisma.candidate.findMany({
-      where: {
-        createdAt: {
-          gte: sixMonthsAgo,
-        },
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-
-    const applicationsPerMonth = candidates.reduce((acc, candidate) => {
-      const date = dayjs(candidate.createdAt).format("MMM YY");
-      const existingEntry = acc.find((entry: any) => entry.date === date);
-
-      if (existingEntry) {
-        existingEntry.count += 1;
-      } else {
-        acc.push({ date, count: 1 });
-      }
-
-      return acc;
-    }, [] as Array<{ date: string; count: number }>);
-
-    return applicationsPerMonth;
-  } catch (error) {
-    redirect("/jobs");
-  }
-}
-
+/**
+ * Verifica se un'email esiste già
+ */
 export async function checkEmailExistsAction(email: string): Promise<boolean> {
-  const userId = await authenticateAndRedirect(); // Even checking requires auth usually
-
+  const userId = await authenticateAndRedirect();
   try {
-    const candidate = await prisma.candidate.findUnique({
+    const existingCandidate = await prisma.candidate.findFirst({
       where: {
         email,
+        userId,
       },
     });
-    return !!candidate;
+    return !!existingCandidate;
   } catch (error) {
+    console.error("Errore nella verifica dell'email:", error);
     return false;
   }
 }
 
-export async function getSectorsAction(): Promise<Array<{ sector: string; count: number }>> {
+/**
+ * Recupera statistiche dei candidati
+ */
+export async function getCandidateStatsAction() {
   const userId = await authenticateAndRedirect();
-
   try {
-    const sectors = await prisma.candidate.groupBy({
-      where: {},
-      by: ["sector"],
-      _count: {
-        sector: true,
-      },
-      orderBy: {
-        sector: "asc",
-      },
+    const totalCandidates = await prisma.candidate.count({
+      where: { userId },
     });
 
-    return sectors.map((s) => ({
-      sector: s.sector,
-      count: s._count.sector,
-    }));
+    const statusStats = await prisma.candidate.groupBy({
+      where: { userId },
+      by: ["status"],
+      _count: { status: true },
+    });
+
+    const sectorStats = await prisma.candidate.groupBy({
+      where: { userId },
+      by: ["sector"],
+      _count: { sector: true },
+      orderBy: { _count: { sector: "desc" } },
+      take: 5,
+    });
+
+    return {
+      totalCandidates,
+      statusStats: statusStats.map(s => ({ status: s.status, count: s._count.status })),
+      sectorStats: sectorStats.map(s => ({ sector: s.sector, count: s._count.sector })),
+    };
   } catch (error) {
-    return [];
+    console.error("Errore nel recupero delle statistiche:", error);
+    return {
+      totalCandidates: 0,
+      statusStats: [],
+      sectorStats: [],
+    };
+  }
+}
+
+/**
+ * Recupera dati per i grafici
+ */
+export async function getChartsDataAction() {
+  const userId = await authenticateAndRedirect();
+  try {
+    const monthlyData = await prisma.candidate.groupBy({
+      where: { userId },
+      by: ["createdAt"],
+      _count: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const statusData = await prisma.candidate.groupBy({
+      where: { userId },
+      by: ["status"],
+      _count: { status: true },
+    });
+
+    return {
+      monthlyData: monthlyData.map(d => ({
+        date: d.createdAt.toISOString().split('T')[0],
+        count: d._count.id,
+      })),
+      statusData: statusData.map(s => ({
+        status: s.status,
+        count: s._count.status,
+      })),
+    };
+  } catch (error) {
+    console.error("Errore nel recupero dei dati per i grafici:", error);
+    return {
+      monthlyData: [],
+      statusData: [],
+    };
+  }
+}
+
+/**
+ * Aggiorna lo stato di un candidato
+ */
+export async function updateCandidateStatusAction(candidateId: string, newStatus: string): Promise<boolean> {
+  const userId = await authenticateAndRedirect();
+  try {
+    await prisma.candidate.updateMany({
+      where: {
+        id: candidateId,
+        userId,
+      },
+      data: {
+        status: newStatus,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Errore nell'aggiornamento dello stato del candidato:", error);
+    return false;
+  }
+}
+
+/**
+ * Elimina un candidato
+ */
+export async function deleteCandidateAction(candidateId: string): Promise<boolean> {
+  const userId = await authenticateAndRedirect();
+  try {
+    await prisma.candidate.deleteMany({
+      where: {
+        id: candidateId,
+        userId,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Errore nell'eliminazione del candidato:", error);
+    return false;
+  }
+}
+
+/**
+ * Crea un nuovo job
+ */
+export async function createJobAction(values: CreateAndEditJobType): Promise<JobType | null> {
+  const userId = await authenticateAndRedirect();
+  try {
+    const job = await prisma.job.create({
+      data: {
+        ...values,
+        userId,
+      },
+    });
+    return job;
+  } catch (error) {
+    console.error("Errore nella creazione del job:", error);
+    return null;
+  }
+}
+
+/**
+ * Aggiorna un candidato esistente
+ */
+export async function updateCandidateAction(candidateId: string, values: Partial<CreateAndEditCandidateType>): Promise<CandidateType | null> {
+  const userId = await authenticateAndRedirect();
+  try {
+    const candidate = await prisma.candidate.update({
+      where: {
+        id: candidateId,
+        userId,
+      },
+      data: values,
+    });
+    return candidate;
+  } catch (error) {
+    console.error("Errore nell'aggiornamento del candidato:", error);
+    return null;
   }
 }

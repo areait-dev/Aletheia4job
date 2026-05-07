@@ -83,3 +83,58 @@ export const createAndEditCandidateSchema = z.object({
 });
 
 export type CreateAndEditCandidateType = z.infer<typeof createAndEditCandidateSchema>;
+
+export enum JobStatus {
+  Aperto = 'Aperto',
+  Chiuso = 'Chiuso',
+  InCorso = 'In corso',
+  Pending = 'Pending',
+}
+
+export enum JobMode {
+  FullTime = 'Full-time',
+  PartTime = 'Part-time',
+  Freelance = 'Freelance',
+}
+
+export type JobType = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  requirements: string;
+  salary: number | null;
+  status: JobStatus;
+  mode: JobMode;
+  sector: string;
+};
+
+export const createAndEditJobSchema = z.object({
+  title: z.string().min(2, {
+    message: 'Il titolo deve essere di almeno 2 caratteri.',
+  }),
+  company: z.string().min(2, {
+    message: 'Il nome dell\'azienda deve essere di almeno 2 caratteri.',
+  }),
+  location: z.string().min(2, {
+    message: 'La località deve essere di almeno 2 caratteri.',
+  }),
+  description: z.string().min(10, {
+    message: 'La descrizione deve essere di almeno 10 caratteri.',
+  }),
+  requirements: z.string().min(10, {
+    message: 'I requisiti devono essere di almeno 10 caratteri.',
+  }),
+  salary: z.coerce.number().optional().nullable(),
+  status: z.nativeEnum(JobStatus),
+  mode: z.nativeEnum(JobMode),
+  sector: z.string().min(2, {
+    message: 'Il settore deve essere di almeno 2 caratteri.',
+  }),
+});
+
+export type CreateAndEditJobType = z.infer<typeof createAndEditJobSchema>;

@@ -25,17 +25,32 @@ function SearchForm() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    let params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
 
     const formData = new FormData(e.currentTarget);
-    const search = formData.get('search') as string;
-    const status = formData.get('candidateStatus') as string;
-    const province = formData.get('province') as string;
-    
-    if (search) params.set('search', search);
-    if (status) params.set('candidateStatus', status);
-    if (province) params.set('province', province);
+    const search = (formData.get('search') as string).trim();
+    const status = (formData.get('candidateStatus') as string) || 'tutti';
+    const province = (formData.get('province') as string).trim() || 'tutte';
 
+    if (search) {
+      params.set('search', search);
+    } else {
+      params.delete('search');
+    }
+
+    if (status && status !== 'tutti') {
+      params.set('candidateStatus', status);
+    } else {
+      params.delete('candidateStatus');
+    }
+
+    if (province && province !== 'tutte') {
+      params.set('province', province);
+    } else {
+      params.delete('province');
+    }
+
+    params.set('page', '1');
     router.push(`${pathname}?${params.toString()}`);
   };
 

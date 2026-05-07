@@ -56,15 +56,15 @@ export default function PipelineHeader() {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
       <div>
-        <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">Pipeline Screening</h1>
+        <h1 className="text-3xl font-bold text-primary mb-1.5 tracking-tight">Pipeline Screening</h1>
         <p className="text-muted-foreground text-sm">Monitora e gestisci l'avanzamento dei candidati nelle fasi di selezione.</p>
       </div>
       
       <Button 
         onClick={handleExportLavorati}
-        className="rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 font-bold px-6 py-6"
+        className="rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 font-bold px-5 py-4"
       >
         <Download className="w-5 h-5" />
         Esporta Lavorati
