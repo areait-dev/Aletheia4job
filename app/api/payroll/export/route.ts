@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManageMembers, getAuthContext } from "@/utils/authz";
 import { generatePayrollCsv } from "@/utils/payrollExport";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   const auth = await getAuthContext();
   if (!auth) return new NextResponse("unauthorized", { status: 401 });
