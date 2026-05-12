@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import CandidatesList from "@/components/JobsList";
 import SearchForm from "@/components/SearchForm";
 import SectorFolders from "@/components/SectorFolders";

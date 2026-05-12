@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import CreateCandidateForm from '@/components/CreateCandidateForm';
 import {
   dehydrate,

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import ChartsContainer from '@/components/ChartsContainer';
 import StatsContainer from '@/components/StatsContainer';
 import { getCandidateStatsAction, getChartsDataAction } from '@/utils/actions';

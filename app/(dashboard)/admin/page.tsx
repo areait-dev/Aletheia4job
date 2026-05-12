@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Globe, Shield, Users, BarChart3, Clock, ArrowRight } from "lucide-react";
 import { AuditAction, MembershipRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getDocumentsAction, getEmployeesAction } from "@/utils/actions";
 import DocumentsClient from "@/components/DocumentsClient";
 import { Files, ShieldCheck, FileText, Download } from "lucide-react";

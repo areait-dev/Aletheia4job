@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getEmployeesAction, getAbsencesAction, getAttendanceEntriesAction } from "@/utils/actions";
 import AttendanceClient from "@/components/AttendanceClient";
 import { 

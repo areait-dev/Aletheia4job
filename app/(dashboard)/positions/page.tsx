@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getAllJobsAction } from "@/utils/actions";
 import Link from "next/link";
 import { Plus, Briefcase, MapPin, Users, Calendar } from "lucide-react";

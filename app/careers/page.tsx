@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getPublicJobsAction } from '@/utils/actions';
 import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight } from 'lucide-react';
 import Link from 'next/link';

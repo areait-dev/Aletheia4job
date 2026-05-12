@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { revalidatePath } from "next/cache";
 import { createEmployeeAction, getEmployeesAction } from "@/utils/actions";
 import { Users, UserPlus, Building2, Calendar, Briefcase, Mail, CheckCircle2, Clock, User } from "lucide-react";

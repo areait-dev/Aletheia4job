@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getUpcomingInterviewsAction, getAbsencesAction } from "@/utils/actions";
 import CalendarClient from "@/components/CalendarClient";
 import { Calendar as CalendarIcon, Video, Phone, Users, Clock } from "lucide-react";
