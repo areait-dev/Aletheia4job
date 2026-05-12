@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     .filter((c) => !c.calendar_deleted && !c.calendar_readonly)
     .sort((a, b) => Number(b.calendar_primary) - Number(a.calendar_primary))[0];
 
-  const webhookBase = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const webhookBase = process.env.NEXT_PUBLIC_SITE_URL || "https://getjob-delta.vercel.app";
   const callbackUrl = `${webhookBase.replace(/\/$/, "")}/api/webhooks/cronofy`;
 
   const channel = writable?.calendar_id
