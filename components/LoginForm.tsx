@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -7,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, Mail, Lock, ArrowRight, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function LoginPage() {
+export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
