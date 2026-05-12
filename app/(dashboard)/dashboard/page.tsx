@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+// app/(dashboard)/dashboard/page.tsx
 
 import { 
   getCandidateStatsAction, 
@@ -25,7 +25,12 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+// 👇 Queste due righe sono FONDAMENTALI per evitare errori di cookie/prerendering su Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardPage() {
+  // Fetch dati in parallelo per velocità
   const [
     stats,
     employees,
@@ -44,6 +49,7 @@ export default async function DashboardPage() {
     getAllJobsAction()
   ]);
 
+  // Logica di filtraggio semplice lato server
   const activeEmployees = employees.filter(e => e.status === "ACTIVE").length;
   const pendingAbsences = absences.filter(a => a.status === "REQUESTED").length;
   const pendingReviews = cycles.filter(c => c.status === "ACTIVE").length;
@@ -57,7 +63,7 @@ export default async function DashboardPage() {
           <p className="text-muted-foreground mt-2 text-lg">Ecco cosa sta succedendo nella tua organizzazione oggi.</p>
         </div>
         <div className="flex gap-3">
-          <Link href="/add-job" className="h-12 px-6 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
+          <Link href="/add-candidate" className="h-12 px-6 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
             <UserPlus className="w-5 h-5" /> Nuovo Candidato
           </Link>
         </div>
