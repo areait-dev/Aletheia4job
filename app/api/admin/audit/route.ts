@@ -3,6 +3,8 @@ import { AuditAction } from "@prisma/client";
 import prisma from "@/utils/db";
 import { canManageMembers, getAuthContext } from "@/utils/authz";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const auth = await getAuthContext();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
