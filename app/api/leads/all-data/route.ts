@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/utils/db';
 import { getAuthContext } from '@/utils/authz';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const auth = await getAuthContext();
