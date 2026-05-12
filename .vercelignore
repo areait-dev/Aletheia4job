@@ -1,0 +1,7 @@
+# Vercel build cache ignore
+.next/
+out/
+dist/
+build/
+.cache/
+node_modules/.cache/
