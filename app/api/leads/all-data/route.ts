@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/utils/db';
-import { createClient } from '@/utils/supabase/server';
+import { getAuthContext } from '@/utils/authz';
 
 export async function GET() {
   try {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // In production, we should check for user
-    // if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await getAuthContext();
+    if (!auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const candidates = await prisma.candidate.findMany({
+      where: {
+        organizationId: auth.organizationId,
+      },
       orderBy: {
         createdAt: 'desc',
       },

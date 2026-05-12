@@ -2,7 +2,7 @@
  * Database inspection script
  * Run: npx tsx scripts/db-inspect.ts
  *
- * Inspects jobs and clerkIds to diagnose why jobs may appear empty
+ * Inspects jobs and userIds to diagnose why jobs may appear empty
  * after switching Clerk applications (new API keys = new user IDs).
  */
 
@@ -24,15 +24,15 @@ async function main() {
     return;
   }
 
-  const clerkIdCounts = jobs.reduce<Record<string, number>>((acc, job) => {
-    acc[job.clerkId] = (acc[job.clerkId] || 0) + 1;
+  const userIdCounts = jobs.reduce<Record<string, number>>((acc, job) => {
+    acc[job.userId] = (acc[job.userId] || 0) + 1;
     return acc;
   }, {});
 
-  console.log('Jobs per Clerk user (clerkId):');
+  console.log('Jobs per userId:');
   console.log('─'.repeat(60));
-  for (const [clerkId, count] of Object.entries(clerkIdCounts)) {
-    console.log(`  ${clerkId}: ${count} job(s)`);
+  for (const [userId, count] of Object.entries(userIdCounts)) {
+    console.log(`  ${userId}: ${count} job(s)`);
   }
 
   // Status breakdown (helps debug stats mismatch)

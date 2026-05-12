@@ -70,13 +70,23 @@ function SearchForm() {
   // Gestisci cambio ricerca in tempo reale
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    debouncedUpdate(value, provinceValue, candidateStatus);
+    if (value.trim() === '') {
+      // Aggiorna immediatamente quando si svuota la ricerca
+      updateSearchParams('', provinceValue, candidateStatus);
+    } else {
+      debouncedUpdate(value, provinceValue, candidateStatus);
+    }
   };
 
   // Gestisci cambio provincia in tempo reale
   const handleProvinceChange = (value: string) => {
     setProvinceValue(value);
-    debouncedUpdate(searchValue, value, candidateStatus);
+    if (value.trim() === '') {
+      // Aggiorna immediatamente quando si svuota la provincia
+      updateSearchParams(searchValue, '', candidateStatus);
+    } else {
+      debouncedUpdate(searchValue, value, candidateStatus);
+    }
   };
 
   // Gestisci cambio stato
@@ -99,7 +109,10 @@ function SearchForm() {
   };
 
   // Controlla se ci sono filtri attivi
-  const hasActiveFilters = searchValue.trim() || provinceValue.trim() || candidateStatus !== 'tutti';
+  const hasActiveFilters = searchValue.trim() || provinceValue.trim() || candidateStatus !== 'tutti' || searchParams.get('sector');
+
+  // Ottieni il settore attivo
+  const activeSector = searchParams.get('sector');
 
   return (
     <form
@@ -154,8 +167,13 @@ function SearchForm() {
       </div>
 
       <div className='flex items-end gap-3'>
-        <div className='text-xs text-muted-foreground/60 italic'>
+        <div className='text-xs text-muted-foreground/60 italic flex items-center gap-2'>
           {hasActiveFilters ? '🔍 Ricerca attiva' : 'La ricerca è automatica mentre digiti'}
+          {activeSector && (
+            <span className='px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium'>
+              Settore: {activeSector}
+            </span>
+          )}
         </div>
         {hasActiveFilters && (
           <Button
@@ -163,13 +181,15 @@ function SearchForm() {
             variant='outline'
             size='sm'
             onClick={() => {
+              const params = new URLSearchParams();
+              params.set('page', '1');
+              router.push(`${pathname}?${params.toString()}`);
               setSearchValue('');
               setProvinceValue('');
-              updateSearchParams('', '', 'tutti');
             }}
             className='h-8 px-3 text-xs'
           >
-            Reset
+            Reset Tutto
           </Button>
         )}
       </div>

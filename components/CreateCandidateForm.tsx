@@ -312,7 +312,7 @@ function CreateCandidateForm() {
               </FormControl>
               {isExtracting && (
                 <p className='text-xs text-primary animate-pulse mt-1 flex items-center gap-1 font-medium'>
-                  <Sparkles className='w-3 h-3' /> L'intelligenza artificiale sta leggendo il CV...
+                  <Sparkles className='w-3 h-3' /> L&apos;intelligenza artificiale sta leggendo il CV...
                 </p>
               )}
               {form.watch('cvUrl') && !isExtracting && (

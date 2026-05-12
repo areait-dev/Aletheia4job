@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Briefcase, CheckCircle, Users, BarChart3, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/utils/supabase/server";
+import { getAuthContext } from "@/utils/authz";
 
 export default async function Home() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const auth = await getAuthContext();
+  const userId = auth?.userId;
 
   return (
     <main className="min-h-screen overflow-hidden">
@@ -23,7 +23,7 @@ export default async function Home() {
         </div>
         
         <div className="flex gap-4">
-          {!user ? (
+          {!userId ? (
             <>
               <Button asChild variant="ghost" className="font-semibold">
                 <Link href="/login">Accedi</Link>
@@ -56,7 +56,7 @@ export default async function Home() {
           </p>
           
           <div className="flex flex-wrap gap-4 mt-12">
-            {user ? (
+            {userId ? (
               <Button asChild size="lg" className="rounded-2xl px-8 h-14 text-lg shadow-xl shadow-primary/30 group">
                 <Link href="/add-job" className="flex items-center gap-2">
                   Vai alla Dashboard <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -64,7 +64,7 @@ export default async function Home() {
               </Button>
             ) : (
               <Button asChild size="lg" className="rounded-2xl px-8 h-14 text-lg shadow-xl shadow-primary/30 group">
-                <Link href="/login" className="flex items-center gap-2">
+                <Link href="/sign-up" className="flex items-center gap-2">
                   Inizia Subito <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>

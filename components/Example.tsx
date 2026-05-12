@@ -20,7 +20,7 @@ function CreateJobForm() {
   const form = useForm<CreateAndEditJobType>({
     resolver: zodResolver(createAndEditJobSchema),
     defaultValues: {
-      position: '',
+      title: '',
       company: '',
       location: '',
       status: JobStatus.Pending,
@@ -42,8 +42,8 @@ function CreateJobForm() {
       >
         <h2 className='capitalize font-semibold text-4xl mb-6'>add job</h2>
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start'>
-          {/* position */}
-          <CustomFormField name='position' control={form.control} />
+          {/* title */}
+          <CustomFormField name='title' control={form.control} />
           {/* company */}
           <CustomFormField name='company' control={form.control} />
           {/* location */}

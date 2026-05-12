@@ -19,14 +19,8 @@ function ButtonContainer({ currentPage, totalPages }: ButtonContainerProps) {
   const pathname = usePathname();
 
   const handlePageChange = (page: number) => {
-    const defaultParams = {
-      search: searchParams.get('search') || '',
-      jobStatus: searchParams.get('jobStatus') || '',
-      page: String(page),
-    };
-
-    let params = new URLSearchParams(defaultParams);
-
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(page));
     router.push(`${pathname}?${params.toString()}`);
   };
 

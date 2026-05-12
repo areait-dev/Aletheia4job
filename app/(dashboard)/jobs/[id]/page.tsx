@@ -1,24 +1,12 @@
-import EditCandidateForm from '@/components/EditJobForm';
 import { getSingleCandidateAction } from '@/utils/actions';
-
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from '@tanstack/react-query';
+import { notFound } from 'next/navigation';
+import CandidateProfilePage from '@/components/CandidateProfilePage';
 
 async function CandidateDetailPage({ params }: { params: { id: string } }) {
-  const queryClient = new QueryClient();
+  const candidate = await getSingleCandidateAction(params.id);
+  if (!candidate) notFound();
 
-  await queryClient.prefetchQuery({
-    queryKey: ['candidate', params.id],
-    queryFn: () => getSingleCandidateAction(params.id),
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <EditCandidateForm candidateId={params.id} />
-    </HydrationBoundary>
-  );
+  return <CandidateProfilePage candidate={candidate} />;
 }
+
 export default CandidateDetailPage;

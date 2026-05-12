@@ -11,10 +11,11 @@ export default function PipelineContent() {
   const candidateStatus = searchParams.get("candidateStatus") || "tutti";
   const province = searchParams.get("province") || "tutte";
   const search = searchParams.get("search") || "";
+  const jobId = searchParams.get("jobId") || "";
 
   const { data, isPending } = useQuery({
-    queryKey: ["candidates", "pipeline", search, candidateStatus, province, sector],
-    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, sector, limit: 2000 }),
+    queryKey: ["candidates", "pipeline", search, candidateStatus, province, sector, jobId],
+    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, sector, limit: 2000, jobId }),
   });
 
   if (isPending) return <div className="text-muted-foreground animate-pulse text-center py-20 font-bold">Caricamento Pipeline...</div>;

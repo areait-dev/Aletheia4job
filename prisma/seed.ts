@@ -28,7 +28,7 @@ interface JobRow {
   clerkId: string;
   createdAt: string;
   updatedAt: string;
-  position: string;
+  title: string;
   company: string;
   location: string;
   status: string;
@@ -69,8 +69,8 @@ async function seedJobs() {
       await prisma.job.upsert({
         where: { id: job.id },
         update: {
-          clerkId: job.clerkId,
-          position: job.position,
+          userId: job.clerkId,
+          title: job.title,
           company: job.company,
           location: job.location,
           status: job.status,
@@ -80,10 +80,14 @@ async function seedJobs() {
         },
         create: {
           id: job.id,
-          clerkId: job.clerkId,
-          position: job.position,
+          userId: job.clerkId,
+          organizationId: 'temp-org-id', // TODO: Fix organization creation
+          title: job.title,
           company: job.company,
           location: job.location,
+          description: 'Descrizione da definire', // job.description may not exist
+          requirements: 'Requisiti da definire', // job.requirements may not exist
+          sector: 'Tecnologia', // job.sector may not exist
           status: job.status,
           mode: job.mode,
           createdAt: new Date(job.createdAt),

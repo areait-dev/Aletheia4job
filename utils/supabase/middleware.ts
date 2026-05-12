@@ -60,9 +60,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protect routes conditionally based on authentication
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
+  const isAuthRoute    = request.nextUrl.pathname.startsWith('/login')
+  const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
+  const isCareersRoute = request.nextUrl.pathname.startsWith('/careers')
+  const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds')
   
-  if (!user && !isAuthRoute && request.nextUrl.pathname !== '/') {
+  if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
     // If not authenticated and not on an auth route, redirect to login
     const url = request.nextUrl.clone()
     url.pathname = '/login'

@@ -14,6 +14,7 @@ export type CandidateType = {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
+  organizationId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -29,6 +30,20 @@ export type CandidateType = {
   status: string;
   cvUrl: string | null;
   notes: string | null;
+  source: string | null;
+  applications?: ApplicationType[];
+};
+
+export type ApplicationType = {
+  id: string;
+  candidateId: string;
+  jobId: string;
+  status: string;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  job?: JobType;
+  candidate?: CandidateType;
 };
 
 export enum CandidateStatus {
@@ -102,18 +117,46 @@ export type JobType = {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
+  organizationId: string;
   title: string;
   company: string;
   location: string;
+  locationFormatted?: string | null;
+  city?: string | null;
+  province?: string | null;
+  country?: string | null;
   description: string;
   requirements: string;
+  responsibilities?: string | null;
+  benefits?: string | null;
+  sector: string;
+  industry?: string | null;
   salary: number | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryCurrency?: string | null;
+  salaryInterval?: string | null;
+  salaryText?: string | null;
+  experienceLevel?: string | null;
+  educationLevel?: string | null;
+  remoteType?: string | null;
+  applicationUrl?: string | null;
+  externalSource?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  category?: string | null;
+  postedAt?: Date | null;
   status: JobStatus;
   mode: JobMode;
-  sector: string;
+  isActive: boolean;
+  postToLinkedIn: boolean;
+  postToIndeed: boolean;
+  postToJooble: boolean;
 };
 
 export const createAndEditJobSchema = z.object({
+  // ... (existing fields)
   title: z.string().min(2, {
     message: 'Il titolo deve essere di almeno 2 caratteri.',
   }),
@@ -130,11 +173,36 @@ export const createAndEditJobSchema = z.object({
     message: 'I requisiti devono essere di almeno 10 caratteri.',
   }),
   salary: z.coerce.number().optional().nullable(),
+  salaryMin: z.coerce.number().optional().nullable(),
+  salaryMax: z.coerce.number().optional().nullable(),
+  salaryCurrency: z.string().optional().nullable(),
+  salaryInterval: z.string().optional().nullable(),
+  salaryText: z.string().optional().nullable(),
+  locationFormatted: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  province: z.string().optional().nullable(),
+  country: z.string().optional().nullable(),
+  postalCode: z.string().optional().nullable(),
+  responsibilities: z.string().optional().nullable(),
+  benefits: z.string().optional().nullable(),
+  industry: z.string().optional().nullable(),
+  experienceLevel: z.string().optional().nullable(),
+  educationLevel: z.string().optional().nullable(),
+  remoteType: z.string().optional().nullable(),
+  applicationUrl: z.string().url().optional().nullable(),
+  externalSource: z.string().optional().nullable(),
+  utmSource: z.string().optional().nullable(),
+  utmMedium: z.string().optional().nullable(),
+  utmCampaign: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
   status: z.nativeEnum(JobStatus),
   mode: z.nativeEnum(JobMode),
   sector: z.string().min(2, {
     message: 'Il settore deve essere di almeno 2 caratteri.',
   }),
+  postToLinkedIn: z.boolean().default(false),
+  postToIndeed: z.boolean().default(false),
+  postToJooble: z.boolean().default(false),
 });
 
 export type CreateAndEditJobType = z.infer<typeof createAndEditJobSchema>;

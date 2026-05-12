@@ -1,5 +1,5 @@
-import { CandidateType } from '@/utils/types';
-import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download } from 'lucide-react';
+import { CandidateType, CandidateStatus } from '@/utils/types';
+import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download, Edit } from 'lucide-react';
 import Link from 'next/link';
 import {
   Card,
@@ -15,14 +15,56 @@ import JobInfo from './JobInfo';
 import DeleteJobButton from './DeleteJobButton';
 import { exportCandidateToPDF } from '@/utils/pdfExport';
 import { useState } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { updateCandidateStatusAction } from '@/utils/actions';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from './ui/use-toast';
 
 function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const [isExporting, setIsExporting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleExport = async () => {
     setIsExporting(true);
     await exportCandidateToPDF(candidate);
     setIsExporting(false);
+  };
+
+  // Mutazione per aggiornare lo stato
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ candidateId, status }: { candidateId: string; status: string }) =>
+      updateCandidateStatusAction(candidateId, status),
+    onSuccess: (updatedCandidate) => {
+      if (updatedCandidate) {
+        // Invalida le query per aggiornare la lista
+        queryClient.invalidateQueries({ queryKey: ['candidates'] });
+        queryClient.invalidateQueries({ queryKey: ['stats'] });
+        toast({
+          title: "Stato aggiornato",
+          description: `Il candidato è ora "${updatedCandidate.status}"`,
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare lo stato del candidato",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStatusChange = (newStatus: string) => {
+    updateStatusMutation.mutate({
+      candidateId: candidate.id,
+      status: newStatus,
+    });
   };
 
   return (
@@ -36,14 +78,38 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
               </div>
               {candidate.firstName} {candidate.lastName}
             </CardTitle>
-            <CardDescription className='text-primary font-semibold text-base py-1 px-3 bg-primary/5 rounded-lg inline-block'>
-              {candidate.role}
-            </CardDescription>
+            <div className='flex items-center gap-2'>
+              <CardDescription className='text-primary font-semibold text-base py-1 px-3 bg-primary/5 rounded-lg inline-block'>
+                {candidate.role}
+              </CardDescription>
+              {candidate.source && (
+                <Badge variant='outline' className='text-[10px] uppercase tracking-wider font-bold border-primary/20 text-primary/70'>
+                  {candidate.source}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className='flex flex-col items-end gap-2'>
-            <Badge variant='secondary' className='rounded-full px-3 py-1 font-medium'>
-              {candidate.status}
-            </Badge>
+            {/* Dropdown sempre visibile per modificare lo stato */}
+            <div className='flex items-center gap-2'>
+              <Select
+                value={candidate.status}
+                onValueChange={handleStatusChange}
+                disabled={updateStatusMutation.isPending}
+              >
+                <SelectTrigger className='h-8 w-32 text-xs'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(CandidateStatus).map((status) => (
+                    <SelectItem key={status} value={status} className='text-xs'>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Edit className='w-3 h-3 text-muted-foreground' />
+            </div>
             <Button 
               variant='ghost' 
               size='icon' 
@@ -84,7 +150,8 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
         <Button asChild size='sm' className='flex-1 rounded-xl font-semibold'>
           <Link href={`/jobs/${candidate.id}`}>Modifica Profilo</Link>
         </Button>
-        <DeleteJobButton id={candidate.id} />
+        {/* TODO: Add proper delete candidate button */}
+        {/* <DeleteJobButton id={candidate.id} /> */}
       </CardFooter>
       
       <div className='absolute bottom-0 left-0 w-full h-1 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-500' />

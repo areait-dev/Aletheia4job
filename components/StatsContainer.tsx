@@ -20,12 +20,16 @@ function StatsContainer() {
       </div>
     );
 
+  const getStatusCount = (status: string) => {
+    return data?.statusStats?.find(s => s.status === status)?.count || 0;
+  };
+
   return (
     <div className='grid sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-      <StatsCard title='In cerca' value={data?.['In cerca'] || 0} />
-      <StatsCard title='Colloquiato' value={data?.Colloquiato || 0} />
-      <StatsCard title='Inserito' value={data?.Inserito || 0} />
-      <StatsCard title='Non idoneo' value={data?.['Non idoneo'] || 0} />
+      <StatsCard title='In cerca' value={getStatusCount('In cerca')} />
+      <StatsCard title='Colloquiato' value={getStatusCount('Colloquiato')} />
+      <StatsCard title='Inserito' value={getStatusCount('Inserito')} />
+      <StatsCard title='Non idoneo' value={getStatusCount('Non idoneo')} />
     </div>
   );
 }

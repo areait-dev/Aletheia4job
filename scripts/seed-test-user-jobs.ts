@@ -1,11 +1,11 @@
 /**
  * Seed random jobs for test@user.com
- * Run: npx tsx scripts/seed-test-user-jobs.ts <CLERK_ID>
+ * Run: npx tsx scripts/seed-test-user-jobs.ts <USER_ID>
  *
  * Deletes existing jobs for the user, then creates new ones in the last 2–3 months
  * with multiple jobs per month (for realistic chart data).
  *
- * Get CLERK_ID from Clerk Dashboard → Users → test@user.com → User ID
+ * Get USER_ID from Clerk Dashboard → Users → test@user.com → User ID
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -55,6 +55,17 @@ const LOCATIONS = [
   'Berlin, Germany',
 ];
 
+const SECTORS = [
+  'Tecnologia',
+  'Finanza',
+  'Sanità',
+  'Educazione',
+  'Marketing',
+  'Vendite',
+  'Risorse Umane',
+  'Produzione',
+];
+
 const STATUSES = ['pending', 'interview', 'declined'];
 const MODES = ['full-time', 'part-time', 'internship'];
 
@@ -78,7 +89,7 @@ async function main() {
   }
 
   // 1. Delete all existing jobs for this user
-  const deleted = await prisma.job.deleteMany({ where: { clerkId } });
+  const deleted = await prisma.job.deleteMany({ where: { userId: clerkId } });
   console.log(`\n🗑️  Deleted ${deleted.count} existing job(s) for test@user.com\n`);
 
   // 2. Generate jobs in last 3 months only, with multiple per month
@@ -87,10 +98,14 @@ async function main() {
   const currentMonth = now.getMonth() + 1; // 1-12
 
   const jobs: Array<{
-    clerkId: string;
-    position: string;
+    userId: string;
+    organizationId: string;
+    title: string;
     company: string;
     location: string;
+    description: string;
+    requirements: string;
+    sector: string;
     status: string;
     mode: string;
     createdAt: Date;
@@ -115,10 +130,14 @@ async function main() {
     for (let j = 0; j < count; j++) {
       const date = randomDateInMonth(year, month, maxDay);
       jobs.push({
-        clerkId,
-        position: random(POSITIONS),
+        userId: clerkId,
+        organizationId: 'temp-org-id', // TODO: Fix organization creation
+        title: random(POSITIONS),
         company: random(COMPANIES),
         location: random(LOCATIONS),
+        description: 'Descrizione da definire per questa posizione',
+        requirements: 'Requisiti da definire per questa posizione',
+        sector: random(SECTORS),
         status: random(STATUSES),
         mode: random(MODES),
         createdAt: date,

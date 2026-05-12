@@ -1,7 +1,7 @@
 'use client';
 
-import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,24 +12,28 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { LogOut, UserIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useRouter } from "next/navigation";
 
 export default function UserProfileDropdown() {
-  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const supabase = createClient();
-  const [email, setEmail] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email) setEmail(user.email);
-    });
-  }, [supabase.auth]);
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, [supabase]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push('/');
+    router.push("/");
     router.refresh();
   };
+
+  const email = user?.email ?? "";
 
   return (
     <DropdownMenu modal={false}>
@@ -46,12 +50,9 @@ export default function UserProfileDropdown() {
           <p className="text-xs text-muted-foreground">{email || "Account"}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={handleSignOut}
-          className="cursor-pointer"
-        >
+        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          Sign out
+          Esci
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

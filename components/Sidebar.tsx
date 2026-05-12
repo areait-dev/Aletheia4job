@@ -5,9 +5,15 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { MembershipRole } from "@prisma/client";
 
-function Sidebar() {
+function Sidebar({ role }: { role: MembershipRole }) {
   const pathname = usePathname();
+
+  const filteredLinks = links.filter((link) => {
+    if (!link.permission) return true;
+    return link.permission(role);
+  });
 
   return (
     <aside className="py-8 px-6 bg-card h-full border-r border-border/50 shadow-sm flex flex-col">
@@ -21,7 +27,7 @@ function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-y-2">
-        {links.map((link) => {
+        {filteredLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Button

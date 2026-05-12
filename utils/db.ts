@@ -15,13 +15,18 @@
  * - Storing client in globalThis prevents this issue in development
  */
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 /**
  * Factory function that creates a new PrismaClient instance
  * This is wrapped in a function so we can call it lazily
  */
 const prismaClientSingleton = () => {
-  return new PrismaClient();
+  return new PrismaClient({
+    adapter: new PrismaPg({
+      connectionString: process.env.DATABASE_URL,
+    }),
+  });
 };
 
 /**

@@ -3,11 +3,12 @@ const data = require("./mock-data.json");
 const prisma = new PrismaClient();
 
 async function main() {
-  const clerkId = "user_2yTTqgm2E3PfnFJKwdpp0OXRoky"; // Replace with my actual Clerk user ID
+  const userId = "user_2yTTqgm2E3PfnFJKwdpp0OXRoky"; // Replace with my actual Clerk user ID
   const jobs = data.map((job) => {
     return {
       ...job,
-      clerkId,
+      userId,
+      title: job.position ?? job.title,
     };
   });
   for (const job of jobs) {
