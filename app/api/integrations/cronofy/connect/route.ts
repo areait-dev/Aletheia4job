@@ -3,6 +3,8 @@ import { getAuthContext } from "@/utils/authz";
 import { signState } from "@/utils/signedState";
 import { buildCronofyAuthorizeUrl } from "@/utils/integrations/cronofy";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   const auth = await getAuthContext();
   if (!auth) {
