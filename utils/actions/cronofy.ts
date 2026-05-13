@@ -134,7 +134,8 @@ export async function createCronofyEventAction(data: {
     };
   } catch (error: any) {
     console.error("ERRORE CRITICO:", error);
-    // Esponiamo l'errore grezzo per capire cosa succede (solo in debug)
-    throw new Error(`Dettaglio: ${error.message || "Errore sconosciuto"}`);
+    // Forziamo la conversione di TUTTO l'errore in testo per non perdere nulla
+    const fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+    throw new Error(`DEBUG_FULL: ${fullError}`);
   }
 }
