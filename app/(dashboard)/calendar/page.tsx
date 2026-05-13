@@ -6,10 +6,11 @@ import CalendarClient from "@/components/CalendarClient";
 import { Calendar as CalendarIcon, Video, Phone, Users, Clock } from "lucide-react";
 
 export default async function CalendarPage() {
-  let interviews: any[] = [];
-  let absences: any[] = [];
-  let cronofyEvents: any[] = [];
+  const interviews: any[] = [];
+  const absences: any[] = [];
+  const cronofyEvents: any[] = [];
 
+  /*
   try {
     [interviews, absences, cronofyEvents] = await Promise.all([
       getUpcomingInterviewsAction(),
@@ -19,6 +20,7 @@ export default async function CalendarPage() {
   } catch (error) {
     console.error("Errore nel caricamento dati calendario:", error);
   }
+  */
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
