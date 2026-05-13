@@ -8,16 +8,18 @@ import { Calendar as CalendarIcon } from "lucide-react";
 export default async function CalendarPage() {
   let interviews: any[] = [];
   let absences: any[] = [];
-  const cronofyEvents: any[] = [];
+  let cronofyEvents: any[] = [];
 
   try {
     const results = await Promise.allSettled([
       getUpcomingInterviewsAction(),
       getAbsencesAction(),
+      getCronofyEventsAction()
     ]);
     
     if (results[0].status === 'fulfilled') interviews = results[0].value;
     if (results[1].status === 'fulfilled') absences = results[1].value;
+    if (results[2].status === 'fulfilled') cronofyEvents = results[2].value;
   } catch (error) {
     console.error("Errore nel caricamento dati:", error);
   }
