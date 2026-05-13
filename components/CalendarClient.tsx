@@ -11,7 +11,8 @@ import {
   Clock, 
   ChevronRight, 
   Plane,
-  Plus
+  Plus,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,9 +21,10 @@ dayjs.locale("it");
 type CalendarClientProps = {
   interviews: any[];
   absences: any[];
+  cronofyEvents?: any[];
 };
 
-export default function CalendarClient({ interviews, absences }: CalendarClientProps) {
+export default function CalendarClient({ interviews, absences, cronofyEvents = [] }: CalendarClientProps) {
   // Uniamo gli eventi e ordiniamoli per data
   const events = [
     ...interviews.map(i => ({
@@ -41,6 +43,16 @@ export default function CalendarClient({ interviews, absences }: CalendarClientP
       date: dayjs(a.startDate),
       endDate: dayjs(a.endDate),
       category: a.type, // FERIE, MALATTIA, etc.
+      recruiter: null,
+      location: null,
+    })),
+    ...cronofyEvents.filter(e => !e.deleted).map(e => ({
+      id: e.id,
+      type: "CRONOFY",
+      title: e.title,
+      date: dayjs(e.start),
+      endDate: e.end ? dayjs(e.end) : null,
+      category: "CALENDAR",
       recruiter: null,
       location: null,
     }))
@@ -70,6 +82,10 @@ export default function CalendarClient({ interviews, absences }: CalendarClientP
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Assenze Team</span>
               <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-xs">{absences.length}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Calendario Cronofy</span>
+              <span className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-xs">{cronofyEvents?.filter(e => !e.deleted).length || 0}</span>
             </div>
           </div>
           
@@ -115,12 +131,16 @@ export default function CalendarClient({ interviews, absences }: CalendarClientP
                       <div className="flex items-center gap-4">
                         <div className={cn(
                           "w-12 h-12 rounded-2xl flex items-center justify-center",
-                          event.type === "INTERVIEW" ? "bg-blue-500/10 text-blue-600" : "bg-amber-500/10 text-amber-600"
+                          event.type === "INTERVIEW" ? "bg-blue-500/10 text-blue-600" : 
+                          event.type === "ABSENCE" ? "bg-amber-500/10 text-amber-600" :
+                          "bg-purple-500/10 text-purple-600"
                         )}>
                           {event.type === "INTERVIEW" ? (
                             event.category === "VIDEO" ? <Video className="w-6 h-6" /> : <Phone className="w-6 h-6" />
-                          ) : (
+                          ) : event.type === "ABSENCE" ? (
                             <Plane className="w-6 h-6" />
+                          ) : (
+                            <Calendar className="w-6 h-6" />
                           )}
                         </div>
                         
