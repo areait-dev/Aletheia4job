@@ -29,7 +29,6 @@ export function buildCronofyAuthorizeUrl(state: string) {
       "create_event",
       "delete_event",
       "list_calendars",
-      "create_channel",
       "read_account",
     ].join(" ")
   );
