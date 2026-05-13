@@ -3,7 +3,6 @@ import prisma from "@/utils/db";
 import { encryptString } from "@/utils/crypto";
 import { verifyState } from "@/utils/signedState";
 import {
-  cronofyCreateChannel,
   cronofyListCalendars,
   cronofyUserInfo,
   exchangeCronofyCode,
@@ -27,52 +26,52 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/admin?cronofy=invalid_state`, req.url));
   }
 
-  const token = await exchangeCronofyCode(code);
-  const expiresAt =
-    token.expires_in != null ? new Date(Date.now() + token.expires_in * 1000) : null;
+  try {
+    const token = await exchangeCronofyCode(code);
+    const expiresAt =
+      token.expires_in != null ? new Date(Date.now() + token.expires_in * 1000) : null;
 
-  const userInfo = await cronofyUserInfo(token.access_token);
-  const calendars = await cronofyListCalendars(token.access_token);
-  const writable = calendars.calendars
-    .filter((c) => !c.calendar_deleted && !c.calendar_readonly)
-    .sort((a, b) => Number(b.calendar_primary) - Number(a.calendar_primary))[0];
+    const userInfo = await cronofyUserInfo(token.access_token);
+    const calendars = await cronofyListCalendars(token.access_token);
+    const writable = calendars.calendars
+      .filter((c) => !c.calendar_deleted && !c.calendar_readonly)
+      .sort((a, b) => Number(b.calendar_primary) - Number(a.calendar_primary))[0];
 
-  const webhookBase = process.env.NEXT_PUBLIC_SITE_URL || "https://getjob-delta.vercel.app";
-  const callbackUrl = `${webhookBase.replace(/\/$/, "")}/api/webhooks/cronofy`;
+    // Impostiamo il canale a null per evitare l'errore 500 legato allo scope mancante
+    const channelId = null;
 
-  const channel = writable?.calendar_id
-    ? await cronofyCreateChannel(token.access_token, callbackUrl, [writable.calendar_id])
-    : null;
-
-  await prisma.cronofyAccount.upsert({
-    where: {
-      organizationId_userId: {
+    await prisma.cronofyAccount.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: payload.organizationId,
+          userId: payload.userId,
+        },
+      },
+      update: {
+        cronofySub: userInfo?.sub || calendars.sub,
+        profileId: writable?.profile_id || null,
+        calendarId: writable?.calendar_id || null,
+        accessTokenEnc: encryptString(token.access_token),
+        refreshTokenEnc: encryptString(token.refresh_token),
+        expiresAt,
+        channelId,
+      },
+      create: {
         organizationId: payload.organizationId,
         userId: payload.userId,
+        cronofySub: userInfo?.sub || calendars.sub,
+        profileId: writable?.profile_id || null,
+        calendarId: writable?.calendar_id || null,
+        accessTokenEnc: encryptString(token.access_token),
+        refreshTokenEnc: encryptString(token.refresh_token),
+        expiresAt,
+        channelId,
       },
-    },
-    update: {
-      cronofySub: userInfo?.sub || calendars.sub,
-      profileId: writable?.profile_id || null,
-      calendarId: writable?.calendar_id || null,
-      accessTokenEnc: encryptString(token.access_token),
-      refreshTokenEnc: encryptString(token.refresh_token),
-      expiresAt,
-      channelId: channel?.channel?.channel_id || null,
-    },
-    create: {
-      organizationId: payload.organizationId,
-      userId: payload.userId,
-      cronofySub: userInfo?.sub || calendars.sub,
-      profileId: writable?.profile_id || null,
-      calendarId: writable?.calendar_id || null,
-      accessTokenEnc: encryptString(token.access_token),
-      refreshTokenEnc: encryptString(token.refresh_token),
-      expiresAt,
-      channelId: channel?.channel?.channel_id || null,
-    },
-  });
+    });
 
-  return NextResponse.redirect(new URL(`/admin?cronofy=connected`, req.url));
+    return NextResponse.redirect(new URL(`/admin?cronofy=connected`, req.url));
+  } catch (err) {
+    console.error("Errore durante il callback di Cronofy:", err);
+    return NextResponse.redirect(new URL(`/admin?cronofy=server_error`, req.url));
+  }
 }
-
