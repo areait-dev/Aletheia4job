@@ -2,7 +2,7 @@
 
 import dayjs from "dayjs";
 import { authenticateAndRedirect } from "./shared";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/utils/db";
 import { cronofyReadManagedEvents, getCronofyAccessTokenForUser } from "../integrations/cronofy";
 
 export async function getCronofyEventsAction() {
