@@ -16,7 +16,9 @@ function assertCronofyEnv() {
 
 export function buildCronofyAuthorizeUrl(state: string) {
   assertCronofyEnv();
-  const url = new URL(`${baseUrl}/oauth/authorize`);
+  // Forziamo l'uso di app.cronofy.com solo per la richiesta di autorizzazione dell'utente
+  const authBaseUrl = "https://app.cronofy.com";
+  const url = new URL(`${authBaseUrl}/oauth/authorize`);
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("redirect_uri", redirectUri);
@@ -34,6 +36,7 @@ export function buildCronofyAuthorizeUrl(state: string) {
   url.searchParams.set("state", state);
   return url.toString();
 }
+
 
 export async function exchangeCronofyCode(code: string) {
   assertCronofyEnv();
