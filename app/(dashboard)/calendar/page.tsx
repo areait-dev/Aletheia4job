@@ -7,13 +7,19 @@ import { Calendar as CalendarIcon } from "lucide-react";
 
 export default async function CalendarPage() {
   let interviews: any[] = [];
-  const absences: any[] = [];
+  let absences: any[] = [];
   const cronofyEvents: any[] = [];
 
   try {
-    interviews = await getUpcomingInterviewsAction();
+    const results = await Promise.allSettled([
+      getUpcomingInterviewsAction(),
+      getAbsencesAction(),
+    ]);
+    
+    if (results[0].status === 'fulfilled') interviews = results[0].value;
+    if (results[1].status === 'fulfilled') absences = results[1].value;
   } catch (error) {
-    console.error("Errore interviste:", error);
+    console.error("Errore nel caricamento dati:", error);
   }
 
   return (
