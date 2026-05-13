@@ -19,10 +19,11 @@ import {
   Calendar,
   LayoutGrid,
   List,
-  Trash2
+  Trash2,
+  Pencil
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createCronofyEventAction, deleteCronofyEventAction } from "@/utils/actions/cronofy";
+import { createCronofyEventAction, deleteCronofyEventAction, updateCronofyEventAction } from "@/utils/actions/cronofy";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
   
   // Modal state
   const [isAddingEvent, setIsAddingEvent] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form state
@@ -59,19 +61,24 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
     setIsSubmitting(true);
     
     try {
-      const res = await createCronofyEventAction({
+      const eventData = {
         summary,
         description,
         start: dayjs(startDate).toISOString(),
         end: dayjs(endDate).toISOString(),
-      });
+      };
+
+      const res = editingEvent 
+        ? await updateCronofyEventAction(editingEvent.id, eventData)
+        : await createCronofyEventAction(eventData);
       
       if (res.success) {
         toast({
-          title: "Evento creato!",
-          description: res.message || "L'impegno è stato aggiunto.",
+          title: editingEvent ? "Evento aggiornato!" : "Evento creato!",
+          description: res.message || "L'impegno è stato salvato.",
         });
         setIsAddingEvent(false);
+        setEditingEvent(null);
         setSummary("");
         setDescription("");
         router.refresh();
@@ -107,6 +114,15 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
     } catch (error: any) {
       toast({ variant: "destructive", title: "Errore", description: error.message });
     }
+  };
+
+  const handleEditClick = (event: any) => {
+    setEditingEvent(event);
+    setSummary(event.title);
+    setDescription(""); // Se vogliamo la descrizione dovremmo passarla nel memo
+    setStartDate(event.date.format("YYYY-MM-DDTHH:mm"));
+    setEndDate(event.endDate ? event.endDate.format("YYYY-MM-DDTHH:mm") : event.date.add(1, 'hour').format("YYYY-MM-DDTHH:mm"));
+    setIsAddingEvent(true);
   };
 
   // Processiamo gli eventi
@@ -262,11 +278,12 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
 
         {/* Main Calendar Content */}
         <div className="lg:col-span-3">
-          {isAddingEvent && (
             <div className="glass rounded-3xl p-8 border-primary/30 mb-8 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold">Nuovo Evento su Calendario</h3>
-                <Button variant="ghost" size="sm" onClick={() => setIsAddingEvent(false)}>Annulla</Button>
+                <h3 className="text-xl font-bold">
+                  {editingEvent ? "Modifica Evento" : "Nuovo Evento su Calendario"}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => { setIsAddingEvent(false); setEditingEvent(null); }}>Annulla</Button>
               </div>
               
               <form onSubmit={handleCreateEvent} className="space-y-4">
@@ -285,7 +302,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Creazione..." : "Salva Evento"}
+                  {isSubmitting ? (editingEvent ? "Salvataggio..." : "Creazione...") : (editingEvent ? "Aggiorna Evento" : "Salva Evento")}
                 </Button>
               </form>
             </div>
@@ -386,14 +403,24 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
                             </div>
                             
                             {event.type === "CRONOFY" && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all rounded-xl"
-                                onClick={() => handleDeleteEvent(event.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-primary hover:text-primary hover:bg-primary/10 rounded-xl"
+                                  onClick={() => handleEditClick(event)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                                  onClick={() => handleDeleteEvent(event.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             )}
                           </div>
                         </div>

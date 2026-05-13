@@ -183,3 +183,54 @@ export async function deleteCronofyEventAction(eventId: string) {
     return { success: false, message: error.message || "Errore durante l'eliminazione." };
   }
 }
+
+export async function updateCronofyEventAction(eventId: string, data: {
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+}) {
+  const { userId, organizationId } = await authenticateAndRedirect();
+  
+  try {
+    // 1. Aggiorna DB locale
+    const localEvent = await prisma.calendarEvent.update({
+      where: { id: eventId },
+      data: {
+        title: data.summary,
+        description: data.description || "",
+        startDate: new Date(data.start),
+        endDate: new Date(data.end),
+      }
+    });
+
+    // 2. Tenta l'aggiornamento su Cronofy
+    const cronofyData = await getCronofyAccessTokenForUser({ organizationId, userId });
+    if (cronofyData && cronofyData.account.calendarId && localEvent.cronofyEventId) {
+      try {
+        const { cronofyUpsertEvent } = await import("../integrations/cronofy");
+        await cronofyUpsertEvent({
+          accessToken: cronofyData.accessToken,
+          calendarId: cronofyData.account.calendarId,
+          eventId: localEvent.cronofyEventId,
+          summary: data.summary,
+          description: data.description,
+          start: dayjs(data.start).format("YYYY-MM-DDTHH:mm:ssZ"),
+          end: dayjs(data.end).format("YYYY-MM-DDTHH:mm:ssZ"),
+          tzid: cronofyData.tzid,
+        });
+      } catch (cronofyError: any) {
+        console.error("Errore aggiornamento Cronofy:", cronofyError);
+        return { 
+          success: true, 
+          message: "Aggiornato localmente, ma sincronizzazione Cronofy fallita." 
+        };
+      }
+    }
+
+    return { success: true, message: "Evento aggiornato con successo." };
+  } catch (error: any) {
+    console.error("ERRORE AGGIORNAMENTO:", error);
+    return { success: false, message: error.message || "Errore durante l'aggiornamento." };
+  }
+}
