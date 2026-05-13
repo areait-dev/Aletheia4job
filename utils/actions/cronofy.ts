@@ -100,22 +100,29 @@ export async function createCronofyEventAction(data: {
       tzid: cronofyData.tzid,
     });
 
-    // 2. Salva nel database locale per resilienza
-    await prisma.calendarEvent.create({
-      data: {
-        organizationId,
-        userId,
-        title: data.summary,
-        description: data.description,
-        startDate: new Date(data.start),
-        endDate: new Date(data.end),
-        cronofyEventId: eventId,
-      }
-    });
+    // 2. Salva nel database locale per resilienza (opzionale se la tabella non è pronta)
+    try {
+      await prisma.calendarEvent.create({
+        data: {
+          organizationId,
+          userId,
+          title: data.summary,
+          description: data.description,
+          startDate: new Date(data.start),
+          endDate: new Date(data.end),
+          cronofyEventId: eventId,
+        }
+      });
+    } catch (dbError) {
+      console.warn("Impossibile salvare copia locale dell'evento:", dbError);
+      // Non blocchiamo l'esecuzione, l'evento su Cronofy è comunque stato creato
+    }
 
     return { success: true };
   } catch (error) {
     console.error("Errore nella creazione dell'evento:", error);
-    throw new Error("Impossibile creare l'evento.");
+    // Ritorna un errore più descrittivo se possibile
+    const errorMsg = error instanceof Error ? error.message : "Errore sconosciuto";
+    throw new Error(`Impossibile creare l'evento: ${errorMsg}`);
   }
 }
