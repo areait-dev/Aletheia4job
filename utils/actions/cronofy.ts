@@ -71,71 +71,26 @@ export async function getCronofyEventsAction() {
   }
 }
 
-export async function createCronofyEventAction(data: {
-  summary: string;
-  description?: string;
-  start: string;
-  end: string;
-}) {
-  const { userId, organizationId } = await authenticateAndRedirect();
-  
-  const cronofyData = await getCronofyAccessTokenForUser({ organizationId, userId });
-  if (!cronofyData || !cronofyData.account.calendarId) {
-    throw new Error("Account Cronofy non connesso o calendario non selezionato.");
-  }
-
+export async function createCronofyEventAction(data: any) {
   try {
-    const { cronofyUpsertEvent } = await import("../integrations/cronofy");
+    const { userId, organizationId } = await authenticateAndRedirect();
     const eventId = `app-event-${Date.now()}`;
     
-    // 1. Tenta prima il salvataggio locale (così abbiamo una traccia subito)
-    let localEvent;
-    try {
-      localEvent = await prisma.calendarEvent.create({
-        data: {
-          organizationId,
-          userId,
-          title: data.summary,
-          description: data.description,
-          startDate: new Date(data.start),
-          endDate: new Date(data.end),
-          cronofyEventId: eventId,
-        }
-      });
-    } catch (dbError: any) {
-      console.error("ERRORE DB LOCALE:", dbError);
-      throw new Error(`Errore Database: ${dbError.message || "Impossibile salvare localmente"}`);
-    }
+    // Solo DB locale per ora, vediamo se almeno questo va
+    const res = await prisma.calendarEvent.create({
+      data: {
+        organizationId,
+        userId,
+        title: data.summary,
+        description: data.description || "",
+        startDate: new Date(data.start),
+        endDate: new Date(data.end),
+        cronofyEventId: eventId,
+      }
+    });
 
-    // 2. Tenta il salvataggio su Cronofy
-    try {
-      await cronofyUpsertEvent({
-        accessToken: cronofyData.accessToken,
-        calendarId: cronofyData.account.calendarId,
-        eventId,
-        summary: data.summary,
-        description: data.description,
-        start: dayjs(data.start).format("YYYY-MM-DDTHH:mm:ssZ"),
-        end: dayjs(data.end).format("YYYY-MM-DDTHH:mm:ssZ"),
-        tzid: cronofyData.tzid,
-      });
-    } catch (cronofyError: any) {
-      console.error("ERRORE CRONOFY:", cronofyError);
-      // Se Cronofy fallisce ma il DB ha salvato, segnaliamolo ma non resettiamo tutto
-      return { 
-        success: true, 
-        message: `Salvato localmente, ma errore Cronofy: ${cronofyError.message || "Connessione fallita"}` 
-      };
-    }
-
-    return { 
-      success: true, 
-      message: `Evento salvato con successo! (ID Locale: ${localEvent.id.substring(0,8)})` 
-    };
-  } catch (error: any) {
-    console.error("ERRORE CRITICO:", error);
-    // Forziamo la conversione di TUTTO l'errore in testo per non perdere nulla
-    const fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-    throw new Error(`DEBUG_FULL: ${fullError}`);
+    return { success: true, message: `Creato: ${res.id}` };
+  } catch (err: any) {
+    return { success: false, message: `ERRORE_DIRETTO: ${err.message}` };
   }
 }

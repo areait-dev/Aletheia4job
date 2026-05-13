@@ -65,20 +65,27 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
         end: dayjs(endDate).toISOString(),
       });
       
+      if (res.success) {
+        toast({
+          title: "Evento creato!",
+          description: res.message || "L'impegno è stato aggiunto.",
+        });
+        setIsAddingEvent(false);
+        setSummary("");
+        setDescription("");
+        router.refresh();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Errore dal Server",
+          description: res.message || "Errore sconosciuto durante il salvataggio.",
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: "Evento inviato!",
-        description: res.message || "L'impegno è stato elaborato.",
-      });
-      
-      setIsAddingEvent(false);
-      setSummary("");
-      setDescription("");
-      router.refresh();
-    } catch (error) {
-      toast({
-        title: "Errore",
-        description: "Impossibile creare l'evento. Riprova più tardi.",
         variant: "destructive",
+        title: "Errore di Connessione",
+        description: error.message || "Impossibile contattare il server.",
       });
     } finally {
       setIsSubmitting(false);
