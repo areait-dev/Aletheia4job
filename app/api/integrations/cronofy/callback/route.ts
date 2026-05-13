@@ -9,7 +9,8 @@ import {
   exchangeCronofyCode,
 } from "@/utils/integrations/cronofy";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'; // Verified version 2 - 2026-05-13
+
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,9 +46,14 @@ export async function GET(req: NextRequest) {
     const webhookBase = process.env.NEXT_PUBLIC_SITE_URL || "https://getjob-delta.vercel.app";
     const callbackUrl = `${webhookBase.replace(/\/$/, "")}/api/webhooks/cronofy`;
 
-    const channel = writable?.calendar_id
-      ? await cronofyCreateChannel(token.access_token, callbackUrl, [writable.calendar_id])
-      : null;
+    let channel = null;
+    try {
+      if (writable?.calendar_id) {
+        channel = await cronofyCreateChannel(token.access_token, callbackUrl, [writable.calendar_id]);
+      }
+    } catch (e) {
+      console.error("Errore nella creazione del canale Cronofy (webhook):", e);
+    }
 
     await prisma.cronofyAccount.upsert({
       where: {
