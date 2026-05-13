@@ -35,14 +35,13 @@ export async function GET(req: NextRequest) {
     const calendars = await cronofyListCalendars(token.access_token);
     
     const calendarList = calendars?.calendars || [];
-    const writable = calendarList
+    const sortedCalendars = calendarList
       .filter((c) => !c.calendar_deleted && !c.calendar_readonly)
-      .sort((a, b) => Number(b.calendar_primary) - Number(a.calendar_primary))[0];
+      .sort((a, b) => Number(b.calendar_primary) - Number(a.calendar_primary));
+    
+    const writable = sortedCalendars[0];
 
     const channelId = null;
-    const profileId = writable?.profile_id || null;
-    const calendarId = writable?.calendar_id || null;
-    const cronofySub = userInfo?.sub || calendars?.sub || "unknown";
 
     await prisma.cronofyAccount.upsert({
       where: {
@@ -52,9 +51,9 @@ export async function GET(req: NextRequest) {
         },
       },
       update: {
-        cronofySub,
-        profileId,
-        calendarId,
+        cronofySub: userInfo?.sub || calendars?.sub || "unknown",
+        profileId: writable?.profile_id || null,
+        calendarId: writable?.calendar_id || null,
         accessTokenEnc: encryptString(token.access_token),
         refreshTokenEnc: encryptString(token.refresh_token),
         expiresAt,
@@ -63,9 +62,9 @@ export async function GET(req: NextRequest) {
       create: {
         organizationId: payload.organizationId,
         userId: payload.userId,
-        cronofySub,
-        profileId,
-        calendarId,
+        cronofySub: userInfo?.sub || calendars?.sub || "unknown",
+        profileId: writable?.profile_id || null,
+        calendarId: writable?.calendar_id || null,
         accessTokenEnc: encryptString(token.access_token),
         refreshTokenEnc: encryptString(token.refresh_token),
         expiresAt,
