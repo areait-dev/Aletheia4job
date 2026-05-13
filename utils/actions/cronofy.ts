@@ -95,8 +95,8 @@ export async function createCronofyEventAction(data: {
       eventId,
       summary: data.summary,
       description: data.description,
-      start: data.start,
-      end: data.end,
+      start: dayjs(data.start).format("YYYY-MM-DDTHH:mm:ssZ"),
+      end: dayjs(data.end).format("YYYY-MM-DDTHH:mm:ssZ"),
       tzid: cronofyData.tzid,
     });
 
