@@ -228,7 +228,7 @@ export async function cronofyReadManagedEvents(params: {
 }) {
   const url = new URL(`${baseUrl}/v1/events`);
   url.searchParams.set("tzid", params.tzid || tzidDefault);
-  url.searchParams.set("only_managed", "true");
+  url.searchParams.set("only_managed", "false");
   url.searchParams.set("include_deleted", "true");
   if (params.lastModified) url.searchParams.set("last_modified", params.lastModified);
 
