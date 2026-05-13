@@ -224,12 +224,17 @@ export async function cronofyDeleteEvent(params: { accessToken: string; calendar
 export async function cronofyReadManagedEvents(params: {
   accessToken: string;
   tzid?: string;
+  from?: string;
+  to?: string;
   lastModified?: string;
 }) {
   const url = new URL(`${baseUrl}/v1/events`);
   url.searchParams.set("tzid", params.tzid || tzidDefault);
   url.searchParams.set("only_managed", "false");
-  url.searchParams.set("include_deleted", "true");
+  url.searchParams.set("include_deleted", "false"); // Don't fetch deleted events
+  
+  if (params.from) url.searchParams.set("from", params.from);
+  if (params.to) url.searchParams.set("to", params.to);
   if (params.lastModified) url.searchParams.set("last_modified", params.lastModified);
 
   return fetchJsonOrThrow<{

@@ -1,5 +1,6 @@
 "use server";
 
+import dayjs from "dayjs";
 import { authenticateAndRedirect } from "./shared";
 import { cronofyReadManagedEvents, getCronofyAccessTokenForUser } from "../integrations/cronofy";
 
@@ -15,6 +16,8 @@ export async function getCronofyEventsAction() {
     const response = await cronofyReadManagedEvents({
       accessToken: cronofyData.accessToken,
       tzid: cronofyData.tzid,
+      from: dayjs().subtract(1, "month").startOf("day").toISOString(),
+      to: dayjs().add(3, "month").endOf("day").toISOString(),
     });
 
     return response.events.map(event => ({
