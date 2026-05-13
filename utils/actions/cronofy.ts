@@ -88,21 +88,10 @@ export async function createCronofyEventAction(data: {
     const { cronofyUpsertEvent } = await import("../integrations/cronofy");
     const eventId = `app-event-${Date.now()}`;
     
-    // 1. Salva su Cronofy
-    await cronofyUpsertEvent({
-      accessToken: cronofyData.accessToken,
-      calendarId: cronofyData.account.calendarId,
-      eventId,
-      summary: data.summary,
-      description: data.description,
-      start: dayjs(data.start).format("YYYY-MM-DDTHH:mm:ssZ"),
-      end: dayjs(data.end).format("YYYY-MM-DDTHH:mm:ssZ"),
-      tzid: cronofyData.tzid,
-    });
-
-    // 2. Salva nel database locale per resilienza (opzionale se la tabella non è pronta)
+    // 1. Tenta prima il salvataggio locale (così abbiamo una traccia subito)
+    let localEvent;
     try {
-      await prisma.calendarEvent.create({
+      localEvent = await prisma.calendarEvent.create({
         data: {
           organizationId,
           userId,
@@ -113,18 +102,38 @@ export async function createCronofyEventAction(data: {
           cronofyEventId: eventId,
         }
       });
-      console.log("Evento salvato localmente con successo.");
-    } catch (dbError) {
-      console.error("ERRORE DATABASE LOCALE:", dbError);
+    } catch (dbError: any) {
+      console.error("ERRORE DB LOCALE:", dbError);
+      throw new Error(`Errore Database: ${dbError.message || "Impossibile salvare localmente"}`);
+    }
+
+    // 2. Tenta il salvataggio su Cronofy
+    try {
+      await cronofyUpsertEvent({
+        accessToken: cronofyData.accessToken,
+        calendarId: cronofyData.account.calendarId,
+        eventId,
+        summary: data.summary,
+        description: data.description,
+        start: dayjs(data.start).format("YYYY-MM-DDTHH:mm:ssZ"),
+        end: dayjs(data.end).format("YYYY-MM-DDTHH:mm:ssZ"),
+        tzid: cronofyData.tzid,
+      });
+    } catch (cronofyError: any) {
+      console.error("ERRORE CRONOFY:", cronofyError);
+      // Se Cronofy fallisce ma il DB ha salvato, segnaliamolo ma non resettiamo tutto
+      return { 
+        success: true, 
+        message: `Salvato localmente, ma errore Cronofy: ${cronofyError.message || "Connessione fallita"}` 
+      };
     }
 
     return { 
       success: true, 
-      message: `Evento inviato a Cronofy (Calendario: ${cronofyData.account.calendarId})` 
+      message: `Evento salvato con successo! (ID Locale: ${localEvent.id.substring(0,8)})` 
     };
-  } catch (error) {
-    console.error("ERRORE CREAZIONE EVENTO:", error);
-    const errorMsg = error instanceof Error ? error.message : "Errore sconosciuto";
-    throw new Error(`Impossibile creare l'evento: ${errorMsg}`);
+  } catch (error: any) {
+    console.error("ERRORE GLOBALE:", error);
+    throw new Error(error.message || "Errore sconosciuto nella creazione");
   }
 }
