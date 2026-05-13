@@ -253,10 +253,11 @@ export async function cronofyReadManagedEvents(params: {
   });
 }
 
+import crypto from "crypto";
+
 export function verifyCronofyHmac(rawBody: string, headerValue: string | null) {
   if (!headerValue) return true;
   assertCronofyEnv();
-  const crypto = require("crypto");
   const expected = crypto.createHmac("sha256", clientSecret).update(rawBody, "utf8").digest("base64");
   const received = headerValue.split(",").map((s: string) => s.trim());
   return received.some((h) => {
