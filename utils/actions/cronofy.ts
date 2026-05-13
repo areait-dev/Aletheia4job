@@ -2,6 +2,7 @@
 
 import dayjs from "dayjs";
 import { authenticateAndRedirect } from "./shared";
+import { prisma } from "@/lib/prisma";
 import { cronofyReadManagedEvents, getCronofyAccessTokenForUser } from "../integrations/cronofy";
 
 export async function getCronofyEventsAction() {
@@ -13,14 +14,16 @@ export async function getCronofyEventsAction() {
   }
 
   try {
+  // 1. Recupera eventi da Cronofy
+  let cronofyEventsList: any[] = [];
+  try {
     const response = await cronofyReadManagedEvents({
       accessToken: cronofyData.accessToken,
       tzid: cronofyData.tzid,
       from: dayjs().subtract(1, "month").startOf("day").toISOString(),
       to: dayjs().add(3, "month").endOf("day").toISOString(),
     });
-
-    return response.events.map(event => ({
+    cronofyEventsList = response.events.map(event => ({
       id: event.event_id || `cronofy-${Date.now()}`,
       type: "CRONOFY",
       title: event.summary,
@@ -31,8 +34,32 @@ export async function getCronofyEventsAction() {
     }));
   } catch (error) {
     console.error("Errore nel recupero eventi Cronofy:", error);
-    return [];
   }
+
+  // 2. Recupera eventi locali
+  const localEvents = await prisma.calendarEvent.findMany({
+    where: { organizationId, userId },
+  });
+
+  const localMapped = localEvents.map(event => ({
+    id: event.cronofyEventId || event.id,
+    type: "CRONOFY",
+    title: event.title,
+    start: event.startDate.toISOString(),
+    end: event.endDate.toISOString(),
+    deleted: false,
+    calendarId: null,
+  }));
+
+  // 3. Unione senza duplicati
+  const merged = [...cronofyEventsList];
+  localMapped.forEach(le => {
+    if (!merged.find(me => me.id === le.id)) {
+      merged.push(le);
+    }
+  });
+
+  return merged;
 }
 
 export async function createCronofyEventAction(data: {
@@ -50,11 +77,13 @@ export async function createCronofyEventAction(data: {
 
   try {
     const { cronofyUpsertEvent } = await import("../integrations/cronofy");
+    const eventId = `app-event-${Date.now()}`;
     
+    // 1. Salva su Cronofy
     await cronofyUpsertEvent({
       accessToken: cronofyData.accessToken,
       calendarId: cronofyData.account.calendarId,
-      eventId: `app-event-${Date.now()}`,
+      eventId,
       summary: data.summary,
       description: data.description,
       start: data.start,
@@ -62,9 +91,22 @@ export async function createCronofyEventAction(data: {
       tzid: cronofyData.tzid,
     });
 
+    // 2. Salva nel database locale per resilienza
+    await prisma.calendarEvent.create({
+      data: {
+        organizationId,
+        userId,
+        title: data.summary,
+        description: data.description,
+        startDate: new Date(data.start),
+        endDate: new Date(data.end),
+        cronofyEventId: eventId,
+      }
+    });
+
     return { success: true };
   } catch (error) {
-    console.error("Errore nella creazione dell'evento Cronofy:", error);
-    throw new Error("Impossibile creare l'evento su Cronofy.");
+    console.error("Errore nella creazione dell'evento:", error);
+    throw new Error("Impossibile creare l'evento.");
   }
 }
