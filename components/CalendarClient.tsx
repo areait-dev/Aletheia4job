@@ -371,6 +371,13 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
           )}
         </div>
       </div>
+      {/* Debug Info - Solo per sviluppo, puoi rimuoverlo dopo */}
+      <div className="mt-8 p-4 glass rounded-2xl border-dashed border-primary/20 opacity-50 text-[10px] flex gap-4">
+        <span>Interviste: {interviews.length}</span>
+        <span>Assenze: {absences.length}</span>
+        <span>Eventi Cronofy/Locali: {cronofyEvents.length}</span>
+        <span>Vista Attuale: {view}</span>
+      </div>
     </div>
   );
 }
