@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { getUpcomingInterviewsAction, getAbsencesAction, getCronofyEventsAction } from "@/utils/actions";
+import { getUpcomingInterviewsAction } from "@/utils/actions/interviews";
+import { getAbsencesAction } from "@/utils/actions/attendance";
+import { getCronofyEventsAction } from "@/utils/actions/cronofy";
 import CalendarClient from "@/components/CalendarClient";
 
 export default async function CalendarPage() {
