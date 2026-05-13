@@ -88,10 +88,6 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
               <span className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-xs">{cronofyEvents?.filter(e => !e.deleted).length || 0}</span>
             </div>
           </div>
-          
-          <button className="w-full mt-6 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
-            <Plus className="w-4 h-4" /> Nuovo Evento
-          </button>
         </div>
 
         <div className="glass rounded-3xl p-6 border-primary/20">

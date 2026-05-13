@@ -1,13 +1,14 @@
 export const dynamic = 'force-dynamic';
 
-import { getUpcomingInterviewsAction, getAbsencesAction } from "@/utils/actions";
+import { getUpcomingInterviewsAction, getAbsencesAction, getCronofyEventsAction } from "@/utils/actions";
 import CalendarClient from "@/components/CalendarClient";
 import { Calendar as CalendarIcon, Video, Phone, Users, Clock } from "lucide-react";
 
 export default async function CalendarPage() {
-  const [interviews, absences] = await Promise.all([
+  const [interviews, absences, cronofyEvents] = await Promise.all([
     getUpcomingInterviewsAction(50),
-    getAbsencesAction({ from: new Date().toISOString() })
+    getAbsencesAction({ from: new Date().toISOString() }),
+    getCronofyEventsAction()
   ]);
 
   return (
@@ -23,7 +24,7 @@ export default async function CalendarPage() {
         </div>
       </div>
 
-      <CalendarClient interviews={interviews} absences={absences} />
+      <CalendarClient interviews={interviews} absences={absences} cronofyEvents={cronofyEvents} />
     </div>
   );
 }
