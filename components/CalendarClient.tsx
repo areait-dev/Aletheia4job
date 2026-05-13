@@ -278,6 +278,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
 
         {/* Main Calendar Content */}
         <div className="lg:col-span-3">
+          {isAddingEvent && (
             <div className="glass rounded-3xl p-8 border-primary/30 mb-8 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold">
