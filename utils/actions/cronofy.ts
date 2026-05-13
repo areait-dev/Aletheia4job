@@ -36,20 +36,25 @@ export async function getCronofyEventsAction() {
       console.error("Errore nel recupero eventi Cronofy:", error);
     }
 
-    // 2. Recupera eventi locali
-    const localEvents = await prisma.calendarEvent.findMany({
-      where: { organizationId, userId },
-    });
+    // 2. Recupera eventi locali (protetto da errori se la tabella manca ancora)
+    let localMapped: any[] = [];
+    try {
+      const localEvents = await prisma.calendarEvent.findMany({
+        where: { organizationId, userId },
+      });
 
-    const localMapped = localEvents.map(event => ({
-      id: event.cronofyEventId || event.id,
-      type: "CRONOFY",
-      title: event.title,
-      start: event.startDate.toISOString(),
-      end: event.endDate.toISOString(),
-      deleted: false,
-      calendarId: null,
-    }));
+      localMapped = localEvents.map(event => ({
+        id: event.cronofyEventId || event.id,
+        type: "CRONOFY",
+        title: event.title,
+        start: event.startDate.toISOString(),
+        end: event.endDate.toISOString(),
+        deleted: false,
+        calendarId: null,
+      }));
+    } catch (e) {
+      console.warn("Database locale non ancora pronto:", e);
+    }
 
     // 3. Unione senza duplicati
     const merged = [...cronofyEventsList];
