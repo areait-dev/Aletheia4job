@@ -113,15 +113,17 @@ export async function createCronofyEventAction(data: {
           cronofyEventId: eventId,
         }
       });
+      console.log("Evento salvato localmente con successo.");
     } catch (dbError) {
-      console.warn("Impossibile salvare copia locale dell'evento:", dbError);
-      // Non blocchiamo l'esecuzione, l'evento su Cronofy è comunque stato creato
+      console.error("ERRORE DATABASE LOCALE:", dbError);
     }
 
-    return { success: true };
+    return { 
+      success: true, 
+      message: `Evento inviato a Cronofy (Calendario: ${cronofyData.account.calendarId})` 
+    };
   } catch (error) {
-    console.error("Errore nella creazione dell'evento:", error);
-    // Ritorna un errore più descrittivo se possibile
+    console.error("ERRORE CREAZIONE EVENTO:", error);
     const errorMsg = error instanceof Error ? error.message : "Errore sconosciuto";
     throw new Error(`Impossibile creare l'evento: ${errorMsg}`);
   }

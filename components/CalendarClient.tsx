@@ -58,7 +58,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
     setIsSubmitting(true);
     
     try {
-      await createCronofyEventAction({
+      const res = await createCronofyEventAction({
         summary,
         description,
         start: dayjs(startDate).toISOString(),
@@ -66,8 +66,8 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
       });
       
       toast({
-        title: "Evento creato!",
-        description: "L'impegno è stato aggiunto al tuo calendario Cronofy.",
+        title: "Evento inviato!",
+        description: res.message || "L'impegno è stato elaborato.",
       });
       
       setIsAddingEvent(false);
