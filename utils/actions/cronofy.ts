@@ -31,3 +31,37 @@ export async function getCronofyEventsAction() {
     return [];
   }
 }
+
+export async function createCronofyEventAction(data: {
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+}) {
+  const { userId, organizationId } = await authenticateAndRedirect();
+  
+  const cronofyData = await getCronofyAccessTokenForUser({ organizationId, userId });
+  if (!cronofyData || !cronofyData.account.calendarId) {
+    throw new Error("Account Cronofy non connesso o calendario non selezionato.");
+  }
+
+  try {
+    const { cronofyUpsertEvent } = await import("../integrations/cronofy");
+    
+    await cronofyUpsertEvent({
+      accessToken: cronofyData.accessToken,
+      calendarId: cronofyData.account.calendarId,
+      eventId: `app-event-${Date.now()}`,
+      summary: data.summary,
+      description: data.description,
+      start: data.start,
+      end: data.end,
+      tzid: cronofyData.tzid,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Errore nella creazione dell'evento Cronofy:", error);
+    throw new Error("Impossibile creare l'evento su Cronofy.");
+  }
+}

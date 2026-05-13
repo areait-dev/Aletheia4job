@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/it";
 import { 
@@ -15,6 +17,12 @@ import {
   Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createCronofyEventAction } from "@/utils/actions";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 dayjs.locale("it");
 
@@ -25,6 +33,49 @@ type CalendarClientProps = {
 };
 
 export default function CalendarClient({ interviews, absences, cronofyEvents = [] }: CalendarClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isAddingEvent, setIsAddingEvent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form state
+  const [summary, setSummary] = useState("");
+  const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DDTHH:mm"));
+  const [endDate, setEndDate] = useState(dayjs().add(1, 'hour').format("YYYY-MM-DDTHH:mm"));
+
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      await createCronofyEventAction({
+        summary,
+        description,
+        start: dayjs(startDate).toISOString(),
+        end: dayjs(endDate).toISOString(),
+      });
+      
+      toast({
+        title: "Evento creato!",
+        description: "L'impegno è stato aggiunto al tuo calendario Cronofy.",
+      });
+      
+      setIsAddingEvent(false);
+      setSummary("");
+      setDescription("");
+      router.refresh();
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile creare l'evento. Riprova più tardi.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Uniamo gli eventi e ordiniamoli per data
   const events = [
     ...interviews.map(i => ({
@@ -32,7 +83,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
       type: "INTERVIEW",
       title: `Colloquio: ${i.candidate.firstName} ${i.candidate.lastName}`,
       date: dayjs(i.scheduledAt),
-      category: i.type, // VIDEO, PHONE, etc.
+      category: i.type,
       recruiter: i.recruiterName,
       location: i.location,
     })),
@@ -42,7 +93,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
       title: `Assenza: ${a.employee.firstName} ${a.employee.lastName}`,
       date: dayjs(a.startDate),
       endDate: dayjs(a.endDate),
-      category: a.type, // FERIE, MALATTIA, etc.
+      category: a.type,
       recruiter: null,
       location: null,
     })),
@@ -72,6 +123,14 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
     <div className="grid lg:grid-cols-4 gap-8">
       {/* Sidebar - Filtri e Mini Stats */}
       <div className="lg:col-span-1 space-y-6">
+        <Button 
+          onClick={() => setIsAddingEvent(true)}
+          className="w-full h-14 rounded-2xl shadow-lg shadow-primary/20 flex items-center gap-2 text-lg font-bold"
+        >
+          <Plus className="w-5 h-5" />
+          Nuovo Impegno
+        </Button>
+
         <div className="glass rounded-3xl p-6">
           <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground mb-4">Prossimi 30 Giorni</h3>
           <div className="space-y-4">
@@ -99,6 +158,69 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
 
       {/* Main Feed */}
       <div className="lg:col-span-3 space-y-10">
+        {isAddingEvent && (
+          <div className="glass rounded-3xl p-8 border-primary/30 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">Aggiungi Evento a Cronofy</h3>
+              <Button variant="ghost" size="sm" onClick={() => setIsAddingEvent(false)}>Annulla</Button>
+            </div>
+            
+            <form onSubmit={handleCreateEvent} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="summary">Titolo Evento</Label>
+                <Input 
+                  id="summary" 
+                  value={summary} 
+                  onChange={(e) => setSummary(e.target.value)} 
+                  placeholder="Es: Riunione Strategica" 
+                  required 
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start">Inizio</Label>
+                  <Input 
+                    id="start" 
+                    type="datetime-local" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)} 
+                    required 
+                    className="bg-background/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end">Fine</Label>
+                  <Input 
+                    id="end" 
+                    type="datetime-local" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)} 
+                    required 
+                    className="bg-background/50"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrizione (Opzionale)</Label>
+                <Textarea 
+                  id="description" 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  placeholder="Dettagli dell'evento..."
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Creazione in corso..." : "Salva su Calendario"}
+              </Button>
+            </form>
+          </div>
+        )}
+
         {days.length === 0 ? (
           <div className="glass rounded-3xl p-20 text-center space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
@@ -151,7 +273,7 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
                           <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
-                              {event.type === "INTERVIEW" ? event.date.format("HH:mm") : "Tutto il giorno"}
+                              {event.type === "INTERVIEW" || event.type === "CRONOFY" ? event.date.format("HH:mm") : "Tutto il giorno"}
                             </div>
                             {event.location && (
                               <div className="flex items-center gap-1">
