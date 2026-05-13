@@ -132,7 +132,7 @@ export async function createCronofyEventAction(data: {
       message: `Evento salvato con successo! (ID Locale: ${localEvent.id.substring(0,8)})` 
     };
   } catch (error: any) {
-    console.error("ERRORE GLOBALE:", error);
-    throw new Error(error.message || "Errore sconosciuto nella creazione");
+    console.error("ERRORE SALVATAGGIO:", error);
+    return { success: false, message: `DETTAGLIO: ${error.message || "Errore sconosciuto"}` };
   }
 }
