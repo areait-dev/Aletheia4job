@@ -26,19 +26,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/admin?cronofy=invalid_state`, req.url));
   }
 
-  try {
+    try {
     const token = await exchangeCronofyCode(code);
     const expiresAt =
       token.expires_in != null ? new Date(Date.now() + token.expires_in * 1000) : null;
 
     const userInfo = await cronofyUserInfo(token.access_token);
     const calendars = await cronofyListCalendars(token.access_token);
-    const writable = calendars.calendars
+    
+    const calendarList = calendars?.calendars || [];
+    const writable = calendarList
       .filter((c) => !c.calendar_deleted && !c.calendar_readonly)
       .sort((a, b) => Number(b.calendar_primary) - Number(a.calendar_primary))[0];
 
-    // Impostiamo il canale a null per evitare l'errore 500 legato allo scope mancante
-    const channelId = null;
+    // ▲ CONFIGURAZIONE WEBHOOK: Generiamo il canale di notifica in tempo reale
+    const webhookBase = process.env.NEXT_PUBLIC_SITE_URL || "vercel.app";
+    const callbackUrl = `${webhookBase.replace(/\/$/, "")}/api/webhooks/cronofy`;
+
+    const channel = writable?.calendar_id
+      ? await cronofyCreateChannel(token.access_token, callbackUrl, [writable.calendar_id])
+      : null;
+
+    const channelId = channel?.channel?.channel_id || null;
 
     await prisma.cronofyAccount.upsert({
       where: {
@@ -48,18 +57,18 @@ export async function GET(req: NextRequest) {
         },
       },
       update: {
-        cronofySub: userInfo?.sub || calendars.sub,
+        cronofySub: userInfo?.sub || calendars?.sub || "unknown",
         profileId: writable?.profile_id || null,
         calendarId: writable?.calendar_id || null,
         accessTokenEnc: encryptString(token.access_token),
         refreshTokenEnc: encryptString(token.refresh_token),
         expiresAt,
-        channelId,
+        channelId, // Salva l'ID del canale per mappare le notifiche push in entrata
       },
       create: {
         organizationId: payload.organizationId,
         userId: payload.userId,
-        cronofySub: userInfo?.sub || calendars.sub,
+        cronofySub: userInfo?.sub || calendars?.sub || "unknown",
         profileId: writable?.profile_id || null,
         calendarId: writable?.calendar_id || null,
         accessTokenEnc: encryptString(token.access_token),
@@ -74,4 +83,3 @@ export async function GET(req: NextRequest) {
     console.error("Errore durante il callback di Cronofy:", err);
     return NextResponse.redirect(new URL(`/admin?cronofy=server_error`, req.url));
   }
-}
