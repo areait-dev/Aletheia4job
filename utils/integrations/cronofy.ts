@@ -28,8 +28,8 @@ export function buildCronofyAuthorizeUrl(state: string) {
       "delete_event",
       "list_calendars",
       "create_channel",
-      "read_account",
     ].join(" ")
+
   );
   url.searchParams.set("state", state);
   return url.toString();
