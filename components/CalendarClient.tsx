@@ -12,16 +12,17 @@ import {
   User, 
   Calendar as CalendarIcon, 
   Clock, 
+  ChevronLeft, 
   ChevronRight, 
   Plane,
   Plus,
   Calendar,
-  ChevronLeft,
   LayoutGrid,
-  List
+  List,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createCronofyEventAction } from "@/utils/actions";
+import { createCronofyEventAction, deleteCronofyEventAction } from "@/utils/actions/cronofy";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +90,22 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm("Sei sicuro di voler eliminare questo evento?")) return;
+    
+    try {
+      const res = await deleteCronofyEventAction(eventId);
+      if (res.success) {
+        toast({ title: "Evento eliminato", description: res.message });
+        router.refresh();
+      } else {
+        toast({ variant: "destructive", title: "Errore", description: res.message });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Errore", description: error.message });
     }
   };
 
@@ -367,6 +384,17 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
                                 </div>
                               </div>
                             </div>
+                            
+                            {event.type === "CRONOFY" && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all rounded-xl"
+                                onClick={() => handleDeleteEvent(event.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))}

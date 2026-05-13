@@ -136,3 +136,50 @@ export async function createCronofyEventAction(data: {
     return { success: false, message: `DETTAGLIO: ${error.message || "Errore sconosciuto"}` };
   }
 }
+
+export async function deleteCronofyEventAction(eventId: string) {
+  const { userId, organizationId } = await authenticateAndRedirect();
+  
+  try {
+    // 1. Cerca l'evento nel DB locale
+    const event = await prisma.calendarEvent.findUnique({
+      where: { id: eventId }
+    });
+
+    if (!event) {
+      // Potrebbe essere un ID di Cronofy direttamente? Proviamo a cercare per cronofyEventId
+      const eventByCronofyId = await prisma.calendarEvent.findUnique({
+        where: { cronofyEventId: eventId }
+      });
+      if (!eventByCronofyId) return { success: false, message: "Evento non trovato." };
+    }
+
+    const targetEvent = event || await prisma.calendarEvent.findUnique({ where: { cronofyEventId: eventId } });
+    if (!targetEvent) return { success: false, message: "Evento non trovato." };
+
+    // 2. Tenta l'eliminazione su Cronofy se abbiamo il token e l'ID
+    const cronofyData = await getCronofyAccessTokenForUser({ organizationId, userId });
+    if (cronofyData && cronofyData.account.calendarId && targetEvent.cronofyEventId) {
+      try {
+        const { cronofyDeleteEvent } = await import("../integrations/cronofy");
+        await cronofyDeleteEvent({
+          accessToken: cronofyData.accessToken,
+          calendarId: cronofyData.account.calendarId,
+          eventId: targetEvent.cronofyEventId,
+        });
+      } catch (cronofyError) {
+        console.error("Errore eliminazione Cronofy (procedo comunque localmente):", cronofyError);
+      }
+    }
+
+    // 3. Elimina dal DB locale
+    await prisma.calendarEvent.delete({
+      where: { id: targetEvent.id }
+    });
+
+    return { success: true, message: "Evento eliminato con successo." };
+  } catch (error: any) {
+    console.error("ERRORE ELIMINAZIONE:", error);
+    return { success: false, message: error.message || "Errore durante l'eliminazione." };
+  }
+}
