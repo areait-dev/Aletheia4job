@@ -2,7 +2,7 @@ import prisma from "@/utils/db";
 import { decryptString, encryptString } from "@/utils/crypto";
 import { fetchJsonOrThrow, fetchWithTimeout } from "@/utils/externalApi";
 
-const baseUrl = process.env.CRONOFY_BASE_URL || "https://api.cronofy.com";
+const baseUrl = process.env.CRONOFY_BASE_URL || "cronofy.com";
 const clientId = process.env.CRONOFY_CLIENT_ID || "";
 const clientSecret = process.env.CRONOFY_CLIENT_SECRET || "";
 const redirectUri = process.env.CRONOFY_REDIRECT_URI || "";
@@ -16,8 +16,7 @@ function assertCronofyEnv() {
 
 export function buildCronofyAuthorizeUrl(state: string) {
   assertCronofyEnv();
-  // Forziamo l'uso di app.cronofy.com solo per la richiesta di autorizzazione dell'utente
-  const authBaseUrl = "https://app.cronofy.com";
+  const authBaseUrl = "cronofy.com";
   const url = new URL(`${authBaseUrl}/oauth/authorize`);
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "code");
@@ -35,7 +34,6 @@ export function buildCronofyAuthorizeUrl(state: string) {
   url.searchParams.set("state", state);
   return url.toString();
 }
-
 
 export async function exchangeCronofyCode(code: string) {
   assertCronofyEnv();
@@ -107,27 +105,6 @@ export async function cronofyListCalendars(accessToken: string) {
     }>;
   }>(`${baseUrl}/v1/calendars`, {
     headers: { Authorization: `Bearer ${accessToken}` },
-    timeoutMs: 10_000,
-    provider: "cronofy",
-  });
-}
-
-export async function cronofyCreateChannel(accessToken: string, callbackUrl: string, calendarIds: string[]) {
-  return fetchJsonOrThrow<{
-    channel: { channel_id: string };
-  }>(`${baseUrl}/v1/channels`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      callback_url: callbackUrl,
-      filters: {
-        calendar_ids: calendarIds,
-        only_managed: true,
-      },
-    }),
     timeoutMs: 10_000,
     provider: "cronofy",
   });
@@ -262,4 +239,3 @@ export function verifyCronofyHmac(rawBody: string, headerValue: string | null) {
     }
   });
 }
-
