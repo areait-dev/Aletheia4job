@@ -16,7 +16,9 @@ function assertCronofyEnv() {
 
 export function buildCronofyAuthorizeUrl(state: string) {
   assertCronofyEnv();
-  const url = new URL(`${baseUrl}/oauth/authorize`);
+  // Authorization must happen on app.cronofy.com, while API calls use api.cronofy.com
+  const authBase = baseUrl.replace("api.", "app.");
+  const url = new URL(`${authBase}/oauth/authorize`);
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("redirect_uri", redirectUri);
