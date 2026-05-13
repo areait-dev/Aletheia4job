@@ -1,5 +1,4 @@
 "use client";
-// Last update: 2026-05-13 15:15
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
