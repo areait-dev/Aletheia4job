@@ -1,32 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/utils/db";
-import { encryptString } from "@/utils/crypto";
-import { verifyState } from "@/utils/signedState";
-import {
-  cronofyListCalendars,
-  cronofyUserInfo,
-  exchangeCronofyCode,
-} from "@/utils/integrations/cronofy";
-
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-  const error = url.searchParams.get("error");
-
-  if (error) {
-    return NextResponse.redirect(new URL(`/admin?cronofy=error`, req.url));
-  }
-  if (!code || !state) {
-    return NextResponse.redirect(new URL(`/admin?cronofy=missing`, req.url));
-  }
-
-  const payload = verifyState<{ userId: string; organizationId: string; ts: number }>(state);
-  if (!payload?.userId || !payload?.organizationId) {
-    return NextResponse.redirect(new URL(`/admin?cronofy=invalid_state`, req.url));
-  }
-
-   try {
+  try {
     const token = await exchangeCronofyCode(code);
     const expiresAt =
       token.expires_in != null ? new Date(Date.now() + token.expires_in * 1000) : null;
