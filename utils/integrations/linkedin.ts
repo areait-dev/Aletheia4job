@@ -13,20 +13,24 @@ export const formatLinkedInAd = (job: JobType) => {
 };
 
 /**
- * Genera il corpo dell'annuncio LinkedIn (LINKEDIN AD BODY)
+ * Genera il corpo dell'annuncio LinkedIn ottimizzato per il Recruiting Marketing
  */
 const generateLinkedInAdBody = (job: JobType): string => {
   const title = `## ${job.title.toUpperCase()}`;
-  const intro = job.description;
+  
+  // Anteprima catchy (prime due righe d'impatto)
+  const catchyPreview = `🚀 Opportunità unica come ${job.title} in ${job.company}. Entra a far parte di un team che sta ridefinendo gli standard del settore!`;
+  
+  const intro = `${catchyPreview}\n\n${job.description}`;
   
   const responsibilities = job.responsibilities 
-    ? `**Main responsibilities:**\n${formatToList(job.responsibilities)}` 
+    ? `**Cosa farai (Responsabilità chiave):**\n${formatToList(job.responsibilities, 7)}` 
     : '';
     
-  const requirements = `**Required Requirements:**\n${formatToList(job.requirements)}`;
+  const requirements = `**Cosa cerchiamo (Requisiti richiesti):**\n${formatToList(job.requirements, 6)}`;
   
   const benefits = job.benefits 
-    ? `**What we offer (Benefit & Welfare):**\n${job.benefits}` 
+    ? `**Cosa offriamo (Welfare & Benefit):**\n${formatToList(job.benefits, 4)}` 
     : '';
 
   return [title, intro, responsibilities, requirements, benefits]
@@ -35,15 +39,13 @@ const generateLinkedInAdBody = (job: JobType): string => {
 };
 
 /**
- * Mappa i metadati nativi di LinkedIn (CLASSIFICATION METADATA)
+ * Mappa i metadati nativi di LinkedIn
  */
 const generateLinkedInMetadata = (job: JobType) => {
-  // Mapping Remote Type
   let workplace = 'On-site';
   if (job.remoteType?.toLowerCase().includes('hybrid')) workplace = 'Hybrid';
   if (job.remoteType?.toLowerCase().includes('remote')) workplace = 'Remote';
 
-  // Mapping Job Mode
   let employmentType = 'Full-time';
   if (job.mode?.toLowerCase().includes('part-time')) employmentType = 'Part-time';
 
@@ -55,12 +57,11 @@ const generateLinkedInMetadata = (job: JobType) => {
 };
 
 /**
- * Estrae i tag delle competenze dai requisiti (RECOMMENDED SKILL TAGS)
+ * Estrae i tag delle competenze dai requisiti
  */
 const extractSkills = (job: JobType): string[] => {
   if (!job.requirements) return [];
   
-  // Lista di skill comuni da cercare (esempio semplificato)
   const commonSkills = [
     'React', 'Next.js', 'TypeScript', 'JavaScript', 'Node.js', 'Python', 'Java', 'SQL', 
     'PostgreSQL', 'Prisma', 'Docker', 'AWS', 'Git', 'Agile', 'Scrum', 'Project Management',
@@ -68,23 +69,23 @@ const extractSkills = (job: JobType): string[] => {
   ];
 
   const requirementsLower = job.requirements.toLowerCase();
-  
   const foundSkills = commonSkills.filter(skill => 
     requirementsLower.includes(skill.toLowerCase())
   );
 
-  return foundSkills.slice(0, 10); // Massimo 10 tags
+  return foundSkills.slice(0, 10);
 };
 
 /**
- * Converte un testo in una lista puntata se non lo è già
+ * Converte un testo in una lista puntata con limite di elementi
  */
-const formatToList = (text: string): string => {
+const formatToList = (text: string, limit: number = 10): string => {
   if (!text) return '';
   return text
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.length > 0)
+    .slice(0, limit) // Applica il limite di punti elenco richiesto
     .map(line => line.startsWith('-') || line.startsWith('*') ? line : `- ${line}`)
     .join('\n');
 };
