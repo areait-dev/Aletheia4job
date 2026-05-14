@@ -106,6 +106,18 @@ model Candidate {
   organizationId String
   userId         String
   source         String?         @default("Diretto")
+  
+  // --- NUOVI CAMPI PER AI MATCHING ---
+  resumeText        String?       @db.Text // Testo estratto dal CV
+  matchingScore     Int?          // Score totale 0-100
+  educationScore    Int?          // Breakdown Istruzione
+  experienceScore   Int?          // Breakdown Esperienza
+  keywordScore      Int?          // Breakdown Keyword
+  recommendation    String?       // Es. 'Highly Recommended'
+  matchedKeywords   String[]      // Liste di parole trovate
+  missingKeywords   String[]      // Liste di parole mancanti
+  // -------------------------------------
+
   applications   Application[]
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   candidateNotes CandidateNote[]
@@ -113,8 +125,9 @@ model Candidate {
 
   @@unique([organizationId, email])
   @@index([organizationId, userId])
+  // Aggiungiamo un indice per ordinare rapidamente per score
+  @@index([matchingScore(sort: Desc)]) 
 }
-
 model Application {
   id             String       @id @default(uuid())
   organizationId String
