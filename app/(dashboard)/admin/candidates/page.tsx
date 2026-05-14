@@ -1,13 +1,27 @@
+export const dynamic = 'force-dynamic';
+
 // app/admin/candidates/page.tsx
 import { prisma } from '@/lib/prisma';
 import CandidateCard from '@/components/admin/CandidateCard';
 import Link from 'next/link'; // Importiamo Link per eventuali azioni future
 
+// Definiamo un tipo per i dati dei candidati che stiamo recuperando.
+// Questo garantisce la sicurezza dei tipi per il resto del componente.
+type CandidateData = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  phone: string | null;
+  matchingScore: number | null;
+  matchedKeywords: any; // Usiamo 'any' per ora, poiché il tipo esatto dipende dallo schema di Prisma
+};
+
 export default async function AdminCandidatesPage() {
   try {
     // Recupera solo i campi necessari dal candidato.
-    // NON carichiamo 'job' per evitare errori se la relazione non è pronta.
-    const candidates = await prisma.candidate.findMany({
+    // Applichiamo esplicitamente il tipo al risultato di findMany per evitare che 'candidates' sia 'any[]'
+    const candidates: CandidateData[] = await prisma.candidate.findMany({
       orderBy: {
         matchingScore: 'desc',
       },
@@ -24,7 +38,7 @@ export default async function AdminCandidatesPage() {
       }
     });
 
-    // Statistiche rapide
+    // Ora, 'c' e 'candidate' saranno correttamente inferiti come 'CandidateData'
     const totalCandidates = candidates.length;
     const topCandidates = candidates.filter(c => (c.matchingScore || 0) >= 80).length;
 
@@ -37,7 +51,7 @@ export default async function AdminCandidatesPage() {
               Totali: <strong>{totalCandidates}</strong>
             </div>
             <div className="px-3 py-1.5 bg-green-50 border border-green-200 text-green-800 rounded shadow-sm">
-              Top Score (>80%): <strong>{topCandidates}</strong>
+              Top Score (&gt;80%): <strong>{topCandidates}</strong>
             </div>
           </div>
         </div>
