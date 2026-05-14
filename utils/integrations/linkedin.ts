@@ -18,8 +18,8 @@ export const formatLinkedInAd = (job: JobType) => {
 const generateLinkedInAdBody = (job: JobType): string => {
   const title = `## ${job.title.toUpperCase()}`;
   
-  // Anteprima catchy (prime due righe d'impatto)
-  const catchyPreview = `🚀 Opportunità unica come ${job.title} in ${job.company}. Entra a far parte di un team che sta ridefinendo gli standard del settore!`;
+  // Anteprima professionale e diretta (evita linguaggi spammy)
+  const catchyPreview = `${job.company} è alla ricerca di un ${job.title} a ${job.city || job.location} per potenziare la propria strategia nel settore ${job.sector || 'di riferimento'}.`;
   
   const intro = `${catchyPreview}\n\n${job.description}`;
   
