@@ -52,7 +52,7 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
 
     setUploading(true);
     try {
-      const { url, error } = await uploadCV(file, { bucket: 'candidates' });
+      const { url, error } = await uploadCV(file, { bucket: 'cvs' }); // bucket Supabase esistente (candidature pubbliche)
 
       if (error || !url) {
         console.error('[JobApplicationForm] Supabase Upload Error:', error);

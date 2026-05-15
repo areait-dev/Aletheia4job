@@ -7,17 +7,26 @@ const ALLOWED_BUCKETS = ['candidates', 'cvs'] as const;
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_EXT = new Set(['pdf', 'doc', 'docx']);
 
+function isBucketNotFound(message: string) {
+  return /bucket not found/i.test(message);
+}
+
+function bucketNotFoundMessage(bucketName: string) {
+  return `Bucket '${bucketName}' non trovato su Supabase. Controlla le impostazioni del bucket.`;
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
-    const bucketParam = String(formData.get('bucket') ?? 'candidates');
+    const bucketName = String(formData.get('bucket') ?? 'candidates');
+    console.log('Tentativo upload bucket:', bucketName);
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'File mancante' }, { status: 400 });
     }
 
-    if (!ALLOWED_BUCKETS.includes(bucketParam as (typeof ALLOWED_BUCKETS)[number])) {
+    if (!ALLOWED_BUCKETS.includes(bucketName as (typeof ALLOWED_BUCKETS)[number])) {
       return NextResponse.json({ error: 'Bucket non consentito' }, { status: 400 });
     }
 
@@ -32,12 +41,12 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient();
     const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${ext}`;
-    const filePath = bucketParam === 'candidates' ? `cvs/${fileName}` : fileName;
+    const filePath = bucketName === 'candidates' ? `cvs/${fileName}` : fileName;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const { data, error: uploadError } = await supabase.storage
-      .from(bucketParam)
+      .from(bucketName)
       .upload(filePath, buffer, {
         contentType: file.type || undefined,
         upsert: false,
@@ -47,30 +56,36 @@ export async function POST(request: Request) {
       console.error('[upload-cv] Supabase Upload Error:', {
         message: uploadError.message,
         name: uploadError.name,
-        bucket: bucketParam,
+        bucket: bucketName,
         path: filePath,
-        // @ts-expect-error — campi extra restituiti da Supabase Storage
-        statusCode: uploadError.statusCode,
         error: uploadError,
       });
+
+      if (isBucketNotFound(uploadError.message)) {
+        return NextResponse.json(
+          { error: bucketNotFoundMessage(bucketName) },
+          { status: 404 },
+        );
+      }
+
       return NextResponse.json(
         { error: uploadError.message || 'Upload fallito su Supabase Storage' },
-        { status: uploadError.message?.includes('not found') ? 404 : 500 },
+        { status: 500 },
       );
     }
 
     if (!data?.path) {
-      console.error('[upload-cv] Upload senza path restituito:', { bucket: bucketParam, data });
+      console.error('[upload-cv] Upload senza path restituito:', { bucket: bucketName, data });
       return NextResponse.json({ error: 'Upload fallito: nessun percorso restituito' }, { status: 500 });
     }
 
-    const { data: { publicUrl } } = supabase.storage.from(bucketParam).getPublicUrl(data.path);
+    const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(data.path);
 
     if (!publicUrl) {
       return NextResponse.json({ error: 'URL pubblico non disponibile' }, { status: 500 });
     }
 
-    console.log('[upload-cv] OK:', { bucket: bucketParam, path: data.path, publicUrl });
+    console.log('[upload-cv] OK:', { bucket: bucketName, path: data.path, publicUrl });
 
     return NextResponse.json({ url: publicUrl, path: data.path });
   } catch (error) {

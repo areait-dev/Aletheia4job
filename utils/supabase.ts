@@ -1,3 +1,4 @@
+/** `candidates` = form pubblico candidature; `cvs` = upload admin (CreateCandidateForm) */
 export type CvUploadBucket = 'candidates' | 'cvs';
 
 /**
@@ -11,6 +12,8 @@ export async function uploadCV(
   const bucket = options?.bucket ?? 'cvs';
 
   try {
+    console.log('[uploadCV] Tentativo upload bucket:', bucket);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('bucket', bucket);
