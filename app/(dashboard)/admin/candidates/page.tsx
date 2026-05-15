@@ -30,6 +30,7 @@ export default async function AdminCandidatesPage() {
       }
     });
 
+    // FIX: Logga solo il numero, non l'oggetto intero per evitare errori di serializzazione
     console.log("🔥 DEBUG: Candidati trovati:", candidates.length);
 
     // Calcola i totali e i top score
