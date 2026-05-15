@@ -1,9 +1,5 @@
-export const dynamic = 'force-dynamic';
-
-import CandidatesList from "@/components/JobsList";
 import SearchForm from "@/components/SearchForm";
-import SectorFolders from "@/components/SectorFolders";
-import JobFolders from "@/components/JobFolders";
+import ArchivioManager from "@/components/ArchivioManager";
 import {
   dehydrate,
   HydrationBoundary,
@@ -12,34 +8,33 @@ import {
 import { getAllCandidatesAction } from "@/utils/actions";
 import { GetAllCandidatesActionTypes } from "@/utils/types";
 
-async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandidatesActionTypes & { jobId?: string } }) {
+async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandidatesActionTypes }) {
   const queryClient = new QueryClient();
   const search = searchParams.search || "";
   const candidateStatus = searchParams.candidateStatus || "tutti";
   const province = searchParams.province || "tutte";
-  const sector = searchParams.sector || "tutti";
-  const jobId = searchParams.jobId;
-  const page = Number(searchParams.page) || 1;
 
   await queryClient.prefetchQuery({
-    queryKey: ["candidates", search, candidateStatus, province, sector, page, jobId],
-    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, sector, page, jobId }),
+    queryKey: ["candidates-grouped", search, candidateStatus, province],
+    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, limit: 100 }),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight">Gestione Candidati & AI Matching</h1>
-        <p className="text-muted-foreground mt-2">
-          Archivio completo dei CV ricevuti tramite Career Page e candidature dirette.
-        </p>
+      <div className="space-y-10">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Gestione Candidati & AI
+          </h1>
+          <p className="text-muted-foreground font-medium">
+            Visione unificata dell'ecosistema talenti.
+          </p>
+        </div>
+
+        <SearchForm />
+
+        <ArchivioManager />
       </div>
-      <SearchForm />
-      <div className="space-y-2">
-        <SectorFolders />
-        <JobFolders />
-      </div>
-      <CandidatesList />
     </HydrationBoundary>
   );
 }

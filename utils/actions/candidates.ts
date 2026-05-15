@@ -55,7 +55,12 @@ export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes
         orderBy: { createdAt: "desc" },
         include: {
           applications: {
-            select: { jobId: true },
+            select: { 
+              jobId: true,
+              job: {
+                select: { title: true }
+              }
+            },
             take: 1,
             orderBy: { createdAt: 'desc' }
           }
