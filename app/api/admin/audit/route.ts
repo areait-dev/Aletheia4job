@@ -1,13 +1,50 @@
 import { NextResponse } from "next/server";
 import { AuditAction } from "@prisma/client";
 import prisma from "@/utils/db";
-import { canManageMembers, getAuthContext } from "@/utils/authz";
+import { canManageMembers, getAuthContext, type AuthContext } from "@/utils/authz";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
+type AuthResult =
+  | { ok: true; auth: AuthContext }
+  | { ok: false; response: NextResponse };
+
+async function resolveAuth(): Promise<AuthResult> {
+  try {
+    const auth = await getAuthContext();
+    if (!auth) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      };
+    }
+    return { ok: true, auth };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[admin/audit] getAuthContext failed:", error);
+
+    if (message.includes("context error") || message.includes("cookies()")) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: "Authentication service unavailable" },
+          { status: 500 },
+        ),
+      };
+    }
+
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Internal authentication error" }, { status: 500 }),
+    };
+  }
+}
 
 export async function GET(request: Request) {
-  const auth = await getAuthContext();
-  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await resolveAuth();
+  if (!authResult.ok) return authResult.response;
+  const { auth } = authResult;
+
   if (!canManageMembers(auth.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const url = new URL(request.url);
