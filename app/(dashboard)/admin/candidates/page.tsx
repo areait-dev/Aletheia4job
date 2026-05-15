@@ -10,6 +10,7 @@ type CandidateData = {
   phone: string | null;
   matchingScore: number | null;
   matchedKeywords: any; 
+  cvUrl: string | null;
 };
 
 export default async function AdminCandidatesPage() {
@@ -27,6 +28,7 @@ export default async function AdminCandidatesPage() {
         phone: true,
         matchingScore: true,
         matchedKeywords: true,
+        cvUrl: true,
       }
     });
 
@@ -64,6 +66,7 @@ export default async function AdminCandidatesPage() {
                 phone: c.phone,
                 matchingScore: c.matchingScore,
                 matchedKeywords: c.matchedKeywords || [],
+                cvUrl: c.cvUrl,
               }} 
             />
           ))}
