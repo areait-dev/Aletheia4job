@@ -29,10 +29,10 @@ import { cn } from '@/lib/utils';
 
 import { calculateMatchingScoreAction } from '@/utils/actions/ai';
 import { useRouter } from 'next/navigation';
+import AnalyzeAIButton from './AnalyzeAIButton';
 
 function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const [isExporting, setIsExporting] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -40,44 +40,6 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
     setIsExporting(true);
     await exportCandidateToPDF(candidate);
     setIsExporting(false);
-  };
-
-  const handleAnalyze = async () => {
-    const jobId = candidate.applications?.[0]?.jobId;
-    if (!jobId) {
-      toast({
-        title: "Errore",
-        description: "Impossibile trovare una posizione associata a questo candidato.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsAnalyzing(true);
-    try {
-      const result = await calculateMatchingScoreAction(candidate.id, jobId);
-      if (result.ok) {
-        toast({
-          title: "Analisi completata",
-          description: `Score AI: ${result.data.matchingScore}%`,
-        });
-        router.refresh();
-      } else {
-        toast({
-          title: "Errore",
-          description: result.error || "Errore durante l'analisi.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Errore",
-        description: "Errore imprevisto.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
   };
 
   // Mutazione per aggiornare lo stato
@@ -167,16 +129,11 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
               <Edit className='w-3 h-3 text-muted-foreground' />
             </div>
             <div className='flex items-center gap-2'>
-              <Button 
-                variant='ghost' 
-                size='icon' 
-                className='h-8 w-8 text-muted-foreground hover:text-primary rounded-full hover:bg-primary/10'
-                onClick={handleAnalyze}
-                disabled={isAnalyzing || !candidate.cvUrl}
-                title='Analisi AI Match'
-              >
-                <Sparkles className={cn("w-4 h-4", isAnalyzing && "animate-spin")} />
-              </Button>
+              <AnalyzeAIButton 
+                candidateId={candidate.id} 
+                jobId={candidate.applications?.[0]?.jobId || ""} 
+                hasCv={!!candidate.cvUrl}
+              />
               <Button 
                 variant='ghost' 
                 size='icon' 

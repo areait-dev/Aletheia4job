@@ -285,7 +285,8 @@ export async function generateJobDescriptionAction({
       }
     `;
 
-    const response = await groq.chat.completions.create({
+    const groqClient = getGroqClient();
+    const response = await groqClient.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: "json_object" },

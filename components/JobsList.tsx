@@ -13,15 +13,17 @@ function CandidatesList() {
   const candidateStatus = searchParams.get("candidateStatus") || "tutti";
   const province = searchParams.get("province") || "tutte";
   const sector = searchParams.get("sector") || "tutti";
+  const jobId = searchParams.get("jobId") || "";
   const pageNumber = Number(searchParams.get("page")) || 1;
 
   const { data, isPending } = useQuery({
-    queryKey: ["candidates", search, candidateStatus, province, sector, pageNumber],
+    queryKey: ["candidates", search, candidateStatus, province, sector, pageNumber, jobId],
     queryFn: () => getAllCandidatesAction({ 
       search, 
       candidateStatus, 
       province, 
       sector,
+      jobId,
       page: pageNumber 
     }),
   });

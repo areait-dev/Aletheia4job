@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
 import ApplicationStatusSelect from "@/components/ApplicationStatusSelect";
+import AnalyzeAIButton from "@/components/AnalyzeAIButton";
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
   const job = await getSingleJobAction(params.id);
@@ -110,6 +111,13 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                      {app.jobId && (
+                        <AnalyzeAIButton 
+                          candidateId={app.candidateId} 
+                          jobId={app.jobId} 
+                          hasCv={!!app.candidate.cvUrl}
+                        />
+                      )}
                       <ApplicationStatusSelect 
                         applicationId={app.id} 
                         currentStatus={app.status} 

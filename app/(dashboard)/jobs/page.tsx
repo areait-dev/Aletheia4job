@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import CandidatesList from "@/components/JobsList";
 import SearchForm from "@/components/SearchForm";
 import SectorFolders from "@/components/SectorFolders";
+import JobFolders from "@/components/JobFolders";
 import {
   dehydrate,
   HydrationBoundary,
@@ -11,17 +12,18 @@ import {
 import { getAllCandidatesAction } from "@/utils/actions";
 import { GetAllCandidatesActionTypes } from "@/utils/types";
 
-async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandidatesActionTypes }) {
+async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandidatesActionTypes & { jobId?: string } }) {
   const queryClient = new QueryClient();
   const search = searchParams.search || "";
   const candidateStatus = searchParams.candidateStatus || "tutti";
   const province = searchParams.province || "tutte";
   const sector = searchParams.sector || "tutti";
+  const jobId = searchParams.jobId;
   const page = Number(searchParams.page) || 1;
 
   await queryClient.prefetchQuery({
-    queryKey: ["candidates", search, candidateStatus, province, sector, page],
-    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, sector, page }),
+    queryKey: ["candidates", search, candidateStatus, province, sector, page, jobId],
+    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, sector, page, jobId }),
   });
 
   return (
@@ -33,7 +35,10 @@ async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandida
         </p>
       </div>
       <SearchForm />
-      <SectorFolders />
+      <div className="space-y-2">
+        <SectorFolders />
+        <JobFolders />
+      </div>
       <CandidatesList />
     </HydrationBoundary>
   );
