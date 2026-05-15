@@ -25,6 +25,7 @@ import {
 import { updateCandidateStatusAction } from '@/utils/actions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from './ui/use-toast';
+import { cn } from '@/lib/utils';
 
 function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const [isExporting, setIsExporting] = useState(false);

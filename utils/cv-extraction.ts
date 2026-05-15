@@ -1,6 +1,4 @@
 import axios from 'axios';
-import pdf from 'pdf-parse';
-import mammoth from 'mammoth';
 
 export async function extractTextFromUrl(url: string): Promise<string> {
   try {
@@ -10,9 +8,13 @@ export async function extractTextFromUrl(url: string): Promise<string> {
     const extension = url.split('.').pop()?.toLowerCase();
 
     if (extension === 'pdf') {
+      // Lazy load pdf-parse
+      const pdf = (await import('pdf-parse')).default;
       const data = await pdf(buffer);
       return data.text;
     } else if (extension === 'docx' || extension === 'doc') {
+      // Lazy load mammoth
+      const mammoth = await import('mammoth');
       const { value } = await mammoth.extractRawText({ buffer });
       return value;
     }

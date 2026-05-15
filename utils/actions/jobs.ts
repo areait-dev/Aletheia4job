@@ -16,10 +16,12 @@ import { processAICandidateAnalysis } from "./ai";
 import OpenAI from 'openai';
 
 // Configurazione client per Groq
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
+function getGroqClient() {
+  return new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  });
+}
 
 export async function createJobAction(values: CreateAndEditJobType): Promise<JobType | null> {
   const { userId, organizationId, role } = await authenticateAndRedirect();

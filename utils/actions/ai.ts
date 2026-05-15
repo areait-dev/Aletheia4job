@@ -6,9 +6,13 @@ import { extractTextFromUrl } from "../cv-extraction";
 import { authenticateAndRedirect } from "./shared";
 import { canWrite } from "../authz";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+function getGroqClient() {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is not defined in environment variables");
+  }
+  return new Groq({ apiKey });
+}
 
 export async function parseCVAction(text: string) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -119,6 +123,7 @@ export async function processAICandidateAnalysis(candidateId: string, jobId: str
       }
     `;
 
+    const groq = getGroqClient();
     const response = await groq.chat.completions.create({
       messages: [
         { role: "system", content: "Sei un assistente HR che risponde esclusivamente in formato JSON." },

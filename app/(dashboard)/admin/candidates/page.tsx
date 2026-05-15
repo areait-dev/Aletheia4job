@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import prisma from '@/utils/db';
 import CandidateCard from '@/components/admin/CandidateCard';
 
 // Definiamo un tipo per i dati dei candidati che stiamo recuperando.
@@ -15,12 +15,20 @@ type CandidateData = {
 
 export default async function AdminCandidatesPage() {
   try {
-    // Recupera i candidati dal DB includendo le applicazioni per sapere a quale lavoro si sono candidati
+    // Recupera i candidati dal DB selezionando solo i campi necessari (evitiamo resumeText che è pesante)
     const candidates = await prisma.candidate.findMany({
       orderBy: {
         matchingScore: 'desc',
       },
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        matchingScore: true,
+        matchedKeywords: true,
+        cvUrl: true,
         applications: {
           select: { jobId: true },
           take: 1
