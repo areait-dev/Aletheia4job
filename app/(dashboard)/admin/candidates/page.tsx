@@ -1,13 +1,21 @@
-// app/(dashboard)/admin/candidates/page.tsx
-export const dynamic = 'force-dynamic'; 
-
 import { prisma } from '@/lib/prisma';
 import CandidateCard from '@/components/admin/CandidateCard';
+
+// Definiamo un tipo per i dati dei candidati che stiamo recuperando.
+type CandidateData = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  phone: string | null;
+  matchingScore: number | null;
+  matchedKeywords: any; 
+};
 
 export default async function AdminCandidatesPage() {
   try {
     // Recupera i candidati dal DB
-    const candidates = await prisma.candidate.findMany({
+    const candidates: CandidateData[] = await prisma.candidate.findMany({
       orderBy: {
         matchingScore: 'desc',
       },
@@ -24,13 +32,20 @@ export default async function AdminCandidatesPage() {
 
     console.log("🔥 DEBUG: Candidati trovati:", candidates.length);
 
+    // Calcola i totali e i top score
+    const totalCandidates = candidates.length;
+    const topCandidates = candidates.filter(c => (c.matchingScore || 0) >= 80).length;
+
     return (
       <div className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-2xl font-bold">Gestione Candidati</h1>
           <div className="flex gap-3 text-sm">
             <div className="px-3 py-1.5 bg-white border rounded shadow-sm">
-              Totali: <strong>{candidates.length}</strong>
+              Totali: <strong>{totalCandidates}</strong>
+            </div>
+            <div className="px-3 py-1.5 bg-green-50 border border-green-200 text-green-800 rounded shadow-sm">
+              Top Score (&gt;80%): <strong>{topCandidates}</strong>
             </div>
           </div>
         </div>
