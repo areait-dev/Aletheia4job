@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { applyToJobAction } from "@/utils/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Upload, CheckCircle2 } from "lucide-react";
@@ -27,17 +27,14 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
     source: "Career Page",
   });
 
-  // Capturing source from URL if present (e.g. ?utm_source=linkedin)
-  useState(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const utmSource = params.get('utm_source');
-      const sourceParam = params.get('source');
-      if (utmSource || sourceParam) {
-        setFormData(prev => ({ ...prev, source: utmSource || sourceParam || "Career Page" }));
-      }
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get('utm_source');
+    const sourceParam = params.get('source');
+    if (utmSource || sourceParam) {
+      setFormData(prev => ({ ...prev, source: utmSource || sourceParam || "Career Page" }));
     }
-  });
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,15 +57,18 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `cvs/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await supabase.storage
         .from('candidates')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
+      if (!data?.path) throw new Error('Upload fallito: nessun percorso restituito');
 
       const { data: { publicUrl } } = supabase.storage
         .from('candidates')
-        .getPublicUrl(filePath);
+        .getPublicUrl(data.path);
+
+      if (!publicUrl) throw new Error('URL pubblico non disponibile');
 
       setFormData(prev => ({ ...prev, cvUrl: publicUrl }));
       toast({
@@ -92,6 +92,7 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
     setIsSubmitting(true);
 
     try {
+      console.log('Invio candidatura con CV:', formData.cvUrl);
       const result = await applyToJobAction({
         jobId,
         ...formData

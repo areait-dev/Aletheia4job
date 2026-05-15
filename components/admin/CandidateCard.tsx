@@ -1,10 +1,9 @@
 // components/admin/CandidateCard.tsx
-'use client'; // Necessario se usiamo interattività futura, ma qui è statico. Meglio lasciarlo server component se possibile, ma per sicurezza UI:
+'use client';
 
 import Link from 'next/link';
-import { FileText, Phone, MapPin } from 'lucide-react';
+import { FileText, Phone } from 'lucide-react';
 
-// Definiamo un tipo semplice per evitare conflitti con Prisma Client types
 interface CandidateData {
   id: string;
   firstName: string;
@@ -13,9 +12,6 @@ interface CandidateData {
   phone?: string | null;
   matchingScore?: number | null;
   matchedKeywords?: string[] | null;
-  job?: {
-    title: string;
-  } | null;
 }
 
 interface CandidateCardProps {
@@ -23,7 +19,8 @@ interface CandidateCardProps {
 }
 
 export default function CandidateCard({ candidate }: CandidateCardProps) {
-  // Determina il colore in base allo score
+  
+  // Funzione per determinare il colore del badge
   const getScoreColor = (score: number | null | undefined) => {
     if (score === null || score === undefined) return 'bg-gray-100 text-gray-500 border-gray-200';
     if (score >= 80) return 'bg-green-100 text-green-700 border-green-200';
@@ -39,9 +36,12 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           <h3 className="text-lg font-semibold truncate pr-2">
             {candidate.firstName} {candidate.lastName}
           </h3>
-          {/* Badge Score */}
+          
+          {/* BADGE SCORE */}
           <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getScoreColor(candidate.matchingScore)}`}>
-            {candidate.matchingScore ?? '-'}%
+            {candidate.matchingScore !== null && candidate.matchingScore !== undefined 
+              ? `${candidate.matchingScore}%` 
+              : '-'}
           </span>
         </div>
         
@@ -54,15 +54,9 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
               <span>{candidate.phone}</span>
             </div>
           )}
-          {candidate.job && (
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <MapPin className="w-3 h-3" />
-              <span className="truncate">{candidate.job.title}</span>
-            </div>
-          )}
         </div>
 
-        {/* Preview Keywords Matchate */}
+        {/* Keywords */}
         {candidate.matchedKeywords && candidate.matchedKeywords.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {candidate.matchedKeywords.slice(0, 3).map((kw, idx) => (
@@ -70,9 +64,6 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
                 {kw}
               </span>
             ))}
-            {candidate.matchedKeywords.length > 3 && (
-              <span className="text-[10px] text-gray-400 self-center">+{candidate.matchedKeywords.length - 3}</span>
-            )}
           </div>
         )}
       </div>
@@ -84,10 +75,6 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
         >
           Vedi Dettaglio
         </Link>
-        <button className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors flex items-center justify-center gap-1 cursor-not-allowed opacity-50" title="Funzione CV in arrivo">
-             <FileText className="w-3 h-3" />
-             CV
-        </button>
       </div>
     </div>
   );

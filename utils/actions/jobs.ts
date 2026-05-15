@@ -148,17 +148,25 @@ export async function applyToJobAction(values: {
     });
 
     if (candidate) {
+      console.log('✅ CV URL salvato:', values.cvUrl);
       candidate = await prisma.candidate.update({
         where: { id: candidate.id },
-        data: { firstName: values.firstName, lastName: values.lastName, phone: values.phone || candidate.phone, city: values.city, cvUrl: values.cvUrl || candidate.cvUrl }
+        data: {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          phone: values.phone || candidate.phone,
+          city: values.city,
+          ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
+        },
       });
     } else {
+      console.log('✅ CV URL salvato:', values.cvUrl);
       candidate = await prisma.candidate.create({
         data: {
           firstName: values.firstName, lastName: values.lastName, email: values.email.toLowerCase(), phone: values.phone,
           city: values.city, role: job.title, seniority: 'Mid', sector: job.sector, status: "Nuovo", source: values.source || "Career Page",
-          organizationId, userId: jobCreatorId,
-        }
+          organizationId, userId: jobCreatorId, cvUrl: values.cvUrl,
+        },
       });
     }
 
