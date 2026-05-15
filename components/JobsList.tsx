@@ -38,10 +38,15 @@ function CandidatesList() {
   return (
     <>
       <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold ">
-            {count} candidati trovati
-          </h2>
+        <div className="flex items-center gap-6">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold ">
+              Candidati arrivati da Job Application
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {count} candidati trovati in totale
+            </p>
+          </div>
           <DownloadDropdown />
         </div>
 

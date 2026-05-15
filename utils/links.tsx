@@ -106,12 +106,6 @@ const links: NavLink[] = [
     icon: <Shield />,
     permission: canAccessAdmin,
   },
-  {
-    href: '/admin/candidates',
-    label: 'candidati (AI)',
-    icon: <Shield />,
-    permission: canWrite,
-  },
 ];
 
 export default links;

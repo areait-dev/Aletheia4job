@@ -26,6 +26,12 @@ async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandida
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold tracking-tight">Gestione Candidati & AI Matching</h1>
+        <p className="text-muted-foreground mt-2">
+          Archivio completo dei CV ricevuti tramite Career Page e candidature dirette.
+        </p>
+      </div>
       <SearchForm />
       <SectorFolders />
       <CandidatesList />

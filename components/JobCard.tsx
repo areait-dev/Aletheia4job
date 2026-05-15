@@ -1,5 +1,5 @@
 import { CandidateType, CandidateStatus } from '@/utils/types';
-import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download, Edit } from 'lucide-react';
+import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download, Edit, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import {
   Card,
