@@ -1,33 +1,44 @@
-import { createClient } from '@/utils/supabase/client';
-
-export const supabase = createClient();
+export type CvUploadBucket = 'candidates' | 'cvs';
 
 /**
- * Carica un file PDF nel bucket 'cvs' di Supabase
- * @param file File da caricare
- * @returns URL pubblico del file caricato
+ * Upload CV tramite API server (Service Role).
+ * Usabile da componenti client — non espone la chiave di servizio.
  */
-export async function uploadCV(file: File): Promise<{ url: string | null, error: string | null }> {
+export async function uploadCV(
+  file: File,
+  options?: { bucket?: CvUploadBucket },
+): Promise<{ url: string | null; error: string | null }> {
+  const bucket = options?.bucket ?? 'cvs';
+
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-    const filePath = fileName;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
 
-    const { error: uploadError } = await supabase.storage
-      .from('cvs')
-      .upload(filePath, file);
+    const res = await fetch('/api/upload-cv', { method: 'POST', body: formData });
+    const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
 
-    if (uploadError) {
-      throw uploadError;
+    if (!res.ok) {
+      console.error('[uploadCV] API error:', {
+        status: res.status,
+        statusText: res.statusText,
+        bucket,
+        error: body.error,
+        body,
+      });
+      return { url: null, error: body.error || `Upload fallito (HTTP ${res.status})` };
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('cvs')
-      .getPublicUrl(filePath);
+    if (!body.url) {
+      console.error('[uploadCV] Risposta senza URL:', body);
+      return { url: null, error: 'URL non restituito dal server' };
+    }
 
-    return { url: publicUrl, error: null };
-  } catch (error: any) {
-    console.error('Errore durante l\'upload del CV:', error);
-    return { url: null, error: error?.message || 'Errore sconosciuto' };
+    console.log('[uploadCV] OK:', { bucket, url: body.url });
+    return { url: body.url, error: null };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+    console.error('[uploadCV] Unexpected error:', { bucket, message, error });
+    return { url: null, error: message };
   }
 }

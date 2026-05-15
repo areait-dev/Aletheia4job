@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { applyToJobAction } from "@/utils/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Upload, CheckCircle2 } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
+import { uploadCV } from "@/utils/supabase";
 
 interface JobApplicationFormProps {
   jobId: string;
@@ -52,34 +52,29 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
 
     setUploading(true);
     try {
-      const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `cvs/${fileName}`;
+      const { url, error } = await uploadCV(file, { bucket: 'candidates' });
 
-      const { data, error: uploadError } = await supabase.storage
-        .from('candidates')
-        .upload(filePath, file);
+      if (error || !url) {
+        console.error('[JobApplicationForm] Supabase Upload Error:', error);
+        toast({
+          title: "Errore caricamento",
+          description: error || "Non è stato possibile caricare il CV. Riprova.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (uploadError) throw uploadError;
-      if (!data?.path) throw new Error('Upload fallito: nessun percorso restituito');
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('candidates')
-        .getPublicUrl(data.path);
-
-      if (!publicUrl) throw new Error('URL pubblico non disponibile');
-
-      setFormData(prev => ({ ...prev, cvUrl: publicUrl }));
+      setFormData(prev => ({ ...prev, cvUrl: url }));
       toast({
         title: "CV caricato",
         description: "Il tuo curriculum è stato caricato correttamente.",
       });
     } catch (error) {
-      console.error('Error uploading CV:', error);
+      const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+      console.error('[JobApplicationForm] Error uploading CV:', { message, error });
       toast({
         title: "Errore caricamento",
-        description: "Non è stato possibile caricare il CV. Riprova.",
+        description: message || "Non è stato possibile caricare il CV. Riprova.",
         variant: "destructive",
       });
     } finally {
