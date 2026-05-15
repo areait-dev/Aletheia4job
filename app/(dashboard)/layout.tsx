@@ -1,21 +1,30 @@
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import { getAuthContext } from '@/utils/authz';
+import { getAuthContext, type AuthContext } from '@/utils/authz';
 import { redirect } from 'next/navigation';
 
 import { PropsWithChildren } from 'react';
 
+export const dynamic = 'force-dynamic';
+
+async function resolveAuth(): Promise<AuthContext | null> {
+  try {
+    return await getAuthContext();
+  } catch (error) {
+    console.error('[dashboard layout] getAuthContext failed:', error);
+    return null;
+  }
+}
+
 async function layout({ children }: PropsWithChildren) {
-  const auth = await getAuthContext();
+  const auth = await resolveAuth();
   if (!auth) redirect('/login');
 
   return (
     <main className='grid lg:grid-cols-5'>
-      {/* first-col hide on small screen */}
       <div className='hidden lg:block lg:col-span-1 lg:min-h-screen'>
         <Sidebar role={auth.role} />
       </div>
-      {/* second-col hide dropdown on big screen */}
 
       <div className='lg:col-span-4'>
         <Navbar role={auth.role} />

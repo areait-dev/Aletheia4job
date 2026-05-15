@@ -8,6 +8,8 @@ import {
   LinkedInOrgConfig,
 } from '@/utils/linkedin-feed-generator';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   // Prendi l'organizationId da env o da config reale
   const organizationId = process.env.LINKEDIN_FEED_ORG_ID ?? 'org_prod_123';

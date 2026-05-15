@@ -1,16 +1,50 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/utils/db';
-import { getAuthContext } from '@/utils/authz';
+import { getAuthContext, type AuthContext } from '@/utils/authz';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+type AuthResult =
+  | { ok: true; auth: AuthContext }
+  | { ok: false; response: NextResponse };
+
+async function resolveAuth(): Promise<AuthResult> {
   try {
     const auth = await getAuthContext();
     if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return {
+        ok: false,
+        response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      };
+    }
+    return { ok: true, auth };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[leads/all-data] getAuthContext failed:', error);
+
+    if (message.includes('context error') || message.includes('cookies()')) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: 'Authentication service unavailable' },
+          { status: 500 },
+        ),
+      };
     }
 
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'Internal authentication error' }, { status: 500 }),
+    };
+  }
+}
+
+export async function GET() {
+  const authResult = await resolveAuth();
+  if (!authResult.ok) return authResult.response;
+  const { auth } = authResult;
+
+  try {
     const candidates = await prisma.candidate.findMany({
       where: {
         organizationId: auth.organizationId,
@@ -20,14 +54,13 @@ export async function GET() {
       },
     });
 
-    // Mocking the structure expected by the old frontend to prevent errors if ported
     return NextResponse.json({
       candidates,
-      googleFormLeads: [], // For compatibility with ported code
-      facebookLeads: [],   // For compatibility with ported code
+      googleFormLeads: [],
+      facebookLeads: [],
       stats: {
         total: candidates.length,
-      }
+      },
     });
   } catch (error) {
     console.error('API Error:', error);

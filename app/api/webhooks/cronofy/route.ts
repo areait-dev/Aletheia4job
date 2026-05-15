@@ -12,6 +12,8 @@ function toDate(value: string) {
   return d;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const hmacHeader = req.headers.get("Cronofy-HMAC-SHA256");

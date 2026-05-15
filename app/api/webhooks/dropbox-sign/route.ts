@@ -3,6 +3,8 @@ import prisma from "@/utils/db";
 import { DocumentSignatureStatus } from "@prisma/client";
 import { isValidDropboxSignEventHash } from "@/utils/integrations/dropboxSign";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   let jsonStr: string | null = null;
   try {

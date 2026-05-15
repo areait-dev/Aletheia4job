@@ -7,9 +7,18 @@ import { Briefcase, CheckCircle, Users, BarChart3, ArrowRight } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { getAuthContext } from "@/utils/authz";
 
+async function resolveAuthOptional(): Promise<string | null> {
+  try {
+    const auth = await getAuthContext();
+    return auth?.userId ?? null;
+  } catch (error) {
+    console.error("[home] getAuthContext failed:", error);
+    return null;
+  }
+}
+
 export default async function Home() {
-  const auth = await getAuthContext();
-  const userId = auth?.userId;
+  const userId = await resolveAuthOptional();
 
   return (
     <main className="min-h-screen overflow-hidden">

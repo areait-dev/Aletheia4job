@@ -6,6 +6,8 @@ import { JobStatus, JobMode } from '@/utils/types';
 const AUTH_TOKEN = process.env.AGGREGATOR_FEED_TOKEN;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = url.searchParams.get('token');

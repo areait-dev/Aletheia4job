@@ -3,6 +3,19 @@ import { redirect } from "next/navigation";
 import { acceptMemberInviteAction } from "@/utils/actions";
 import { createClient } from "@/utils/supabase/server";
 
+export const dynamic = "force-dynamic";
+
+async function resolveUser(): Promise<{ userId?: string; email: string | null }> {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    return { userId: user?.id, email: user?.email ?? null };
+  } catch (error) {
+    console.error("[invite] createClient failed:", error);
+    return { userId: undefined, email: null };
+  }
+}
+
 async function InviteAcceptPage({
   params,
   searchParams,
@@ -10,10 +23,7 @@ async function InviteAcceptPage({
   params: { token: string };
   searchParams?: { error?: string };
 }) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const userId = user?.id;
-  const email = user?.email ?? null;
+  const { userId, email } = await resolveUser();
 
   const loginHref = `/login?redirect_url=${encodeURIComponent(`/invite/${params.token}`)}`;
 
