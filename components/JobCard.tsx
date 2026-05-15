@@ -27,14 +27,57 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from './ui/use-toast';
 import { cn } from '@/lib/utils';
 
+import { calculateMatchingScoreAction } from '@/utils/actions/ai';
+import { useRouter } from 'next/navigation';
+
 function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const [isExporting, setIsExporting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const handleExport = async () => {
     setIsExporting(true);
     await exportCandidateToPDF(candidate);
     setIsExporting(false);
+  };
+
+  const handleAnalyze = async () => {
+    const jobId = candidate.applications?.[0]?.jobId;
+    if (!jobId) {
+      toast({
+        title: "Errore",
+        description: "Impossibile trovare una posizione associata a questo candidato.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const result = await calculateMatchingScoreAction(candidate.id, jobId);
+      if (result.ok) {
+        toast({
+          title: "Analisi completata",
+          description: `Score AI: ${result.data.matchingScore}%`,
+        });
+        router.refresh();
+      } else {
+        toast({
+          title: "Errore",
+          description: result.error || "Errore durante l'analisi.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Errore imprevisto.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   // Mutazione per aggiornare lo stato
@@ -123,16 +166,28 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
               </Select>
               <Edit className='w-3 h-3 text-muted-foreground' />
             </div>
-            <Button 
-              variant='ghost' 
-              size='icon' 
-              className='h-8 w-8 text-muted-foreground hover:text-primary rounded-full hover:bg-primary/10'
-              onClick={handleExport}
-              disabled={isExporting}
-              title='Scarica Scheda PDF'
-            >
-              <Download className='w-4 h-4' />
-            </Button>
+            <div className='flex items-center gap-2'>
+              <Button 
+                variant='ghost' 
+                size='icon' 
+                className='h-8 w-8 text-muted-foreground hover:text-primary rounded-full hover:bg-primary/10'
+                onClick={handleAnalyze}
+                disabled={isAnalyzing || !candidate.cvUrl}
+                title='Analisi AI Match'
+              >
+                <Sparkles className={cn("w-4 h-4", isAnalyzing && "animate-spin")} />
+              </Button>
+              <Button 
+                variant='ghost' 
+                size='icon' 
+                className='h-8 w-8 text-muted-foreground hover:text-primary rounded-full hover:bg-primary/10'
+                onClick={handleExport}
+                disabled={isExporting}
+                title='Scarica Scheda PDF'
+              >
+                <Download className='w-4 h-4' />
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -148,6 +203,16 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
           )}
         </div>
         
+        {candidate.matchedKeywords && candidate.matchedKeywords.length > 0 && (
+          <div className='flex flex-wrap gap-2'>
+            {candidate.matchedKeywords.slice(0, 5).map((skill, index) => (
+              <Badge key={index} variant='secondary' className='text-[10px] bg-primary/5 text-primary border-primary/10'>
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        )}
+
         {candidate.cvUrl && (
           <Button asChild variant='link' className='p-0 h-auto text-primary hover:text-primary/80 font-medium group/cv'>
             <a href={candidate.cvUrl} target="_blank" rel="noopener noreferrer" className='flex items-center gap-2'>

@@ -53,6 +53,13 @@ export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
+        include: {
+          applications: {
+            select: { jobId: true },
+            take: 1,
+            orderBy: { createdAt: 'desc' }
+          }
+        }
       }),
       prisma.candidate.count({ where: whereClause }),
     ]);
