@@ -1,12 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/utils/db";
 import { DocumentSignatureStatus } from "@prisma/client";
-import { getAuthContext, canWrite } from "@/utils/authz";
+import { getAuthContext, canWrite, type AuthContext } from "@/utils/authz";
 import { sendSignatureRequest } from "@/utils/integrations/dropboxSign";
 
+export const dynamic = "force-dynamic";
+
+type AuthResult =
+  | { ok: true; auth: AuthContext }
+  | { ok: false; response: NextResponse };
+
+async function resolveAuth(): Promise<AuthResult> {
+  try {
+    const auth = await getAuthContext();
+    if (!auth) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      };
+    }
+    return { ok: true, auth };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[documents/send-for-signature] getAuthContext failed:", error);
+
+    if (message.includes("context error") || message.includes("cookies()")) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: "Authentication service unavailable" },
+          { status: 500 },
+        ),
+      };
+    }
+
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Internal authentication error" }, { status: 500 }),
+    };
+  }
+}
+
 export async function POST(req: NextRequest) {
-  const auth = await getAuthContext();
-  if (!auth) return new NextResponse("unauthorized", { status: 401 });
+  const authResult = await resolveAuth();
+  if (!authResult.ok) return authResult.response;
+  const { auth } = authResult;
+
   if (!canWrite(auth.role)) return new NextResponse("forbidden", { status: 403 });
 
   const body = await req.json().catch(() => null);
@@ -47,4 +86,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, signatureRequestId });
 }
-
