@@ -93,6 +93,19 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                           <span>{app.candidate.email}</span>
                           <span>•</span>
                           <span>{new Date(app.createdAt).toLocaleDateString("it-IT")}</span>
+                          {app.candidate.matchingScore !== null && (
+                            <>
+                              <span>•</span>
+                              <span className={cn(
+                                "font-bold",
+                                app.candidate.matchingScore >= 80 ? "text-green-600" : 
+                                app.candidate.matchingScore >= 50 ? "text-yellow-600" : 
+                                "text-orange-600"
+                              )}>
+                                {app.candidate.matchingScore}% Match
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

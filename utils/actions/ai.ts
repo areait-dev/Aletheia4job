@@ -1,5 +1,15 @@
 "use server";
 
+import prisma from "@/utils/db";
+import { Groq } from 'groq-sdk';
+import { extractTextFromUrl } from "../cv-extraction";
+import { authenticateAndRedirect } from "./shared";
+import { canWrite } from "../authz";
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 export async function parseCVAction(text: string) {
   const apiKey = process.env.GEMINI_API_KEY;
   const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -33,5 +43,111 @@ export async function parseCVAction(text: string) {
   } catch (error) {
     console.error("Errore AI CV Parsing:", error);
     return null;
+  }
+}
+
+export async function calculateMatchingScoreAction(candidateId: string, jobId: string) {
+  try {
+    const { role } = await authenticateAndRedirect();
+    if (!canWrite(role)) return { ok: false, error: "Non autorizzato" };
+
+    return await processAICandidateAnalysis(candidateId, jobId);
+  } catch (error) {
+    console.error('Error in AI matching action:', error);
+    return { ok: false, error: "Errore durante l'analisi AI" };
+  }
+}
+
+/**
+ * Funzione interna per processare l'analisi AI senza controlli di sessione (per trigger automatici)
+ */
+export async function processAICandidateAnalysis(candidateId: string, jobId: string) {
+  try {
+    // 1. Recupera dati candidato e job
+    const candidate = await prisma.candidate.findUnique({
+      where: { id: candidateId },
+      select: { id: true, cvUrl: true, resumeText: true }
+    });
+
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      select: { title: true, requirements: true, description: true }
+    });
+
+    if (!candidate || !job) return { ok: false, error: "Candidato o Job non trovato" };
+    if (!candidate.cvUrl && !candidate.resumeText) return { ok: false, error: "Il candidato non ha un CV caricato" };
+
+    // 2. Estrai testo se non presente
+    let text = candidate.resumeText;
+    if (!text && candidate.cvUrl) {
+      console.log('🔄 [AI] Estrazione testo dal CV...');
+      text = await extractTextFromUrl(candidate.cvUrl);
+      if (text) {
+        await prisma.candidate.update({
+          where: { id: candidateId },
+          data: { resumeText: text }
+        });
+      }
+    }
+
+    if (!text) return { ok: false, error: "Impossibile estrarre il testo dal CV" };
+
+    // 3. Prompt per Groq
+    const prompt = `
+      Sei un esperto HR Senior. Analizza il CV di un candidato rispetto ai requisiti di una posizione lavorativa.
+      
+      JOB TITLE: ${job.title}
+      JOB REQUIREMENTS: ${job.requirements}
+      JOB DESCRIPTION: ${job.description}
+      
+      CV TEXT:
+      ${text.substring(0, 10000)}
+      
+      REGOLE:
+      - Restituisci un oggetto JSON.
+      - matchingScore: un intero da 0 a 100.
+      - matchedKeywords: array di stringhe (massimo 10 competenze chiave trovate).
+      - missingKeywords: array di stringhe (massimo 5 competenze importanti mancanti).
+      - recommendation: una breve frase (massimo 15 parole).
+      
+      FORMATO JSON:
+      {
+        "matchingScore": 85,
+        "matchedKeywords": ["React", "TypeScript", "Node.js"],
+        "missingKeywords": ["AWS", "Docker"],
+        "recommendation": "Profilo solido con ottime basi tecniche, consigliato per colloquio tecnico."
+      }
+    `;
+
+    const response = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: "Sei un assistente HR che risponde esclusivamente in formato JSON." },
+        { role: "user", content: prompt }
+      ],
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" }
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("Risposta AI vuota");
+    
+    const result = JSON.parse(content);
+
+    // 4. Aggiorna il record
+    await prisma.candidate.update({
+      where: { id: candidateId },
+      data: {
+        matchingScore: result.matchingScore,
+        matchedKeywords: result.matchedKeywords,
+        missingKeywords: result.missingKeywords,
+        recommendation: result.recommendation
+      }
+    });
+
+    return { ok: true, data: result };
+
+  } catch (error) {
+    console.error('Error in processAICandidateAnalysis:', error);
+    return { ok: false, error: error instanceof Error ? error.message : "Errore analisi AI" };
   }
 }

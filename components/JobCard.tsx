@@ -87,6 +87,18 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
                   {candidate.source}
                 </Badge>
               )}
+              {candidate.matchingScore !== null && candidate.matchingScore !== undefined && (
+                <Badge 
+                  className={cn(
+                    "font-bold",
+                    candidate.matchingScore >= 80 ? "bg-green-600 hover:bg-green-700" : 
+                    candidate.matchingScore >= 50 ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-600" : 
+                    "bg-orange-600 hover:bg-orange-700"
+                  )}
+                >
+                  {candidate.matchingScore}% Match
+                </Badge>
+              )}
             </div>
           </div>
           <div className='flex flex-col items-end gap-2'>

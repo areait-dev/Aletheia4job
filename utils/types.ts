@@ -31,6 +31,10 @@ export type CandidateType = {
   cvUrl: string | null;
   notes: string | null;
   source: string | null;
+  matchingScore: number | null;
+  matchedKeywords: string[] | null;
+  missingKeywords: string[] | null;
+  recommendation: string | null;
   applications?: ApplicationType[];
 };
 

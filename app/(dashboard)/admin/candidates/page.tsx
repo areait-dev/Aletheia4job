@@ -15,20 +15,16 @@ type CandidateData = {
 
 export default async function AdminCandidatesPage() {
   try {
-    // Recupera i candidati dal DB
-    const candidates: CandidateData[] = await prisma.candidate.findMany({
+    // Recupera i candidati dal DB includendo le applicazioni per sapere a quale lavoro si sono candidati
+    const candidates = await prisma.candidate.findMany({
       orderBy: {
         matchingScore: 'desc',
       },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        matchingScore: true,
-        matchedKeywords: true,
-        cvUrl: true,
+      include: {
+        applications: {
+          select: { jobId: true },
+          take: 1
+        }
       }
     });
 
@@ -42,7 +38,7 @@ export default async function AdminCandidatesPage() {
     return (
       <div className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">Gestione Candidati</h1>
+          <h1 className="text-2xl font-bold">Gestione Candidati (AI)</h1>
           <div className="flex gap-3 text-sm">
             <div className="px-3 py-1.5 bg-white border rounded shadow-sm">
               Totali: <strong>{totalCandidates}</strong>
@@ -67,6 +63,7 @@ export default async function AdminCandidatesPage() {
                 matchingScore: c.matchingScore,
                 matchedKeywords: c.matchedKeywords || [],
                 cvUrl: c.cvUrl,
+                jobId: c.applications[0]?.jobId // Passiamo l'ID del lavoro per l'analisi AI
               }} 
             />
           ))}

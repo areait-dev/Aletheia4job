@@ -10,6 +10,7 @@ import {
 import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry } from "../authz";
 import { authenticateAndRedirect } from "./shared";
+import { processAICandidateAnalysis } from "./ai";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -178,6 +179,13 @@ export async function applyToJobAction(values: {
     await prisma.application.create({
       data: { candidateId: candidate.id, jobId: values.jobId, organizationId, status: "Nuovo" }
     });
+
+    // Avvio analisi AI automatica (non blocca la conferma all'utente)
+    if (values.cvUrl || candidate.resumeText) {
+      console.log('🤖 Avvio analisi AI automatica per:', candidate.email);
+      processAICandidateAnalysis(candidate.id, values.jobId).catch(e => console.error('AI Auto-match error:', e));
+    }
+
     return { ok: true };
   } catch (error) { 
     console.error("Errore applicazione:", error);

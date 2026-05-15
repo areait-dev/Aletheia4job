@@ -2,7 +2,11 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, Phone } from 'lucide-react';
+import { FileText, Phone, Sparkles, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { calculateMatchingScoreAction } from '@/utils/actions/ai';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
 
 interface CandidateData {
   id: string;
@@ -13,6 +17,7 @@ interface CandidateData {
   cvUrl?: string | null;
   matchingScore?: number | null;
   matchedKeywords?: string[] | null;
+  jobId?: string | null;
 }
 
 interface CandidateCardProps {
@@ -26,15 +31,71 @@ function getScoreColor(score: number): string {
 }
 
 export default function CandidateCard({ candidate }: CandidateCardProps) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const router = useRouter();
+
   const hasScore =
     candidate.matchingScore !== null && candidate.matchingScore !== undefined;
+
+  const handleAnalyze = async () => {
+    if (!candidate.jobId) {
+      toast({
+        title: "Errore",
+        description: "Impossibile trovare una posizione associata a questo candidato.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const result = await calculateMatchingScoreAction(candidate.id, candidate.jobId);
+      if (result.ok) {
+        toast({
+          title: "Analisi completata",
+          description: `Score AI: ${result.data.matchingScore}%`,
+        });
+        router.refresh();
+      } else {
+        toast({
+          title: "Errore",
+          description: result.error || "Si è verificato un errore durante l'analisi.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Errore imprevisto durante l'analisi AI.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
     <div className="flex flex-col justify-between p-4 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow h-full">
       <div>
-        <h3 className="text-lg font-semibold truncate mb-1">
-          {candidate.firstName} {candidate.lastName}
-        </h3>
+        <div className="flex justify-between items-start mb-1">
+          <h3 className="text-lg font-semibold truncate flex-1">
+            {candidate.firstName} {candidate.lastName}
+          </h3>
+          <button
+            onClick={handleAnalyze}
+            disabled={isAnalyzing || !candidate.cvUrl}
+            className={`p-1.5 rounded-full transition-colors ${
+              hasScore ? 'text-primary hover:bg-primary/10' : 'text-gray-400 hover:bg-gray-100'
+            }`}
+            title={hasScore ? "Rifai analisi AI" : "Avvia analisi AI"}
+          >
+            {isAnalyzing ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Sparkles size={16} />
+            )}
+          </button>
+        </div>
 
         {(hasScore || candidate.cvUrl) && (
           <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -90,7 +151,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
 
       <div className="mt-4 pt-4 border-t flex gap-2">
         <Link
-          href={`/admin/candidates/${candidate.id}`}
+          href={`/jobs/${candidate.id}`}
           className="flex-1 px-3 py-1.5 text-xs font-medium text-center text-white bg-primary rounded hover:bg-primary/90 transition-colors"
         >
           Vedi Dettaglio
