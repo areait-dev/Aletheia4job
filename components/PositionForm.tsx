@@ -42,6 +42,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
   const remoteOptions = ['Onsite', 'Remote', 'Hybrid'];
   const salaryCurrencyOptions = ['EUR', 'USD', 'GBP'];
   const salaryIntervalOptions = ['Yearly', 'Monthly', 'Hourly'];
+  const sectorOptions = ['Information Technology', 'Finance', 'Healthcare', 'Marketing', 'Sales', 'Engineering', 'Human Resources', 'Legal', 'Education', 'Manufacturing', 'Retail', 'Other'];
 
   // 🔥 NUOVO: stato per il caricamento AI
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -80,7 +81,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
       applicationUrl: undefined,
       status: JobStatus.Pending,
       mode: JobMode.FullTime,
-      sector: '',
+      sector: 'Information Technology',
     },
   });
 
@@ -248,6 +249,13 @@ function PositionForm({ jobId }: { jobId?: string }) {
           <CustomFormTextarea name='description' control={form.control} labelText='job description' />
           {/* requirements */}
           <CustomFormTextarea name='requirements' control={form.control} labelText='requirements' />
+          {/* sector */}
+          <CustomFormSelect
+            name='sector'
+            control={form.control}
+            labelText='sector'
+            items={sectorOptions}
+          />
           {/* salary min */}
           <CustomFormField name='salaryMin' control={form.control} labelText='salary min' type='number' />
           {/* salary max */}
