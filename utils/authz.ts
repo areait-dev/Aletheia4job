@@ -40,7 +40,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   // Cerchiamo la membership principale dell'utente
   let membership = await prisma.membership.findFirst({
     where: { userId },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   if (!membership) {

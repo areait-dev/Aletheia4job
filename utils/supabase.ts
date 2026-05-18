@@ -7,16 +7,18 @@ export type CvUploadBucket = 'candidates' | 'cvs';
  */
 export async function uploadCV(
   file: File,
-  options?: { bucket?: CvUploadBucket },
+  options?: { bucket?: CvUploadBucket; jobId?: string },
 ): Promise<{ url: string | null; error: string | null }> {
   const bucket = options?.bucket ?? 'cvs';
+  const jobId = options?.jobId;
 
   try {
-    console.log('[uploadCV] Tentativo upload bucket:', bucket);
+    console.log('[uploadCV] Tentativo upload bucket:', bucket, 'jobId:', jobId);
 
     const formData = new FormData();
     formData.append('file', file);
     formData.append('bucket', bucket);
+    if (jobId) formData.append('jobId', jobId);
 
     const res = await fetch('/api/upload-cv', { method: 'POST', body: formData });
     const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };

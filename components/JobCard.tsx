@@ -1,5 +1,5 @@
 import { CandidateType, CandidateStatus } from '@/utils/types';
-import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download, Edit, Sparkles } from 'lucide-react';
+import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download, Edit, Trash2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   Card,
@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { updateCandidateStatusAction } from '@/utils/actions';
+import { updateCandidateStatusAction, deleteCandidateAction } from '@/utils/actions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from './ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -48,7 +48,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
       updateCandidateStatusAction(candidateId, status),
     onSuccess: (updatedCandidate) => {
       if (updatedCandidate) {
-        // Invalida le query per aggiornare la lista
+        queryClient.invalidateQueries({ queryKey: ['candidates-grouped'] });
         queryClient.invalidateQueries({ queryKey: ['candidates'] });
         queryClient.invalidateQueries({ queryKey: ['stats'] });
         toast({
@@ -71,6 +71,29 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
       candidateId: candidate.id,
       status: newStatus,
     });
+  };
+
+  // Mutazione per eliminare il candidato
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCandidateAction(candidate.id),
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['candidates-grouped'] });
+        queryClient.invalidateQueries({ queryKey: ['stats'] });
+        toast({ title: "Candidato eliminato", description: "Il candidato è stato rimosso dall'archivio." });
+      } else {
+        toast({ title: "Errore", description: "Impossibile eliminare il candidato.", variant: "destructive" });
+      }
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile eliminare il candidato.", variant: "destructive" });
+    },
+  });
+
+  const handleDelete = () => {
+    if (window.confirm(`Eliminare ${candidate.firstName} ${candidate.lastName}? Operazione irreversibile.`)) {
+      deleteMutation.mutate();
+    }
   };
 
   return (
@@ -143,6 +166,16 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
                 title='Scarica Scheda PDF'
               >
                 <Download className='w-4 h-4' />
+              </Button>
+              <Button 
+                variant='ghost' 
+                size='icon' 
+                className='h-8 w-8 text-muted-foreground hover:text-destructive rounded-full hover:bg-destructive/10'
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                title='Elimina candidato'
+              >
+                {deleteMutation.isPending ? <Loader2 className='w-4 h-4 animate-spin' /> : <Trash2 className='w-4 h-4' />}
               </Button>
             </div>
           </div>

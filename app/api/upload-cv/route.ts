@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file');
     const bucketName = String(formData.get('bucket') ?? 'candidates');
-    console.log('Tentativo upload bucket:', bucketName);
+    const jobId = formData.get('jobId') as string | null;
+    console.log('Tentativo upload bucket:', bucketName, 'jobId:', jobId);
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'File mancante' }, { status: 400 });
@@ -41,7 +42,11 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient();
     const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${ext}`;
-    const filePath = bucketName === 'candidates' ? `cvs/${fileName}` : fileName;
+    const filePath = bucketName === 'candidates'
+      ? `cvs/${fileName}`
+      : jobId
+        ? `${jobId}/${fileName}`
+        : fileName;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 

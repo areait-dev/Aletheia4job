@@ -15,6 +15,22 @@ import { processAICandidateAnalysis } from "./ai";
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
 
+// Crea cartella per la posizione aperta in Supabase Storage
+async function ensureJobFolder(jobId: string) {
+  try {
+    const { createServiceClient } = await import('@/utils/supabase/service');
+    const supabase = createServiceClient();
+    const { error } = await supabase.storage
+      .from('cvs')
+      .upload(`${jobId}/.keep`, new Uint8Array(0), { upsert: true, contentType: 'text/plain' });
+    if (error && !error.message.includes('Duplicate')) {
+      console.warn('[ensureJobFolder] Errore creazione cartella:', error.message);
+    }
+  } catch (e) {
+    console.warn('[ensureJobFolder] Fallito:', e);
+  }
+}
+
 // Configurazione client per Groq
 function getGroqClient() {
   return new OpenAI({
@@ -35,6 +51,7 @@ export async function createJobAction(values: CreateAndEditJobType): Promise<Job
       },
     });
     await createAuditLogEntry({ userId, organizationId, action: AuditAction.CREATE, entity: "job", entityId: job.id });
+    ensureJobFolder(job.id);
     return {
       ...job,
       status: job.status as JobStatus,
@@ -89,6 +106,7 @@ export async function updateJobAction(jobId: string, values: Partial<CreateAndEd
     await createAuditLogEntry({ userId, organizationId, action: AuditAction.UPDATE, entity: "job", entityId: jobId });
     const updatedJob = await prisma.job.findFirst({ where: { id: jobId, organizationId } });
     if (!updatedJob) return null;
+    if (updatedJob.status === "Aperto") ensureJobFolder(jobId);
     return {
       ...updatedJob,
       status: updatedJob.status as JobStatus,
@@ -139,59 +157,96 @@ export async function applyToJobAction(values: {
   jobId: string; firstName: string; lastName: string; email: string; phone?: string; city: string; cvUrl?: string; source?: string;
 }) {
   try {
+    console.log('🔍 [applyToJobAction] Inizio processo per jobId:', values.jobId, 'email:', values.email);
+    
     const job = await prisma.job.findUnique({
       where: { id: values.jobId },
       select: { organizationId: true, sector: true, title: true, userId: true }
     });
-    if (!job) return { ok: false, error: "Posizione non trovata" };
-
-    const { organizationId, userId: jobCreatorId } = job;
-    let candidate = await prisma.candidate.findFirst({
-      where: { email: { equals: values.email, mode: 'insensitive' }, organizationId }
-    });
-
-    if (candidate) {
-      console.log('✅ CV URL salvato:', values.cvUrl);
-      candidate = await prisma.candidate.update({
-        where: { id: candidate.id },
-        data: {
-          firstName: values.firstName,
-          lastName: values.lastName,
-          phone: values.phone || candidate.phone,
-          city: values.city,
-          ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
-        },
-      });
-    } else {
-      console.log('✅ CV URL salvato:', values.cvUrl);
-      candidate = await prisma.candidate.create({
-        data: {
-          firstName: values.firstName, lastName: values.lastName, email: values.email.toLowerCase(), phone: values.phone,
-          city: values.city, role: job.title, seniority: 'Mid', sector: job.sector, status: "Nuovo", source: values.source || "Career Page",
-          organizationId, userId: jobCreatorId, cvUrl: values.cvUrl,
-        },
-      });
+    
+    if (!job) {
+      console.warn('⚠️ [applyToJobAction] Job non trovato:', values.jobId);
+      return { ok: false, error: "Posizione non trovata" };
     }
 
-    const existingApp = await prisma.application.findUnique({
-      where: { candidateId_jobId: { candidateId: candidate.id, jobId: values.jobId } }
-    });
-    if (existingApp) return { ok: false, error: "Hai già inviato una candidatura per questa posizione." };
+    const { organizationId, userId: jobCreatorId } = job;
+    const emailLower = values.email.toLowerCase();
 
-    await prisma.application.create({
-      data: { candidateId: candidate.id, jobId: values.jobId, organizationId, status: "Nuovo" }
+    // Operazioni DB atomiche in transazione
+    const result = await prisma.$transaction(async (tx) => {
+      // Find or create candidate
+      let candidate = await tx.candidate.findFirst({
+        where: { email: { equals: emailLower, mode: 'insensitive' }, organizationId }
+      });
+
+      if (candidate) {
+        candidate = await tx.candidate.update({
+          where: { id: candidate.id },
+          data: {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            phone: values.phone || candidate.phone,
+            city: values.city,
+            ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
+          },
+        });
+      } else {
+        candidate = await tx.candidate.create({
+          data: {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: emailLower,
+            phone: values.phone,
+            city: values.city,
+            role: job.title,
+            seniority: 'Mid',
+            sector: job.sector,
+            status: "Nuovo",
+            source: values.source || "Career Page",
+            organizationId,
+            userId: jobCreatorId,
+            cvUrl: values.cvUrl,
+          },
+        });
+      }
+
+      // Check duplicate application
+      const existingApp = await tx.application.findUnique({
+        where: { candidateId_jobId: { candidateId: candidate.id, jobId: values.jobId } }
+      });
+
+      if (existingApp) {
+        throw new Error("DUPLICATE_APPLICATION");
+      }
+
+      // Create application record
+      const application = await tx.application.create({
+        data: {
+          candidateId: candidate.id,
+          jobId: values.jobId,
+          organizationId,
+          status: "Nuovo",
+        }
+      });
+
+      return { candidateId: candidate.id, applicationId: application.id };
     });
 
-    // Avvio analisi AI automatica (non blocca la conferma all'utente)
-    if (values.cvUrl || candidate.resumeText) {
-      console.log('🤖 Avvio analisi AI automatica per:', candidate.email);
-      processAICandidateAnalysis(candidate.id, values.jobId).catch(e => console.error('AI Auto-match error:', e));
+    // AI analysis fuori dalla transazione (non critica)
+    if (values.cvUrl) {
+      processAICandidateAnalysis(result.candidateId, values.jobId).catch(e => {
+        console.error('❌ [applyToJobAction] AI Auto-match error:', e);
+      });
     }
 
     return { ok: true };
-  } catch (error) { 
-    console.error("Errore applicazione:", error);
-    return { ok: false, error: "Errore invio candidatura" }; 
+  } catch (error) {
+    if (error instanceof Error && error.message === "DUPLICATE_APPLICATION") {
+      return { ok: false, error: "Hai già inviato una candidatura per questa posizione." };
+    }
+    console.error("❌ [applyToJobAction] Errore critico durante l'invio:", error);
+    const errorMessage = error instanceof Error ? error.message : "Errore interno del server";
+    return { ok: false, error: `Impossibile completare l'invio: ${errorMessage}` };
   }
 }
 

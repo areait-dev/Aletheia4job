@@ -85,16 +85,26 @@ export async function processAICandidateAnalysis(candidateId: string, jobId: str
     let text = candidate.resumeText;
     if (!text && candidate.cvUrl) {
       console.log('🔄 [AI] Estrazione testo dal CV...');
-      text = await extractTextFromUrl(candidate.cvUrl);
-      if (text) {
+      const extractionResult = await extractTextFromUrl(candidate.cvUrl);
+      
+      if (extractionResult.success) {
+        text = extractionResult.text;
         await prisma.candidate.update({
           where: { id: candidateId },
           data: { resumeText: text }
         });
+        console.log('✅ [AI] Testo estratto e salvato');
+      } else {
+        console.warn('⚠️ [AI] Estrazione testo fallita:', extractionResult.error);
+        // Non blocchiamo, ma restituiamo un errore gestito
+        return { ok: false, error: extractionResult.error };
       }
     }
 
-    if (!text) return { ok: false, error: "Impossibile estrarre il testo dal CV" };
+    if (!text) {
+      console.warn('⚠️ [AI] Nessun testo disponibile per l\'analisi');
+      return { ok: false, error: "Nessun testo disponibile per l'analisi" };
+    }
 
     // 3. Prompt per Groq
     const prompt = `

@@ -52,7 +52,7 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
 
     setUploading(true);
     try {
-      const { url, error } = await uploadCV(file, { bucket: 'cvs' }); // bucket Supabase esistente (candidature pubbliche)
+      const { url, error } = await uploadCV(file, { bucket: 'cvs', jobId });
 
       if (error || !url) {
         console.error('[JobApplicationForm] Supabase Upload Error:', error);
@@ -87,29 +87,38 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
     setIsSubmitting(true);
 
     try {
-      console.log('Invio candidatura con CV:', formData.cvUrl);
+      console.log('🚀 [JobApplicationForm] Tentativo di invio candidatura...', { 
+        jobId, 
+        email: formData.email, 
+        cvUrl: formData.cvUrl 
+      });
+
       const result = await applyToJobAction({
         jobId,
         ...formData
       });
 
       if (result.ok) {
+        console.log('✅ [JobApplicationForm] Candidatura inviata con successo');
         setIsSuccess(true);
         toast({
           title: "Candidatura inviata!",
           description: "Abbiamo ricevuto la tua candidatura. Ti ricontatteremo presto.",
         });
       } else {
+        console.error('❌ [JobApplicationForm] Errore restituito dall\'azione:', result.error);
         toast({
           title: "Errore",
-          description: result.error || "Si è verificato un errore.",
+          description: result.error || "Si è verificato un errore durante l'invio.",
           variant: "destructive",
         });
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Errore imprevisto';
+      console.error('💥 [JobApplicationForm] Eccezione durante il submit:', error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore imprevisto.",
+        description: `Errore di rete o di sistema: ${message}`,
         variant: "destructive",
       });
     } finally {

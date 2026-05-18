@@ -71,7 +71,7 @@ export default function ArchivioManager() {
           </div>
         </div>
         
-        <div className="bg-primary/5 p-4 sm:p-8 rounded-[2.5rem] border border-primary/10 shadow-inner">
+        <div className="bg-primary/5 p-4 sm:p-8 rounded-[2.5rem] border border-primary/10 shadow-inner max-h-[600px] overflow-y-auto">
           <JobFolders candidates={automaticCandidates} />
         </div>
       </section>
