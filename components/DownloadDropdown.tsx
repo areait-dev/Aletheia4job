@@ -11,8 +11,6 @@ import { Download, FileText, Table } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { CandidateType } from "@/utils/types";
-import * as XLSX from "xlsx";
-import Papa from "papaparse";
 
 function DownloadDropdown() {
   const { toast } = useToast();
@@ -48,11 +46,12 @@ function DownloadDropdown() {
     }));
   };
 
-  const handleDownloadCSV = () => {
+  const handleDownloadCSV = async () => {
     const data = getCandidatesData();
     if (!data) return;
 
-    const csv = Papa.unparse(data);
+    const Papa = await import("papaparse");
+    const csv = Papa.default.unparse(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -66,10 +65,11 @@ function DownloadDropdown() {
     toast({ description: "CSV scaricato con successo." });
   };
 
-  const handleDownloadExcel = () => {
+  const handleDownloadExcel = async () => {
     const data = getCandidatesData();
     if (!data) return;
 
+    const XLSX = await import("xlsx");
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Candidati");

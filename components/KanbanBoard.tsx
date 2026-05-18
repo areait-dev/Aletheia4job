@@ -1,7 +1,7 @@
 'use client';
 
 import { CandidateType, CandidateStatus } from '@/utils/types';
-import { User, MapPin, Briefcase, GripVertical, Phone, Mail } from 'lucide-react';
+import { MapPin, Briefcase, GripVertical, Phone, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,11 +10,9 @@ import {
   DragEndEvent,
   DragOverEvent,
   DragOverlay,
-  DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  pointerWithin,
   rectIntersection,
   useDroppable,
 } from '@dnd-kit/core';
@@ -24,16 +22,18 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useEffect, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { updateCandidateStatusAction } from '@/utils/actions';
 import { useToast } from './ui/use-toast';
 
-function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateType[] }) {
+const KanbanBoard = React.memo(function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateType[] }) {
   const [candidates, setCandidates] = useState(initialCandidates);
   const [activeId, setActiveId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const candidatesRef = useRef(candidates);
+  candidatesRef.current = candidates;
 
   const columns = Object.values(CandidateStatus);
 
@@ -54,11 +54,11 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
     [activeId, candidates]
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-  };
+  }, []);
 
-  const handleDragOver = (event: DragOverEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
 
@@ -67,43 +67,33 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
 
     if (activeId === overId) return;
 
-    const activeCand = candidates.find((c) => c.id === activeId);
-    if (!activeCand) return;
-
-    // Caso 1: Trascinamento sopra una colonna (vuota o meno)
-    const isOverAColumn = columns.includes(overId as any);
-    if (isOverAColumn) {
-      if (activeCand.status !== overId) {
-        setCandidates((prev) => 
-          prev.map((c) => (c.id === activeId ? { ...c, status: overId as string } : c))
-        );
+    setCandidates((prev) => {
+      const activeCand = prev.find((c) => c.id === activeId);
+      if (!activeCand) return prev;
+      const isOverAColumn = columns.includes(overId as any);
+      if (isOverAColumn) {
+        if (activeCand.status !== overId) {
+          return prev.map((c) => (c.id === activeId ? { ...c, status: overId as string } : c));
+        }
+        return prev;
       }
-      return;
-    }
+      const overCand = prev.find((c) => c.id === overId);
+      if (overCand && activeCand.status !== overCand.status) {
+        return prev.map((c) => (c.id === activeId ? { ...c, status: overCand.status } : c));
+      }
+      return prev;
+    });
+  }, [columns]);
 
-    // Caso 2: Trascinamento sopra un altro candidato
-    const overCand = candidates.find((c) => c.id === overId);
-    if (overCand && activeCand.status !== overCand.status) {
-      setCandidates((prev) => 
-        prev.map((c) => (c.id === activeId ? { ...c, status: overCand.status } : c))
-      );
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    console.log('DragEnd:', { active: active.id, over: over?.id });
 
-    if (!over) {
-      setCandidates(initialCandidates);
-      return;
-    }
+    if (!over) return;
 
     const candidateId = active.id as string;
-    const currentCandidate = candidates.find((c) => c.id === candidateId);
+    const currentCandidate = candidatesRef.current.find((c) => c.id === candidateId);
     const originalCandidate = initialCandidates.find((c) => c.id === candidateId);
-
     if (currentCandidate && originalCandidate && currentCandidate.status !== originalCandidate.status) {
       try {
         const result = await updateCandidateStatusAction(candidateId, currentCandidate.status);
@@ -114,12 +104,12 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
           setCandidates(initialCandidates);
           toast({ variant: 'destructive', description: 'Errore nel salvataggio.' });
         }
-      } catch (error) {
+      } catch {
         setCandidates(initialCandidates);
         toast({ variant: 'destructive', description: "Errore durante l'operazione." });
       }
     }
-  };
+  }, [initialCandidates, queryClient, toast]);
 
   return (
     <DndContext
@@ -131,10 +121,10 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
     >
       <div className='flex flex-col gap-4 pb-6'>
         {columns.map((status) => (
-          <KanbanColumn 
-            key={status} 
-            status={status} 
-            candidates={candidates.filter((c) => c.status === status)} 
+          <KanbanColumnMemoized
+            key={status}
+            status={status}
+            candidates={candidates}
           />
         ))}
       </div>
@@ -149,12 +139,17 @@ function KanbanBoard({ candidates: initialCandidates }: { candidates: CandidateT
       </DragOverlay>
     </DndContext>
   );
-}
+});
 
-function KanbanColumn({ status, candidates }: { status: string, candidates: CandidateType[] }) {
+const KanbanColumn = React.memo(function KanbanColumn({ status, candidates: allCandidates }: { status: string, candidates: CandidateType[] }) {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
   });
+
+  const columnCandidates = useMemo(
+    () => allCandidates.filter((c) => c.status === status),
+    [allCandidates, status]
+  );
 
   return (
     <div 
@@ -173,13 +168,13 @@ function KanbanColumn({ status, candidates }: { status: string, candidates: Cand
           <h3 className='font-bold text-sm uppercase tracking-wider'>{status}</h3>
         </div>
         <Badge variant='secondary' className='rounded-lg px-2 py-0.5 bg-primary/5 text-primary border-none font-bold'>
-          {candidates.length}
+          {columnCandidates.length}
         </Badge>
       </div>
 
       <SortableContext 
         id={status}
-        items={candidates.map(c => c.id)} 
+        items={columnCandidates.map(c => c.id)} 
         strategy={horizontalListSortingStrategy}
       >
         <div 
@@ -188,23 +183,24 @@ function KanbanColumn({ status, candidates }: { status: string, candidates: Cand
             isOver ? 'bg-primary/[0.08] border-primary/40' : 'bg-primary/[0.02] border-primary/5'
           )}
         >
-          {candidates.map((candidate) => (
+          {columnCandidates.map((candidate) => (
             <SortableCandidateCard key={candidate.id} candidate={candidate} />
           ))}
-          {candidates.length === 0 && (
+          {columnCandidates.length === 0 && (
             <div className='flex-1 flex items-center justify-center text-muted-foreground/30 text-[10px] uppercase font-bold tracking-tighter'>
               Trascina qui
             </div>
           )}
-          {/* Aggiunto un area vuota espandibile per facilitare il drop a fine lista */}
           <div className="flex-1 min-h-[50px]" />
         </div>
       </SortableContext>
     </div>
   );
-}
+});
 
-function SortableCandidateCard({ candidate }: { candidate: CandidateType }) {
+const KanbanColumnMemoized = React.memo(KanbanColumn);
+
+const SortableCandidateCard = React.memo(function SortableCandidateCard({ candidate }: { candidate: CandidateType }) {
   const {
     attributes,
     listeners,
@@ -214,11 +210,11 @@ function SortableCandidateCard({ candidate }: { candidate: CandidateType }) {
     isDragging,
   } = useSortable({ id: candidate.id });
 
-  const style = {
+  const style = useMemo(() => ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.3 : 1,
-  };
+  }), [transform, transition, isDragging]);
 
   return (
     <div
@@ -282,6 +278,6 @@ function SortableCandidateCard({ candidate }: { candidate: CandidateType }) {
       </div>
     </div>
   );
-}
+});
 
 export default KanbanBoard;

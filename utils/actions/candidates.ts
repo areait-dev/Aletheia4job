@@ -231,21 +231,24 @@ export async function updateCandidateAction(candidateId: string, values: Partial
 export async function getChartsDataAction() {
   const { organizationId } = await authenticateAndRedirect();
   try {
-    const monthlyData = await prisma.candidate.groupBy({
-      where: { organizationId },
-      by: ["createdAt"],
-      _count: { id: true },
-      orderBy: { createdAt: "asc" },
-    });
-    const statusData = await prisma.candidate.groupBy({
-      where: { organizationId },
-      by: ["status"],
-      _count: { status: true },
-    });
+    const [monthlyData, statusData] = await Promise.all([
+      prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
+        SELECT DATE_TRUNC('month', "createdAt")::date as date, COUNT(*)::int as count
+        FROM "Candidate"
+        WHERE "organizationId" = ${organizationId}
+        GROUP BY DATE_TRUNC('month', "createdAt")
+        ORDER BY date ASC
+      `,
+      prisma.candidate.groupBy({
+        where: { organizationId },
+        by: ["status"],
+        _count: { status: true },
+      }),
+    ]);
     return {
       monthlyData: monthlyData.map(d => ({
-        date: d.createdAt.toISOString().split('T')[0],
-        count: d._count.id,
+        date: typeof d.date === 'string' ? d.date.split('T')[0] : String(d.date),
+        count: Number(d.count),
       })),
       statusData: statusData.map(s => ({
         status: s.status,

@@ -1,5 +1,3 @@
-// app/(dashboard)/dashboard/page.tsx
-
 import { 
   getCandidateStatsAction, 
   getEmployeesAction, 
@@ -19,18 +17,14 @@ import {
   TrendingUp,
   ArrowRight,
   UserPlus,
-  FilePlus,
   PlusCircle
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// 👇 Queste due righe sono FONDAMENTALI per evitare errori di cookie/prerendering su Vercel
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 30;
 
 export default async function DashboardPage() {
-  // Fetch dati in parallelo per velocità
   const [
     stats,
     employees,
@@ -49,10 +43,11 @@ export default async function DashboardPage() {
     getAllJobsAction()
   ]);
 
-  // Logica di filtraggio semplice lato server
   const activeEmployees = employees.filter(e => e.status === "ACTIVE").length;
   const pendingAbsences = absences.filter(a => a.status === "REQUESTED").length;
   const pendingReviews = cycles.filter(c => c.status === "ACTIVE").length;
+  const openPositions = jobs.filter(j => j.status === "Aperto").length;
+  const pendingSignatures = documents.filter(d => d.signatureStatus === "SENT").length;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -73,9 +68,9 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: "Candidati Totali", value: stats.totalCandidates, icon: <Users />, color: "text-blue-600", bg: "bg-blue-500/10", href: "/jobs" },
-          { label: "Posizioni Aperte", value: jobs.filter(j => j.status === "Aperto").length, icon: <Briefcase />, color: "text-indigo-600", bg: "bg-indigo-500/10", href: "/positions" },
+          { label: "Posizioni Aperte", value: openPositions, icon: <Briefcase />, color: "text-indigo-600", bg: "bg-indigo-500/10", href: "/positions" },
           { label: "Team Attivo", value: activeEmployees, icon: <Users />, color: "text-green-600", bg: "bg-green-500/10", href: "/employees" },
-          { label: "Documenti Firma", value: documents.filter(d => d.signatureStatus === "SENT").length, icon: <Files />, color: "text-amber-600", bg: "bg-amber-500/10", href: "/documents" },
+          { label: "Documenti Firma", value: pendingSignatures, icon: <Files />, color: "text-amber-600", bg: "bg-amber-500/10", href: "/documents" },
         ].map((s, idx) => (
           <Link key={idx} href={s.href} className="glass group rounded-[2.5rem] p-8 flex flex-col gap-6 hover:border-primary/30 transition-all duration-300">
             <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform", s.bg, s.color)}>

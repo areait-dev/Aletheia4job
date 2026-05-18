@@ -1,6 +1,4 @@
-export const dynamic = 'force-dynamic';
-
-import ChartsContainer from '@/components/ChartsContainer';
+import dynamic from 'next/dynamic';
 import StatsContainer from '@/components/StatsContainer';
 import { getCandidateStatsAction, getChartsDataAction } from '@/utils/actions';
 import {
@@ -9,17 +7,21 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 
+const ChartsContainer = dynamic(() => import('@/components/ChartsContainer'), { ssr: false });
+
 async function StatsPage() {
   const queryClient = new QueryClient();
 
-  await queryClient.prefetchQuery({
-    queryKey: ['stats'],
-    queryFn: () => getCandidateStatsAction(),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ['charts'],
-    queryFn: () => getChartsDataAction(),
-  });
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: ['stats'],
+      queryFn: () => getCandidateStatsAction(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ['charts'],
+      queryFn: () => getChartsDataAction(),
+    }),
+  ]);
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <StatsContainer />

@@ -13,10 +13,13 @@
  */
 'use client';
 import { ThemeProvider } from '@/components/theme-provider';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from '@/components/ui/toaster';
+
+const ReactQueryDevtools = lazy(() =>
+  import('@tanstack/react-query-devtools').then(m => ({ default: m.ReactQueryDevtools }))
+);
 
 /**
  * Providers Component
@@ -80,7 +83,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
         {children}
         {/* React Query Devtools - only visible in development */}
         {/* Shows query cache, active queries, and allows manual refetching */}
-        <ReactQueryDevtools initialIsOpen={false} />
+        <Suspense fallback={null}><ReactQueryDevtools initialIsOpen={false} /></Suspense>
       </QueryClientProvider>
     </ThemeProvider>
   );

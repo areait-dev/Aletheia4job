@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from './ui/button';
 import { Search, MapPin } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import {
   Select,
@@ -23,18 +23,9 @@ function SearchForm() {
   
   const router = useRouter();
   const pathname = usePathname();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounce function per evitare troppe chiamate API
-  const debounce = useCallback((func: Function, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
-    return (...args: any[]) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func.apply(null, args), delay);
-    };
-  }, []);
-
-  // Funzione per aggiornare i parametri URL
-  const updateSearchParams = useCallback((search: string, province: string, status: string) => {
+  const updateSearchParams = (search: string, province: string, status: string) => {
     const params = new URLSearchParams(searchParams);
     
     if (search.trim()) {
@@ -57,44 +48,35 @@ function SearchForm() {
 
     params.set('page', '1');
     router.push(`${pathname}?${params.toString()}`);
-  }, [searchParams, router, pathname]);
+  };
 
-  // Debounced search update
-  const debouncedUpdate = useCallback(
-    debounce((search: string, province: string, status: string) => {
-      updateSearchParams(search, province, status);
-    }, 300),
-    [debounce, updateSearchParams]
-  );
+  const debouncedUpdate = (fn: () => void) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(fn, 300);
+  };
 
-  // Gestisci cambio ricerca in tempo reale
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
     if (value.trim() === '') {
-      // Aggiorna immediatamente quando si svuota la ricerca
       updateSearchParams('', provinceValue, candidateStatus);
     } else {
-      debouncedUpdate(value, provinceValue, candidateStatus);
+      debouncedUpdate(() => updateSearchParams(value, provinceValue, candidateStatus));
     }
   };
 
-  // Gestisci cambio provincia in tempo reale
   const handleProvinceChange = (value: string) => {
     setProvinceValue(value);
     if (value.trim() === '') {
-      // Aggiorna immediatamente quando si svuota la provincia
       updateSearchParams(searchValue, '', candidateStatus);
     } else {
-      debouncedUpdate(searchValue, value, candidateStatus);
+      debouncedUpdate(() => updateSearchParams(searchValue, value, candidateStatus));
     }
   };
 
-  // Gestisci cambio stato
   const handleStatusChange = (value: string) => {
     updateSearchParams(searchValue, provinceValue, value);
   };
 
-  // Sincronizza i valori locali con i parametri URL quando cambiano
   useEffect(() => {
     const searchParam = searchParams.get('search') || '';
     const provinceParam = searchParams.get('province') || '';

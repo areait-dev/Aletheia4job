@@ -1,5 +1,5 @@
 // utils/get-linkedin-jobs.ts
-import { prisma } from '@/lib/prisma';
+import prisma from '@/utils/db';
 import { JobStatus } from '@/utils/types';
 import type { JobType } from '@/utils/types';
 

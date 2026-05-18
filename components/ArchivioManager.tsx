@@ -20,7 +20,7 @@ export default function ArchivioManager() {
       search, 
       candidateStatus, 
       province,
-      limit: 100 // Prendiamo un numero alto per la visione d'insieme
+      limit: 500
     }),
   });
 
