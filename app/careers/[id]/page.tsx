@@ -1,9 +1,10 @@
 import { getPublicJobsAction } from '@/utils/actions';
 import { notFound } from 'next/navigation';
-import { MapPin, Briefcase, Clock, Euro, Wifi, ArrowLeft, CheckCircle2, Star } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, Wifi, ArrowLeft, CheckCircle2, Star, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
+import { createClient } from '@/utils/supabase/server';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -35,14 +36,29 @@ export default async function CareerJobPage({ params }: { params: { id: string }
     .map(b => b.replace(/^[-•*]\s*/, '').trim())
     .filter(Boolean) ?? [];
 
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isLoggedIn = !!user;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/careers" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
-            <ArrowLeft className="w-4 h-4" /> Tutte le posizioni
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/careers" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
+              <ArrowLeft className="w-4 h-4" /> Tutte le posizioni
+            </Link>
+            {isLoggedIn && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-muted/80 px-2.5 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
+              >
+                <LayoutDashboard className="w-3 h-3" />
+                ATS
+              </Link>
+            )}
+          </div>
           <a
             href="#apply"
             className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"

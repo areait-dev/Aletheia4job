@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 import { getPublicJobsAction } from '@/utils/actions';
-import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/utils/supabase/server';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -40,6 +41,10 @@ export default async function CareersPage({
       )
     : jobs;
 
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isLoggedIn = !!user;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
@@ -49,9 +54,20 @@ export default async function CareersPage({
           <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-primary/8 blur-2xl" />
         </div>
         <div className="relative max-w-5xl mx-auto px-4 py-16 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Posizioni Aperte
+          <div className="flex items-center justify-center gap-3">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Posizioni Aperte
+            </div>
+            {isLoggedIn && (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-muted/80 px-3 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                ATS
+              </Link>
+            )}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Trova il tuo <span className="text-primary">prossimo ruolo</span>
