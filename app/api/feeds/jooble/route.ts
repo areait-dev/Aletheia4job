@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     const jobs = await prisma.job.findMany({
       where: {
         isActive: true,
+        postToJooble: true,
       },
       orderBy: {
         postedAt: 'desc',

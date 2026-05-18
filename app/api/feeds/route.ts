@@ -18,8 +18,9 @@ export async function GET(request: Request) {
   }
 
   try {
+    const postField = provider === 'jooble' ? 'postToJooble' : 'postToIndeed';
     const jobs = await prisma.job.findMany({
-      where: { isActive: true },
+      where: { isActive: true, [postField]: true },
       orderBy: { postedAt: 'desc' },
     });
 

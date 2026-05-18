@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     const jobs = await prisma.job.findMany({
       where: {
         isActive: true,
+        postToIndeed: true,
       },
       orderBy: {
         postedAt: 'desc',
