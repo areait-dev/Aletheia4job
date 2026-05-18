@@ -70,7 +70,7 @@ export async function processAICandidateAnalysis(candidateId: string, jobId: str
     // 1. Recupera dati candidato e job
     const candidate = await prisma.candidate.findUnique({
       where: { id: candidateId },
-      select: { id: true, cvUrl: true, resumeText: true }
+      select: { id: true, cvUrl: true, resumeText: true, organizationId: true }
     });
 
     const job = await prisma.job.findUnique({
@@ -148,9 +148,20 @@ export async function processAICandidateAnalysis(candidateId: string, jobId: str
     
     const result = JSON.parse(content);
 
-    // 4. Aggiorna il record
+    // 4. Aggiorna il record Candidate (score generale)
     await prisma.candidate.update({
       where: { id: candidateId },
+      data: {
+        matchingScore: result.matchingScore,
+        matchedKeywords: result.matchedKeywords,
+        missingKeywords: result.missingKeywords,
+        recommendation: result.recommendation
+      }
+    });
+
+    // 5. Aggiorna anche l'Application specifica (score per posizione)
+    await prisma.application.updateMany({
+      where: { candidateId, jobId, organizationId: candidate.organizationId },
       data: {
         matchingScore: result.matchingScore,
         matchedKeywords: result.matchedKeywords,

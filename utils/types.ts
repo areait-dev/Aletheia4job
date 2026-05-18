@@ -48,6 +48,10 @@ export type ApplicationType = {
   updatedAt: Date;
   job?: JobType;
   candidate?: CandidateType;
+  matchingScore?: number | null;
+  matchedKeywords?: string[];
+  missingKeywords?: string[];
+  recommendation?: string | null;
 };
 
 export enum CandidateStatus {

@@ -141,6 +141,13 @@ model Application {
   job            Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  // --- AI MATCHING SCORE PER POSIZIONE ---
+  matchingScore   Int?
+  matchedKeywords String[]
+  missingKeywords String[]
+  recommendation String?
+  // ----------------------------------------
+
   @@unique([candidateId, jobId])
   @@index([candidateId])
   @@index([jobId])

@@ -94,11 +94,11 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                           <span>{app.candidate.email}</span>
                           <span>•</span>
                           <span>{new Date(app.createdAt).toLocaleDateString("it-IT")}</span>
-                          {app.candidate.matchingScore !== null && (
+                          {(app.matchingScore ?? app.candidate.matchingScore) !== null && (
                             <>
                               <span>•</span>
-                              <span className={cn("font-bold px-1.5 py-0.5 rounded-lg text-[10px]", getScoreColor(app.candidate.matchingScore))}>
-                                {app.candidate.matchingScore}% Match
+                              <span className={cn("font-bold px-1.5 py-0.5 rounded-lg text-[10px]", getScoreColor(app.matchingScore ?? app.candidate.matchingScore))}>
+                                {(app.matchingScore ?? app.candidate.matchingScore)}% Match
                               </span>
                             </>
                           )}
