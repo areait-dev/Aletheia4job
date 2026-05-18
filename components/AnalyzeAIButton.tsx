@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 interface AnalyzeAIButtonProps {
   candidateId: string;
   jobId: string;
-  hasCv: boolean;
   className?: string;
   variant?: "ghost" | "outline" | "default";
   size?: "sm" | "icon" | "default";
@@ -20,7 +19,6 @@ interface AnalyzeAIButtonProps {
 export default function AnalyzeAIButton({ 
   candidateId, 
   jobId, 
-  hasCv, 
   className,
   variant = "ghost",
   size = "icon"
@@ -31,15 +29,6 @@ export default function AnalyzeAIButton({
   const handleAnalyze = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!hasCv) {
-      toast({
-        title: "Nessun CV",
-        description: "Carica un CV per poter effettuare l'analisi AI.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setIsAnalyzing(true);
     try {
@@ -74,7 +63,7 @@ export default function AnalyzeAIButton({
       size={size}
       className={cn("rounded-full", className)}
       onClick={handleAnalyze}
-      disabled={isAnalyzing || !hasCv}
+      disabled={isAnalyzing}
       title="Analisi AI Match"
     >
       {isAnalyzing ? (

@@ -25,7 +25,7 @@ import {
 import { updateCandidateStatusAction, deleteCandidateAction } from '@/utils/actions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from './ui/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, getScoreColor, getScoreLabel } from '@/lib/utils';
 
 import { calculateMatchingScoreAction } from '@/utils/actions/ai';
 import { useRouter } from 'next/navigation';
@@ -118,14 +118,10 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
               )}
               {candidate.matchingScore !== null && candidate.matchingScore !== undefined && (
                 <Badge 
-                  className={cn(
-                    "font-bold",
-                    candidate.matchingScore >= 80 ? "bg-green-600 hover:bg-green-700" : 
-                    candidate.matchingScore >= 50 ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-600" : 
-                    "bg-orange-600 hover:bg-orange-700"
-                  )}
+                  variant="outline"
+                  className={cn("font-bold border", getScoreColor(candidate.matchingScore))}
                 >
-                  {candidate.matchingScore}% Match
+                  {candidate.matchingScore}% · {getScoreLabel(candidate.matchingScore)}
                 </Badge>
               )}
             </div>
@@ -154,8 +150,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
             <div className='flex items-center gap-2'>
               <AnalyzeAIButton 
                 candidateId={candidate.id} 
-                jobId={candidate.applications?.[0]?.jobId || ""} 
-                hasCv={!!candidate.cvUrl}
+                jobId={candidate.applications?.[0]?.jobId || ""}
               />
               <Button 
                 variant='ghost' 

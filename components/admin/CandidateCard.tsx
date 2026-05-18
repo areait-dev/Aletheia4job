@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { calculateMatchingScoreAction } from '@/utils/actions/ai';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
+import { getScoreColor } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface CandidateData {
   id: string;
@@ -22,12 +24,6 @@ interface CandidateData {
 
 interface CandidateCardProps {
   candidate: CandidateData;
-}
-
-function getScoreColor(score: number): string {
-  if (score >= 80) return 'bg-green-600 text-white';
-  if (score >= 50) return 'bg-yellow-500 text-yellow-950';
-  return 'bg-orange-600 text-white';
 }
 
 export default function CandidateCard({ candidate }: CandidateCardProps) {
@@ -83,7 +79,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           </h3>
           <button
             onClick={handleAnalyze}
-            disabled={isAnalyzing || !candidate.cvUrl}
+            disabled={isAnalyzing}
             className={`p-1.5 rounded-full transition-colors ${
               hasScore ? 'text-primary hover:bg-primary/10' : 'text-gray-400 hover:bg-gray-100'
             }`}
@@ -97,15 +93,15 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
           </button>
         </div>
 
-        {(hasScore || candidate.cvUrl) && (
+        {(hasScore) && (
           <div className="flex flex-wrap items-center gap-3 mb-3">
             {hasScore && (
               <div className="flex flex-col gap-0.5" title="AI Match Score">
-                <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-bold rounded-full ${getScoreColor(candidate.matchingScore!)}`}
-                >
-                  {candidate.matchingScore}% Match
-                </span>
+                  <span
+                    className={cn("inline-flex items-center px-2 py-1 text-xs font-bold rounded-full border", getScoreColor(candidate.matchingScore))}
+                  >
+                    {candidate.matchingScore}% Match
+                  </span>
                 <span className="text-[10px] text-muted-foreground">AI Match Score</span>
               </div>
             )}

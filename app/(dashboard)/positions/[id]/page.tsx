@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Clock
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getScoreColor } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
 import ApplicationStatusSelect from "@/components/ApplicationStatusSelect";
 import AnalyzeAIButton from "@/components/AnalyzeAIButton";
@@ -97,12 +97,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                           {app.candidate.matchingScore !== null && (
                             <>
                               <span>•</span>
-                              <span className={cn(
-                                "font-bold",
-                                app.candidate.matchingScore >= 80 ? "text-green-600" : 
-                                app.candidate.matchingScore >= 50 ? "text-yellow-600" : 
-                                "text-orange-600"
-                              )}>
+                              <span className={cn("font-bold px-1.5 py-0.5 rounded-lg text-[10px]", getScoreColor(app.candidate.matchingScore))}>
                                 {app.candidate.matchingScore}% Match
                               </span>
                             </>
@@ -114,8 +109,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                       {app.jobId && (
                         <AnalyzeAIButton 
                           candidateId={app.candidateId} 
-                          jobId={app.jobId} 
-                          hasCv={!!app.candidate.cvUrl}
+                          jobId={app.jobId}
                         />
                       )}
                       <ApplicationStatusSelect 

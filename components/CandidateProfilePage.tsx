@@ -12,7 +12,7 @@ import {
 import Link from 'next/link';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { cn } from '@/lib/utils';
+import { cn, getScoreColor, getScoreLabel } from '@/lib/utils';
 import {
   getCandidateNotesAction, createCandidateNoteAction, deleteCandidateNoteAction,
   getCandidateInterviewsAction, createInterviewAction, updateInterviewOutcomeAction, deleteInterviewAction,
@@ -217,6 +217,49 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
             {candidate.expectedSalary && <InfoRow label="RAL Attesa" value={`€ ${candidate.expectedSalary.toLocaleString('it-IT')}`} />}
             <InfoRow label="Aggiunto il" value={new Date(candidate.createdAt).toLocaleDateString('it-IT')} />
           </div>
+
+          {candidate.matchingScore !== null && candidate.matchingScore !== undefined && (
+            <div className="glass rounded-3xl p-6 space-y-4">
+              <h2 className="font-semibold text-primary flex items-center gap-2"><Sparkles className="w-4 h-4" />AI Match Score</h2>
+              <div className="flex items-center gap-4">
+                <span className={cn("text-4xl font-black px-4 py-2 rounded-2xl border", getScoreColor(candidate.matchingScore))}>
+                  {candidate.matchingScore}%
+                </span>
+                <div>
+                  <span className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border", getScoreColor(candidate.matchingScore))}>
+                    {getScoreLabel(candidate.matchingScore)}
+                  </span>
+                  {candidate.recommendation && (
+                    <p className="text-sm text-muted-foreground mt-2 italic">&ldquo;{candidate.recommendation}&rdquo;</p>
+                  )}
+                </div>
+              </div>
+              {candidate.matchedKeywords && candidate.matchedKeywords.length > 0 && (
+                <div className="pt-3 border-t border-border/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Competenze Riconosciute</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {candidate.matchedKeywords.map((kw, i) => (
+                      <span key={i} className="text-xs px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-200/50 dark:border-emerald-800/50">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {candidate.missingKeywords && candidate.missingKeywords.length > 0 && (
+                <div className="pt-3 border-t border-border/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Competenze Mancanti</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {candidate.missingKeywords.map((kw, i) => (
+                      <span key={i} className="text-xs px-2.5 py-1 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 font-medium border border-red-200/50 dark:border-red-800/50">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="glass rounded-3xl p-6 space-y-4">
             <h2 className="font-semibold text-primary flex items-center gap-2"><Tag className="w-4 h-4" />Competenze</h2>
