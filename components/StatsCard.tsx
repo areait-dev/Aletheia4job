@@ -15,17 +15,17 @@ type StatsCardsProps = {
 
 function StatsCards({ title, value, className }: StatsCardsProps) {
   return (
-    <Card className={cn('glass overflow-hidden relative group border-white/20 transition-all duration-300 hover:shadow-xl rounded-2xl', className)}>
+    <Card className={cn('glass overflow-hidden relative group transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 rounded-3xl', className)}>
       <CardHeader className='flex flex-row justify-between items-center pb-2 px-6 pt-6'>
-        <CardTitle className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>{title}</CardTitle>
-        <div className='w-2 h-2 rounded-full bg-primary animate-pulse' />
+        <CardTitle className='text-xs font-bold text-muted-foreground uppercase tracking-widest'>{title}</CardTitle>
+        <div className='w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50' />
       </CardHeader>
       <div className='px-6 pb-6'>
-        <p className='text-5xl font-black text-primary tracking-tighter'>
+        <p className='text-5xl font-black text-primary tracking-tighter group-hover:scale-105 origin-left transition-transform duration-300'>
           {value}
         </p>
       </div>
-      <div className='absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors' />
+      <div className='absolute -right-6 -bottom-6 w-32 h-32 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-500' />
     </Card>
   );
 }

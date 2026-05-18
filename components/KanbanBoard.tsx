@@ -131,9 +131,10 @@ const KanbanBoard = React.memo(function KanbanBoard({ candidates: initialCandida
 
       <DragOverlay>
         {activeCandidate ? (
-          <div className='glass p-3 rounded-xl border-primary/50 shadow-2xl w-[260px] opacity-90 cursor-grabbing rotate-3 scale-105'>
+          <div className='glass p-4 rounded-2xl border-primary/50 shadow-2xl w-[240px] opacity-95 cursor-grabbing rotate-2 scale-105 backdrop-blur-xl'>
             <div className='font-bold text-sm mb-1'>{activeCandidate.firstName} {activeCandidate.lastName}</div>
-            <div className='text-[10px] text-muted-foreground'>{activeCandidate.role}</div>
+            <div className='text-[10px] text-muted-foreground font-medium'>{activeCandidate.role}</div>
+            <div className='text-[9px] text-muted-foreground/50 mt-1'>{activeCandidate.city}</div>
           </div>
         ) : null}
       </DragOverlay>
@@ -160,14 +161,17 @@ const KanbanColumn = React.memo(function KanbanColumn({ status, candidates: allC
       )}
     >
       <div className={cn(
-        'flex items-center justify-between p-2 backdrop-blur-md rounded-2xl border transition-all duration-300 shadow-sm',
-        isOver ? 'bg-primary/20 border-primary shadow-lg' : 'bg-background/40 border-primary/10'
+        'flex items-center justify-between p-3 backdrop-blur-md rounded-2xl border transition-all duration-300 shadow-sm',
+        isOver ? 'bg-primary/20 border-primary shadow-lg' : 'bg-card/50 border-border/50'
       )}>
         <div className='flex items-center gap-3'>
-          <div className='w-2 h-2 rounded-full bg-primary' />
+          <div className={cn(
+            'w-2.5 h-2.5 rounded-full',
+            isOver ? 'bg-primary animate-pulse' : 'bg-primary/60'
+          )} />
           <h3 className='font-bold text-sm uppercase tracking-wider'>{status}</h3>
         </div>
-        <Badge variant='secondary' className='rounded-lg px-2 py-0.5 bg-primary/5 text-primary border-none font-bold'>
+        <Badge className='rounded-xl px-3 py-0.5 bg-primary/10 text-primary border-none font-bold text-xs'>
           {columnCandidates.length}
         </Badge>
       </div>
@@ -179,15 +183,15 @@ const KanbanColumn = React.memo(function KanbanColumn({ status, candidates: allC
       >
         <div 
           className={cn(
-            'flex gap-3 overflow-x-auto max-h-[240px] p-2 rounded-2xl border border-dashed transition-all duration-300 overflow-y-hidden',
-            isOver ? 'bg-primary/[0.08] border-primary/40' : 'bg-primary/[0.02] border-primary/5'
+            'flex gap-3 overflow-x-auto max-h-[240px] p-3 rounded-2xl border border-dashed transition-all duration-300 overflow-y-hidden',
+            isOver ? 'bg-primary/[0.06] border-primary/40' : 'bg-primary/[0.01] border-border/30'
           )}
         >
           {columnCandidates.map((candidate) => (
             <SortableCandidateCard key={candidate.id} candidate={candidate} />
           ))}
           {columnCandidates.length === 0 && (
-            <div className='flex-1 flex items-center justify-center text-muted-foreground/30 text-[10px] uppercase font-bold tracking-tighter'>
+            <div className='flex-1 flex items-center justify-center text-muted-foreground/20 text-[10px] uppercase font-bold tracking-wider'>
               Trascina qui
             </div>
           )}
@@ -222,40 +226,40 @@ const SortableCandidateCard = React.memo(function SortableCandidateCard({ candid
       style={style}
       className='relative group outline-none'
     >
-      <div className='glass p-2 rounded-xl border-white/10 hover:border-primary/30 hover:shadow-md transition-all duration-300 w-[220px] shrink-0'>
-        <div className='flex justify-between items-start mb-2'>
+      <div className='glass p-3 rounded-2xl border-white/10 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 w-[220px] shrink-0'>
+        <div className='flex justify-between items-start mb-2.5'>
           <Link 
             href={`/jobs/${candidate.id}`}
-            className='font-bold text-[12px] hover:text-primary transition-colors line-clamp-1 flex-1 pr-2'
+            className='font-bold text-[13px] hover:text-primary transition-colors line-clamp-1 flex-1 pr-2 leading-tight'
           >
             {candidate.firstName} {candidate.lastName}
           </Link>
           <div 
             {...attributes} 
             {...listeners}
-            className='cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-primary'
+            className='cursor-grab active:cursor-grabbing p-1 rounded-lg text-muted-foreground/30 hover:text-primary hover:bg-primary/5 transition-all'
           >
             <GripVertical className='w-4 h-4' />
           </div>
         </div>
         
-        <div className='text-[10px] text-muted-foreground space-y-1'>
-          <div className='flex flex-wrap items-center gap-2 font-semibold text-primary/70'>
-            <Briefcase className='w-3 h-3' />
+        <div className='text-[10px] text-muted-foreground space-y-1.5'>
+          <div className='flex items-center gap-2 font-semibold text-primary/70'>
+            <Briefcase className='w-3 h-3 shrink-0' />
             <span className='truncate'>{candidate.role}</span>
           </div>
-          <div className='flex items-center gap-1'>
-            <MapPin className='w-3 h-3' />
+          <div className='flex items-center gap-1.5'>
+            <MapPin className='w-3 h-3 shrink-0 opacity-60' />
             <span className='truncate'>{candidate.city} {candidate.province ? `(${candidate.province.toUpperCase()})` : ''}</span>
           </div>
         </div>
 
-        <div className='mt-2 pt-2 border-t border-white/5 flex justify-between items-center'>
-          <div className='flex gap-2 relative z-10'>
+        <div className='mt-3 pt-2.5 border-t border-border/30 flex justify-between items-center'>
+          <div className='flex gap-1.5'>
             {candidate.phone && (
               <a 
                 href={`tel:${candidate.phone}`} 
-                className='w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all pointer-events-auto'
+                className='w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all text-primary shadow-sm'
                 title='Chiama Candidato'
                 onClick={(e) => e.stopPropagation()}
               >
@@ -264,14 +268,14 @@ const SortableCandidateCard = React.memo(function SortableCandidateCard({ candid
             )}
             <a 
               href={`mailto:${candidate.email}`} 
-              className='w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all pointer-events-auto'
+              className='w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm'
               title='Invia Email'
               onClick={(e) => e.stopPropagation()}
             >
               <Mail className='w-3 h-3' />
             </a>
           </div>
-          <span className='text-[8px] uppercase font-bold text-muted-foreground/40'>
+          <span className='text-[7px] uppercase font-bold text-muted-foreground/30 tracking-wider'>
             {new Date(candidate.createdAt).toLocaleDateString('it-IT')}
           </span>
         </div>
