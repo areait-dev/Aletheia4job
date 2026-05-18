@@ -65,6 +65,11 @@ export default async function PositionsPage() {
               </div>
               <div className="flex flex-col items-end gap-2 shrink-0">
                 <div className="flex items-center gap-1.5">
+                  {job.postToCareerPage && (
+                    <div title="Pubblicato su Career Page" className="w-5 h-5 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600 border border-emerald-200">
+                      <span className="text-[10px] font-bold">C</span>
+                    </div>
+                  )}
                   {job.postToLinkedIn && (
                     <div title="Postato su LinkedIn" className="w-5 h-5 rounded-md bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200">
                       <span className="text-[10px] font-bold">L</span>

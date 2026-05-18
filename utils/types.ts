@@ -158,6 +158,7 @@ export type JobType = {
   status: JobStatus;
   mode: JobMode;
   isActive: boolean;
+  postToCareerPage: boolean;
   postToLinkedIn: boolean;
   postToIndeed: boolean;
   postToJooble: boolean;
@@ -208,6 +209,7 @@ export const createAndEditJobSchema = z.object({
   sector: z.string().min(2, {
     message: 'Il settore deve essere di almeno 2 caratteri.',
   }),
+  postToCareerPage: z.boolean().default(true),
   postToLinkedIn: z.boolean().default(false),
   postToIndeed: z.boolean().default(false),
   postToJooble: z.boolean().default(false),

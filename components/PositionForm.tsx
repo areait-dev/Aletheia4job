@@ -113,6 +113,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
         status: jobData.status as JobStatus,
         mode: jobData.mode as JobMode,
         sector: jobData.sector,
+        postToCareerPage: jobData.postToCareerPage ?? true,
         postToLinkedIn: jobData.postToLinkedIn || false,
         postToIndeed: jobData.postToIndeed || false,
         postToJooble: jobData.postToJooble || false,
@@ -317,8 +318,19 @@ function PositionForm({ jobId }: { jobId?: string }) {
           <CustomFormField name='applicationUrl' control={form.control} labelText='application URL' type='url' />
 
           <div className='col-span-full border-t border-border pt-6 mt-2'>
-            <h3 className='text-sm font-bold uppercase tracking-wider text-primary mb-4'>Multiposting (Pubblica su aggregatori)</h3>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-primary mb-4'>Canali di pubblicazione</h3>
             <div className='flex flex-wrap gap-6'>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="postToCareerPage"
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  {...form.register("postToCareerPage")}
+                />
+                <label htmlFor="postToCareerPage" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Career Page
+                </label>
+              </div>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"

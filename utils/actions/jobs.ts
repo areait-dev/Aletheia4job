@@ -133,7 +133,7 @@ export async function deleteJobAction(id: string): Promise<boolean> {
 
 export async function getPublicJobsAction(params?: { sector?: string; location?: string; mode?: string; }) {
   try {
-    const where: Prisma.JobWhereInput = { isActive: true, status: "Aperto" };
+    const where: Prisma.JobWhereInput = { isActive: true, status: "Aperto", postToCareerPage: true };
     if (params?.sector && params.sector !== "tutti") where.sector = { equals: params.sector, mode: "insensitive" };
     if (params?.location) where.location = { contains: params.location, mode: "insensitive" };
     if (params?.mode) where.mode = params.mode;

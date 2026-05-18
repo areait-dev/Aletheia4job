@@ -233,9 +233,10 @@ model Job {
   isActive          Boolean       @default(true)
   postedAt          DateTime?     @default(now())
   expiresAt         DateTime?
-  postToIndeed      Boolean       @default(false)
-  postToJooble      Boolean       @default(false)
-  postToLinkedIn    Boolean       @default(false)
+  postToCareerPage   Boolean       @default(true)
+  postToIndeed       Boolean       @default(false)
+  postToJooble       Boolean       @default(false)
+  postToLinkedIn     Boolean       @default(false)
   applications      Application[]
   organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
