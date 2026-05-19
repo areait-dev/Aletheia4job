@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         city: "",
         role: job.title,
         seniority: "Mid",
-        sector: job.sector,
+        sector: job.category || job.sector,
         status: "Nuovo",
         source: source_board || "Broadbean",
         cvUrl: publicUrl,
