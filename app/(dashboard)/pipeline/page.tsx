@@ -5,7 +5,6 @@ import {
 } from "@tanstack/react-query";
 import { getAllCandidatesAction, getAllJobsAction } from "@/utils/actions";
 import PipelineContent from "@/components/PipelineContent";
-import SectorFolders from "@/components/SectorFolders";
 import PipelineHeader from "@/components/PipelineHeader";
 import SearchForm from "@/components/SearchForm";
 import JobFilterSelector from "@/components/JobFilterSelector";
@@ -35,7 +34,6 @@ async function PipelinePage({ searchParams }: { searchParams: { search?: string;
         </div>
         <JobFilterSelector jobs={jobs} />
       </div>
-      <SectorFolders />
       <PipelineContent />
     </HydrationBoundary>
   );
