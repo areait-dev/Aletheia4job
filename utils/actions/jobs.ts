@@ -161,7 +161,7 @@ export async function applyToJobAction(values: {
     
     const job = await prisma.job.findUnique({
       where: { id: values.jobId },
-      select: { organizationId: true, sector: true, title: true, userId: true }
+      select: { organizationId: true, sector: true, title: true, userId: true, category: true }
     });
     
     if (!job) {
@@ -200,7 +200,7 @@ export async function applyToJobAction(values: {
             city: values.city,
             role: job.title,
             seniority: 'Mid',
-            sector: job.sector,
+            sector: job.category || job.sector,
             status: "Nuovo",
             source: values.source || "Career Page",
             organizationId,
@@ -318,9 +318,10 @@ export async function generateJobDescriptionAction({
       3. INDUSTRY: Identifica il settore industriale/mercato di riferimento basandoti sul titolo del ruolo e sul contesto aziendale.
       4. LOCATION: Estrai automaticamente Città, Provincia e inferisci il CAP principale dalla location fornita.
 
-      ⚠️ FORMATO OUTPUT:
+       ⚠️ FORMATO OUTPUT:
       Restituisci SOLO un oggetto JSON valido. I campi salaryMin e salaryMax DEVONO essere numeri (integer). 
       Tutto il testo deve essere in italiano professionale.
+      5. SECTOR: Inferisci il settore produttivo/merceologico (es. "Information Technology", "Vendite", "Sanità", "Marketing", "Logistica", "Amministrazione", "Ristorazione", ecc.) in base al titolo del ruolo.
 
       {
         "description": "string",
@@ -330,8 +331,9 @@ export async function generateJobDescriptionAction({
         "salaryMin": 25000,
         "salaryMax": 32000,
         "salaryText": "25.000 - 32.000 € RAL",
-        "category": "Categoria inferita",
-        "industry": "Settore inferito",
+        "category": "Categoria professionale inferita",
+        "industry": "Industria/mercato inferito",
+        "sector": "Settore produttivo inferito dal titolo",
         "city": "Città estratta",
         "province": "Provincia estratta",
         "postalCode": "CAP principale",

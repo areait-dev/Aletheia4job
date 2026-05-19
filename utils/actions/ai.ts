@@ -67,18 +67,27 @@ export async function calculateMatchingScoreAction(candidateId: string, jobId: s
  */
 export async function processAICandidateAnalysis(candidateId: string, jobId: string) {
   try {
-    // 1. Recupera dati candidato e job
+    console.log('[AI] processAICandidateAnalysis called with:', { candidateId, jobId });
+
     const candidate = await prisma.candidate.findUnique({
       where: { id: candidateId },
       select: { id: true, cvUrl: true, resumeText: true, organizationId: true }
     });
+
+    if (!candidate) {
+      console.warn('[AI] Candidate not found for ID:', candidateId);
+      return { ok: false, error: "Candidato o Job non trovato" };
+    }
 
     const job = await prisma.job.findUnique({
       where: { id: jobId },
       select: { title: true, requirements: true, description: true }
     });
 
-    if (!candidate || !job) return { ok: false, error: "Candidato o Job non trovato" };
+    if (!job) {
+      console.warn('[AI] Job not found for ID:', jobId);
+      return { ok: false, error: "Candidato o Job non trovato" };
+    }
     if (!candidate.cvUrl && !candidate.resumeText) return { ok: false, error: "Il candidato non ha un CV caricato" };
 
     // 2. Estrai testo se non presente

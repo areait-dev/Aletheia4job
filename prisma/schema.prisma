@@ -148,6 +148,11 @@ model Application {
   recommendation String?
   // ----------------------------------------
 
+  // --- BROADBEAN INTEGRATION ---
+  broadbeanApplicationRef String?  @unique
+  broadbeanBoardId        String?
+  // ----------------------------
+
   @@unique([candidateId, jobId])
   @@index([candidateId])
   @@index([jobId])
@@ -237,6 +242,14 @@ model Job {
   postToIndeed       Boolean       @default(false)
   postToJooble       Boolean       @default(false)
   postToLinkedIn     Boolean       @default(false)
+
+  // --- BROADBEAN MULTIPOSTING ---
+  broadbeanJobId        String?       @unique
+  broadbeanStatus       String?       @default("NOT_SENT")
+  broadbeanError        String?
+  broadbeanLastSyncedAt DateTime?
+  // ------------------------------
+
   applications      Application[]
   organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

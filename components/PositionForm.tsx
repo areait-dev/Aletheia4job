@@ -79,9 +79,10 @@ function PositionForm({ jobId }: { jobId?: string }) {
       experienceLevel: 'Mid Level',
       remoteType: 'Onsite',
       applicationUrl: undefined,
-      status: JobStatus.Pending,
+      status: JobStatus.Aperto,
       mode: JobMode.FullTime,
       sector: 'Information Technology',
+      postToCareerPage: true,
     },
   });
 
@@ -166,6 +167,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
     // 🏷️ Classificazione automatica
     form.setValue('category', result.category);
     form.setValue('industry', result.industry);
+    if (result.sector) form.setValue('sector', result.sector);
     
     // 📍 Location parsing automatico
     form.setValue('city', result.city);

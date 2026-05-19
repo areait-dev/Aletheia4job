@@ -16,6 +16,7 @@ import { cn, getScoreColor } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
 import ApplicationStatusSelect from "@/components/ApplicationStatusSelect";
 import AnalyzeAIButton from "@/components/AnalyzeAIButton";
+import BroadbeanSection from "@/components/BroadbeanSection";
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
   const job = await getSingleJobAction(params.id);
@@ -147,6 +148,12 @@ export default async function JobDetailPage({ params }: { params: { id: string }
               </div>
             </div>
           </div>
+
+          <BroadbeanSection
+            jobId={job.id}
+            broadbeanStatus={job.broadbeanStatus}
+            broadbeanError={job.broadbeanError}
+          />
 
           <div className="glass rounded-3xl p-6 space-y-4 bg-primary/5 border-primary/10">
             <h3 className="font-bold flex items-center gap-2 italic">

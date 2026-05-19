@@ -30,6 +30,15 @@ export default function AnalyzeAIButton({
     e.preventDefault();
     e.stopPropagation();
 
+    if (!jobId) {
+      toast({
+        title: "Errore",
+        description: "Nessuna posizione associata a questo candidato.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
       const result = await calculateMatchingScoreAction(candidateId, jobId);

@@ -148,10 +148,12 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
               <Edit className='w-3 h-3 text-muted-foreground' />
             </div>
             <div className='flex items-center gap-2'>
-              <AnalyzeAIButton 
-                candidateId={candidate.id} 
-                jobId={candidate.applications?.[0]?.jobId || ""}
-              />
+              {candidate.applications?.[0]?.jobId && (
+                <AnalyzeAIButton 
+                  candidateId={candidate.id} 
+                  jobId={candidate.applications[0].jobId}
+                />
+              )}
               <Button 
                 variant='ghost' 
                 size='icon' 
