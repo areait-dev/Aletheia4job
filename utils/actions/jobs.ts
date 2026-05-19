@@ -10,7 +10,7 @@ import {
 import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry } from "../authz";
 import { authenticateAndRedirect } from "./shared";
-import { processAICandidateAnalysis } from "./ai";
+import { inngest } from "@/inngest/client";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -226,17 +226,30 @@ export async function applyToJobAction(values: {
           jobId: values.jobId,
           organizationId,
           status: "Nuovo",
+          parsingStatus: values.cvUrl ? "PENDING" : undefined,
         }
       });
 
       return { candidateId: candidate.id, applicationId: application.id };
     });
 
-    // AI analysis fuori dalla transazione (non critica)
+    // CV parsing asincrono via Inngest
     if (values.cvUrl) {
-      processAICandidateAnalysis(result.candidateId, values.jobId).catch(e => {
-        console.error('❌ [applyToJobAction] AI Auto-match error:', e);
-      });
+      try {
+        await inngest.send({
+          name: "cv/process.requested",
+          data: {
+            applicationId: result.applicationId,
+            candidateId: result.candidateId,
+            jobId: values.jobId,
+            organizationId: job.organizationId,
+            cvUrl: values.cvUrl,
+          },
+        });
+        console.log("[applyToJobAction] Inngest event cv/process.requested inviato per:", result.applicationId);
+      } catch (e) {
+        console.error("[applyToJobAction] Errore invio a Inngest:", e);
+      }
     }
 
     return { ok: true };

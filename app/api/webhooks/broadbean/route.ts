@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/utils/db";
 import { createServiceClient } from "@/utils/supabase/service";
-import { extractTextFromCV } from "@/lib/cvParser";
+import { inngest } from "@/inngest/client";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +19,7 @@ function mimeTypeFromFilename(filename: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
     const {
       job_reference,
       application_ref,
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     const filePath = `cvs/${Date.now()}_${safeFilename}`;
     const contentType = mimeTypeFromFilename(safeFilename);
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("cvs")
       .upload(filePath, cvBuffer, {
         contentType,
@@ -74,13 +75,6 @@ export async function POST(req: NextRequest) {
       .from("cvs")
       .getPublicUrl(filePath);
 
-    let cvText = "";
-    try {
-      cvText = await extractTextFromCV(cvBuffer, contentType);
-    } catch (parseError) {
-      console.warn("[broadbean-webhook] CV text extraction non riuscita (non bloccante):", parseError);
-    }
-
     const emailLower = candidate_email.toLowerCase().trim();
     const organizationId = job.organizationId;
 
@@ -95,7 +89,6 @@ export async function POST(req: NextRequest) {
         firstName: candidate_first_name,
         lastName: candidate_last_name,
         cvUrl: publicUrl,
-        resumeText: cvText || undefined,
         source: source_board || "Broadbean",
       },
       create: {
@@ -112,30 +105,73 @@ export async function POST(req: NextRequest) {
         status: "Nuovo",
         source: source_board || "Broadbean",
         cvUrl: publicUrl,
-        resumeText: cvText || undefined,
       },
     });
 
+    let applicationId: string | null = null;
+
     try {
-      await prisma.application.create({
+      const application = await prisma.application.create({
         data: {
           candidateId: candidate.id,
           jobId: job.id,
           organizationId,
           status: "Nuovo",
+          parsingStatus: "PENDING",
           broadbeanApplicationRef: application_ref || undefined,
           broadbeanBoardId: source_board || undefined,
         },
       });
+      applicationId = application.id;
     } catch (appError: any) {
       if (appError?.code === "P2002") {
         console.log("[broadbean-webhook] Application già esistente (idempotent), skip create");
+
+        const existing = await prisma.application.findUnique({
+          where: {
+            candidateId_jobId: {
+              candidateId: candidate.id,
+              jobId: job.id,
+            },
+          },
+          select: { id: true },
+        });
+        applicationId = existing?.id ?? null;
       } else {
         throw appError;
       }
     }
 
-    return NextResponse.json({ ok: true, candidateId: candidate.id });
+    if (applicationId) {
+      try {
+        await inngest.send({
+          name: "cv/process.requested",
+          data: {
+            applicationId,
+            candidateId: candidate.id,
+            jobId: job.id,
+            organizationId,
+            filePath,
+            mimeType: contentType,
+          },
+        });
+        console.log("[broadbean-webhook] Inngest event cv/process.requested inviato per:", applicationId);
+      } catch (queueError) {
+        console.error("[broadbean-webhook] Errore invio a Inngest:", queueError);
+        await prisma.application.update({
+          where: { id: applicationId },
+          data: {
+            parsingStatus: "FAILED",
+            parsingError: `Impossibile accodare job: ${queueError instanceof Error ? queueError.message : "errore sconosciuto"}`,
+          },
+        });
+      }
+    }
+
+    return NextResponse.json(
+      { ok: true, candidateId: candidate.id, applicationId },
+      { status: 202 },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Errore sconosciuto";
     console.error("[broadbean-webhook] Errore:", error);

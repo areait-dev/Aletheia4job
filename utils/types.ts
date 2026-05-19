@@ -52,6 +52,8 @@ export type ApplicationType = {
   matchedKeywords?: string[];
   missingKeywords?: string[];
   recommendation?: string | null;
+  parsingStatus?: string;
+  parsingError?: string | null;
 };
 
 export enum CandidateStatus {

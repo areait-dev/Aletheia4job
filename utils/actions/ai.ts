@@ -5,6 +5,8 @@ import { Groq } from 'groq-sdk';
 import { extractTextFromUrl } from "../cv-extraction";
 import { authenticateAndRedirect } from "./shared";
 import { canWrite } from "../authz";
+import { inngest } from "@/inngest/client";
+import { revalidatePath } from "next/cache";
 
 function getGroqClient() {
   const apiKey = process.env.GROQ_API_KEY;
@@ -59,6 +61,47 @@ export async function calculateMatchingScoreAction(candidateId: string, jobId: s
   } catch (error) {
     console.error('Error in AI matching action:', error);
     return { ok: false, error: "Errore durante l'analisi AI" };
+  }
+}
+
+export async function retryCvParsingAction(applicationId: string) {
+  try {
+    const { role } = await authenticateAndRedirect();
+    if (!canWrite(role)) return { ok: false, error: "Non autorizzato" };
+
+    const application = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: {
+        candidate: { select: { id: true, cvUrl: true } },
+        job: { select: { id: true, organizationId: true } },
+      },
+    });
+
+    if (!application) return { ok: false, error: "Candidatura non trovata" };
+
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { parsingStatus: "PENDING", parsingError: null },
+    });
+
+    await inngest.send({
+      name: "cv/process.requested",
+      data: {
+        applicationId,
+        candidateId: application.candidateId,
+        jobId: application.job.id,
+        organizationId: application.job.organizationId,
+        cvUrl: application.candidate.cvUrl || undefined,
+      },
+    });
+
+    revalidatePath(`/positions/${application.job.id}`);
+    revalidatePath(`/jobs/${application.candidateId}`);
+
+    return { ok: true };
+  } catch (error) {
+    console.error("[retryCvParsingAction] Errore:", error);
+    return { ok: false, error: error instanceof Error ? error.message : "Errore nel retry" };
   }
 }
 

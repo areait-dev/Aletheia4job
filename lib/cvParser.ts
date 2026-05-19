@@ -1,5 +1,7 @@
-import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+
+// @ts-ignore - pdf-parse v1.x usa module.exports = function
+const pdf = require("pdf-parse");
 
 const MAX_BUFFER_SIZE = 15 * 1024 * 1024;
 const OCR_MIN_TEXT_LENGTH = 80;
@@ -12,7 +14,7 @@ function sanitizeText(text: string): string {
     .replace(/[\t ]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[^\S\n]+$/gm, '')
-    .replace(/^[^\S\n]+/gm, '')
+    .replace(/^[^\S\n]+$/gm, '')
     .trim();
 }
 
@@ -23,7 +25,7 @@ function detectMimeType(buffer: Buffer): string | null {
   return null;
 }
 
-async function ocrFallback(buffer: Buffer, pageLimit = 1): Promise<string> {
+async function ocrFallback(buffer: Buffer): Promise<string> {
   try {
     const { createWorker } = await import('tesseract.js');
     const worker = await createWorker('ita+eng', 1, {
@@ -53,18 +55,16 @@ export async function extractTextFromCV(fileBuffer: Buffer, mimeType?: string): 
     let text = '';
 
     if (resolvedMime === 'application/pdf') {
-      const data = await pdfParse(fileBuffer);
+      const data = await pdf(fileBuffer);
       text = data.text || '';
 
       if (text.trim().length < OCR_MIN_TEXT_LENGTH) {
-        console.log('[cvParser] PDF scannerizzato rilevato, avvio OCR fallback...');
+        console.log('[cvParser] PDF scannerizzato rilevato, avvio OCR fallback con Tesseract...');
         const ocrText = await ocrFallback(fileBuffer);
         if (ocrText.length > text.trim().length) {
           text = ocrText;
         }
       }
-
-      (data as any) = null;
     } else if (resolvedMime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       const result = await mammoth.extractRawText({ buffer: fileBuffer });
       text = result.value || '';

@@ -7,7 +7,7 @@ import {
   Star, MessageSquare, Calendar, ChevronRight, Pencil, Trash2,
   Clock, Video, Phone as PhoneIcon, Building2, ClipboardCheck,
   CheckCircle2, XCircle, AlertCircle, RotateCcw, Plus, ArrowLeft, ExternalLink,
-  Sparkles, Tag
+  Sparkles, Tag, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
@@ -16,7 +16,7 @@ import { cn, getScoreColor, getScoreLabel } from '@/lib/utils';
 import {
   getCandidateNotesAction, createCandidateNoteAction, deleteCandidateNoteAction,
   getCandidateInterviewsAction, createInterviewAction, updateInterviewOutcomeAction, deleteInterviewAction,
-  updateCandidateAction,
+  updateCandidateAction, retryCvParsingAction,
 } from '@/utils/actions';
 import { useToast } from './ui/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -208,7 +208,43 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
 
       {/* ── OVERVIEW TAB ─────────────────────────────────── */}
       {activeTab === 'overview' && (
-        <div className="grid md:grid-cols-2 gap-6">
+        <>
+          {(() => {
+            const failedApp = candidate.applications?.find(a => a.parsingStatus === "FAILED");
+            if (!failedApp) return null;
+            const [retrying, startRetry] = useTransition();
+            return (
+              <div className="mb-6 p-5 rounded-2xl border-2 border-red-300 bg-red-50/80 dark:bg-red-950/20 dark:border-red-800">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div className="space-y-2">
+                    <p className="font-bold text-red-700 dark:text-red-400">Elaborazione CV fallita</p>
+                    <p className="text-sm text-red-600/80 dark:text-red-400/80">
+                      {failedApp.parsingError || "Errore sconosciuto durante l'elaborazione del CV."}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 rounded-xl border-red-300 text-red-600 hover:bg-red-100 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
+                      disabled={retrying}
+                      onClick={() => startRetry(async () => {
+                        const res = await retryCvParsingAction(failedApp.id);
+                        if (res.ok) window.location.reload();
+                      })}
+                    >
+                      {retrying ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-4 h-4" />
+                      )}
+                      Riprova Elaborazione
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          <div className="grid md:grid-cols-2 gap-6">
           <div className="glass rounded-3xl p-6 space-y-4">
             <h2 className="font-semibold text-primary flex items-center gap-2"><Briefcase className="w-4 h-4" />Profilo Professionale</h2>
             <InfoRow label="Settore" value={candidate.sector} />
@@ -281,6 +317,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
             </div>
           )}
         </div>
+      </>
       )}
       {/* ── APPLICATIONS TAB ─────────────────────────────── */}
       {activeTab === 'applications' && (

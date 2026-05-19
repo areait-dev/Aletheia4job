@@ -116,14 +116,32 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
                   {candidate.source}
                 </Badge>
               )}
-              {candidate.matchingScore !== null && candidate.matchingScore !== undefined && (
-                <Badge 
-                  variant="outline"
-                  className={cn("font-bold border", getScoreColor(candidate.matchingScore))}
-                >
-                  {candidate.matchingScore}% · {getScoreLabel(candidate.matchingScore)}
-                </Badge>
-              )}
+              {(() => {
+                const ps = candidate.applications?.[0]?.parsingStatus;
+                if (ps === "PENDING" || ps === "PROCESSING") {
+                  return (
+                    <Badge variant="outline" className="font-bold border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-950/20 gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Analisi AI in corso...
+                    </Badge>
+                  );
+                }
+                if (ps === "FAILED") {
+                  return (
+                    <Badge variant="destructive" className="font-bold gap-1">
+                      Parsing Fallito
+                    </Badge>
+                  );
+                }
+                if (candidate.matchingScore !== null && candidate.matchingScore !== undefined) {
+                  return (
+                    <Badge variant="outline" className={cn("font-bold border", getScoreColor(candidate.matchingScore))}>
+                      {candidate.matchingScore}% · {getScoreLabel(candidate.matchingScore)}
+                    </Badge>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
           <div className='flex flex-col items-end gap-2'>

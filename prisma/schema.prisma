@@ -148,6 +148,11 @@ model Application {
   recommendation String?
   // ----------------------------------------
 
+  // --- CV PARSING STATUS (ASYNC) ---
+  parsingStatus String   @default("PENDING")
+  parsingError  String?
+  // ----------------------------------
+
   // --- BROADBEAN INTEGRATION ---
   broadbeanApplicationRef String?  @unique
   broadbeanBoardId        String?

@@ -10,7 +10,8 @@ import {
   FileText, 
   ExternalLink,
   ChevronRight,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react";
 import { cn, getScoreColor } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
@@ -95,14 +96,42 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                           <span>{app.candidate.email}</span>
                           <span>•</span>
                           <span>{new Date(app.createdAt).toLocaleDateString("it-IT")}</span>
-                          {(app.matchingScore ?? app.candidate.matchingScore) !== null && (
-                            <>
-                              <span>•</span>
-                              <span className={cn("font-bold px-1.5 py-0.5 rounded-lg text-[10px]", getScoreColor(app.matchingScore ?? app.candidate.matchingScore))}>
-                                {(app.matchingScore ?? app.candidate.matchingScore)}% Match
-                              </span>
-                            </>
-                          )}
+                          {(() => {
+                            const ps = app.parsingStatus;
+                            if (ps === "PENDING" || ps === "PROCESSING") {
+                              return (
+                                <>
+                                  <span>•</span>
+                                  <span className="inline-flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-lg text-[10px] bg-amber-50 dark:bg-amber-950/20 text-amber-600 border border-amber-400">
+                                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                    Analisi in corso...
+                                  </span>
+                                </>
+                              );
+                            }
+                            if (ps === "FAILED") {
+                              return (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-bold px-1.5 py-0.5 rounded-lg text-[10px] bg-red-100 dark:bg-red-950/30 text-red-600 border border-red-300">
+                                    Parsing Fallito
+                                  </span>
+                                </>
+                              );
+                            }
+                            const score = app.matchingScore ?? app.candidate.matchingScore;
+                            if (score !== null && score !== undefined) {
+                              return (
+                                <>
+                                  <span>•</span>
+                                  <span className={cn("font-bold px-1.5 py-0.5 rounded-lg text-[10px]", getScoreColor(score))}>
+                                    {score}% Match
+                                  </span>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
                     </div>
