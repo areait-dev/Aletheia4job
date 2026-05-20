@@ -78,13 +78,13 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
       className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
     >
       {/* Header: avatar + name/role (left), badges (right) */}
-      <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
+      <div className="flex flex-col gap-2 px-5 pt-5 pb-3 md:flex-row md:items-start md:justify-between md:gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0", avatarColor)}>
             {initials || <Mail className="w-4 h-4" />}
           </div>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-bold text-slate-900 truncate">
+            <h3 className="text-[15px] font-bold text-slate-900 break-words md:truncate">
               {candidate.firstName} {candidate.lastName}
             </h3>
             <p className="text-[13px] text-slate-500 truncate mt-0.5">{candidate.role}</p>
@@ -92,7 +92,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
         </div>
 
         {/* Right column: compact status + actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
           {candidate.source && (
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100">
               {candidate.source}
