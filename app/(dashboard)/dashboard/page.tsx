@@ -94,7 +94,7 @@ export default async function DashboardPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Upcoming Interviews */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <h2 className="text-2xl font-bold flex items-center gap-3">
               <Calendar className="w-6 h-6 text-primary" /> Prossimi Colloqui
             </h2>

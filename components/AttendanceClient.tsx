@@ -154,7 +154,7 @@ export default function AttendanceClient({ employees, initialAbsences, initialAt
 
           {/* List Presenze */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="glass rounded-3xl overflow-hidden border-0">
+            <div className="glass rounded-3xl overflow-x-auto border-0">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b bg-background/30">

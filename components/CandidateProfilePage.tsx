@@ -189,13 +189,13 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 glass rounded-2xl w-fit">
+      <div className="flex gap-1 p-1 glass rounded-2xl overflow-x-auto max-w-full">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200',
+              'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap',
               activeTab === tab.id
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-primary/5'

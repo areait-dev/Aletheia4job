@@ -80,19 +80,19 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             ) : (
               <div className="divide-y divide-border/50">
                 {applications.map((app: any) => (
-                  <div key={app.id} className="py-4 first:pt-0 last:pb-0 flex items-center justify-between group">
+                  <div key={app.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {app.candidate.firstName[0]}{app.candidate.lastName[0]}
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <Link 
                           href={`/jobs/${app.candidateId}`} 
-                          className="font-bold hover:text-primary transition-colors block"
+                          className="font-bold hover:text-primary transition-colors block truncate"
                         >
                           {app.candidate.firstName} {app.candidate.lastName}
                         </Link>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground mt-0.5">
                           <span>{app.candidate.email}</span>
                           <span>•</span>
                           <span>{new Date(app.createdAt).toLocaleDateString("it-IT")}</span>

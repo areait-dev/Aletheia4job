@@ -151,9 +151,9 @@ async function AdminPage({
         <h2 className="font-semibold mb-4">Members</h2>
         <div className="space-y-3">
           {members.map((member) => (
-            <form key={member.id} action={updateRole} className="flex items-center gap-3">
+            <form key={member.id} action={updateRole} className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <input type="hidden" name="membershipId" value={member.id} />
-              <div className="min-w-[260px] text-sm">
+              <div className="min-w-0 sm:min-w-[260px] text-sm w-full sm:w-auto">
                 <div className="font-medium">{member.userId}</div>
                 <div className="text-muted-foreground">Joined: {new Date(member.createdAt).toLocaleDateString()}</div>
               </div>
