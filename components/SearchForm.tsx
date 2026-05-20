@@ -98,7 +98,7 @@ function SearchForm() {
 
   return (
     <form
-      className={`glass mb-8 p-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6 rounded-3xl items-end shadow-xl border-white/20 transition-all duration-300 ${
+      className={`glass mb-8 p-4 sm:p-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl items-end shadow-xl border-white/20 transition-all duration-300 ${
         hasActiveFilters ? 'ring-2 ring-primary/20 shadow-primary/10' : ''
       }`}
       onSubmit={handleSubmit}

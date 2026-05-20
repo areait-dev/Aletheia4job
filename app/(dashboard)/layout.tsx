@@ -30,7 +30,7 @@ async function layout({ children }: PropsWithChildren) {
 
       <div className='lg:col-span-4 relative z-10'>
         <Navbar role={auth.role} />
-        <div className='py-16 px-4 sm:px-8 lg:px-16'>{children}</div>
+        <div className='py-8 sm:py-16 px-4 sm:px-8 lg:px-16'>{children}</div>
       </div>
     </main>
   );

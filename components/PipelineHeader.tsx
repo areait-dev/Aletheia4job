@@ -58,7 +58,7 @@ export default function PipelineHeader() {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
       <div>
-        <h1 className="text-3xl font-bold text-primary mb-1.5 tracking-tight">Pipeline Screening</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-1.5 tracking-tight">Pipeline Screening</h1>
         <p className="text-muted-foreground text-sm">Monitora e gestisci l&apos;avanzamento dei candidati nelle fasi di selezione.</p>
       </div>
       

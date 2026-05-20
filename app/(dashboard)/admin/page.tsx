@@ -87,7 +87,7 @@ async function AdminPage({
             name="email"
             type="email"
             placeholder="new.member@company.com"
-            className="h-9 min-w-[280px] rounded-md border bg-background px-3 text-sm"
+            className="h-9 min-w-[200px] sm:min-w-[280px] rounded-md border bg-background px-3 text-sm w-full sm:w-auto"
             disabled={!canManage}
           />
           <select
@@ -249,7 +249,7 @@ async function AdminPage({
             name="entity"
             defaultValue={searchParams?.entity ?? ""}
             placeholder="Entity (candidate, job, membership...)"
-            className="h-9 min-w-[240px] rounded-md border bg-background px-3 text-sm"
+            className="h-9 min-w-[200px] sm:min-w-[240px] rounded-md border bg-background px-3 text-sm w-full sm:w-auto"
           />
           <select
             name="action"

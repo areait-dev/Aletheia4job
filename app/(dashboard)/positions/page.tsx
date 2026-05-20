@@ -12,7 +12,7 @@ export default async function PositionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Posizioni Aperte</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Posizioni Aperte</h1>
           <p className="text-muted-foreground text-sm">Gestisci i job pubblicati sulla tua career page.</p>
         </div>
         <Link 
@@ -45,14 +45,14 @@ export default async function PositionsPage() {
             <Link 
               key={job.id} 
               href={`/positions/${job.id}`}
-              className="group glass rounded-2xl p-5 hover:border-primary/30 transition-all duration-300 flex items-center justify-between gap-4"
+              className="group glass rounded-2xl p-5 hover:border-primary/30 transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
                   <Briefcase className="w-6 h-6" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="font-bold text-lg leading-tight truncate">{job.title}</h2>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-bold text-base sm:text-lg leading-tight truncate">{job.title}</h2>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
                     <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
                     <span className="flex items-center gap-1"><Users className="w-3 h-3" />{job._count.applications} candidature</span>
@@ -63,7 +63,7 @@ export default async function PositionsPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:gap-2 w-full sm:w-auto shrink-0">
                 <div className="flex items-center gap-1.5">
                   {job.postToCareerPage && (
                     <div title="Pubblicato su Career Page" className="w-5 h-5 rounded-md bg-emerald-500/15 flex items-center justify-center text-emerald-500 border border-emerald-500/30">

@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       {/* Welcome Header + CTA */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-4xl font-black tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
             Bentornato su <span className="text-primary italic">Aletheia</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-base">Ecco cosa sta succedendo nella tua organizzazione oggi.</p>
@@ -79,12 +79,12 @@ export default async function DashboardPage() {
           { label: "Team Attivo", value: activeEmployees, icon: <Users />, color: "text-green-600", bg: "bg-green-500/10", href: "/employees" },
           { label: "Documenti Firma", value: pendingSignatures, icon: <Files />, color: "text-amber-600", bg: "bg-amber-500/10", href: "/documents" },
         ].map((s, idx) => (
-          <Link key={idx} href={s.href} className="glass-card group rounded-[2.5rem] p-8 flex flex-col gap-6 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
+          <Link key={idx} href={s.href} className="glass-card group rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 flex flex-col gap-4 sm:gap-6 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
             <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform", s.bg, s.color)}>
               {s.icon}
             </div>
             <div>
-              <div className="text-4xl font-black">{s.value}</div>
+              <div className="text-2xl sm:text-4xl font-black">{s.value}</div>
               <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground mt-1">{s.label}</div>
             </div>
           </Link>
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
           
           <div className="space-y-3">
             {interviews.length === 0 ? (
-              <div className="glass-card rounded-3xl p-10 text-center flex flex-col items-center gap-4">
+              <div className="glass-card rounded-3xl p-6 sm:p-10 text-center flex flex-col items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center">
                   <CalendarX className="w-7 h-7 text-muted-foreground/40" />
                 </div>
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               interviews.map(i => (
-                <div key={i.id} className="glass-card rounded-2xl p-5 flex items-center justify-between hover:bg-white/50 dark:hover:bg-white/5 transition-all duration-200">
+                <div key={i.id} className="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between hover:bg-white/50 dark:hover:bg-white/5 transition-all duration-200">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/15 backdrop-blur-sm flex items-center justify-center text-primary font-bold ring-1 ring-primary/20">
                       {i.candidate.firstName[0]}{i.candidate.lastName[0]}

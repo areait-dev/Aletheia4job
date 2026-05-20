@@ -53,7 +53,7 @@ async function OnboardingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Onboarding</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Onboarding</h1>
           <p className="text-muted-foreground mt-1">Traccia le attività di inserimento dei nuovi dipendenti</p>
         </div>
         <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">

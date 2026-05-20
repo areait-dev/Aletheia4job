@@ -20,8 +20,8 @@ function ChartsContainer() {
   if (isPending) return <h2 className='text-xl font-medium'>Please wait...</h2>;
   if (!data || !data.monthlyData || data.monthlyData.length < 1) return null;
   return (
-    <section className='mt-16 glass p-8 rounded-3xl shadow-xl border-white/20'>
-      <h1 className='text-3xl font-bold text-center mb-10 text-primary'>
+    <section className='mt-16 glass p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl border-white/20'>
+      <h1 className='text-xl sm:text-3xl font-bold text-center mb-6 sm:mb-10 text-primary'>
         Andamento Inserimenti
       </h1>
       <ResponsiveContainer width='100%' height={350}>

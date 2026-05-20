@@ -21,7 +21,7 @@ export default async function DocumentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestione Documentale</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Gestione Documentale</h1>
           <p className="text-muted-foreground mt-1">Archivia, gestisci e monitora la firma dei documenti aziendali</p>
         </div>
         <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">

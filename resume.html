@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Nome Cognome] - Curriculum Vitae</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #E8ECF0;
+    font-family: Arial, Helvetica, Calibri, sans-serif;
+    font-size: 11.5pt;
+    color: #2D3142;
+    line-height: 1.65;
+    padding: 48px 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    background: radial-gradient(circle at top left, #DEE2E6 0%, #F8F9FA 60%, #FFFFFF 85%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .content-wrapper {
+    position: relative;
+    z-index: 2;
+    padding: 52px 56px 44px 56px;
+  }
+
+  h1 {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #008C95;
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+  }
+
+  h2 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #008C95;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-top: 30px;
+    margin-bottom: 14px;
+    padding-bottom: 0;
+    border-bottom: none;
+    position: relative;
+  }
+
+  h2::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: #CED4DA;
+    margin-top: 8px;
+  }
+
+  h2:first-of-type { margin-top: 0; }
+
+  header { margin-bottom: 22px; }
+
+  .contact-line {
+    font-size: 9pt;
+    color: #495057;
+    margin-top: 12px;
+    line-height: 2;
+  }
+
+  .contact-line span {
+    margin-right: 18px;
+    white-space: nowrap;
+  }
+
+  .contact-line .icon {
+    color: #008C95;
+    margin-right: 3px;
+    font-weight: 700;
+  }
+
+  section { margin-top: 26px; }
+  section:first-of-type { margin-top: 0; }
+
+  .profile-text {
+    margin-top: 6px;
+    text-align: justify;
+    hyphens: auto;
+    color: #343A40;
+  }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    gap: 4px;
+  }
+
+  .job-header .title {
+    font-weight: 700;
+    font-size: 11.5pt;
+    color: #212529;
+    letter-spacing: 0.1px;
+  }
+
+  .job-header .dates {
+    font-size: 9pt;
+    color: #6C757D;
+    font-style: italic;
+  }
+
+  .company {
+    font-size: 10pt;
+    color: #6C757D;
+    margin-top: 2px;
+    margin-bottom: 8px;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 4px;
+  }
+
+  ul li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 5px;
+    color: #343A40;
+  }
+
+  ul li::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 7px;
+    width: 6px;
+    height: 6px;
+    background: #008C95;
+    border-radius: 50%;
+  }
+
+  .skills-group {
+    margin-top: 12px;
+    line-height: 1.6;
+    color: #343A40;
+  }
+
+  .skills-group:first-of-type { margin-top: 8px; }
+
+  .skills-group strong {
+    color: #008C95;
+    font-weight: 600;
+  }
+
+  .edu-detail { margin-top: 16px; }
+  .edu-detail:first-of-type { margin-top: 0; }
+
+  .edu-detail .degree {
+    font-weight: 700;
+    font-size: 11.5pt;
+    color: #212529;
+  }
+
+  .edu-detail .school {
+    font-size: 10.5pt;
+    color: #6C757D;
+    margin-top: 2px;
+  }
+
+  .edu-detail .year {
+    font-size: 10pt;
+    color: #6C757D;
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #DEE2E6;
+    margin: 0;
+  }
+
+  footer {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid #DEE2E6;
+    text-align: center;
+    font-size: 8.5pt;
+    color: #ADB5BD;
+    line-height: 1.5;
+  }
+
+  @media print {
+    body { background: #FFFFFF; padding: 0; }
+    .page { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header-bg"></div>
+  <div class="content-wrapper">
+
+    <header>
+      <h1>[Nome Cognome]</h1>
+      <div class="contact-line">
+        <span><span class="icon">&#9993;</span> [email@example.com]</span>
+        <span><span class="icon">&#9742;</span> [+39 123 456 7890]</span>
+        <span><span class="icon">&#9898;</span> [Citt&agrave;, Provincia]</span>
+        <span><span class="icon">&#9670;</span> [linkedin.com/in/nomecognome]</span>
+        <span><span class="icon">&#9733;</span> [github.com/nomecognome]</span>
+      </div>
+      <hr>
+    </header>
+
+    <section>
+      <h2>Profilo Professionale</h2>
+      <p class="profile-text">
+        [Professionista con [X] anni di esperienza in [settore/ambito], specializzato/a in [area di competenza principale].
+        Comprovata capacit&agrave; di [risultato chiave 1] e [risultato chiave 2], con un approccio orientato al raggiungimento
+        degli obiettivi e alla collaborazione in team interfunzionali. Certificato/a [principale certificazione] e
+        appassionato/a di [interesse professionale rilevante].]
+      </p>
+    </section>
+
+    <section>
+      <h2>Esperienza Lavorativa</h2>
+
+      <div class="job-header">
+        <span class="title">[Titolo Posizione]</span>
+        <span class="dates">[Mese AAAA] &ndash; [Mese AAAA]</span>
+      </div>
+      <div class="company">[Nome Azienda] &mdash; [Citt&agrave;]</div>
+      <ul>
+        <li>[Mansione o risultato principale 1, possibilmente quantificato.]</li>
+        <li>[Mansione o risultato principale 2, evidenziando l'impatto generato.]</li>
+        <li>[Mansione o risultato principale 3, con dettaglio su competenze trasversali utilizzate.]</li>
+        <li>[Mansione o risultato principale 4, collegato a un progetto significativo.]</li>
+      </ul>
+
+      <div class="job-header">
+        <span class="title">[Titolo Posizione]</span>
+        <span class="dates">[Mese AAAA] &ndash; [Mese AAAA]</span>
+      </div>
+      <div class="company">[Nome Azienda] &mdash; [Citt&agrave;]</div>
+      <ul>
+        <li>[Mansione o risultato principale 1.]</li>
+        <li>[Mansione o risultato principale 2, con accento su efficienza o innovazione.]</li>
+        <li>[Mansione o risultato principale 3.]</li>
+      </ul>
+
+      <div class="job-header">
+        <span class="title">[Titolo Posizione]</span>
+        <span class="dates">[Mese AAAA] &ndash; [Mese AAAA]</span>
+      </div>
+      <div class="company">[Nome Azienda] &mdash; [Citt&agrave;]</div>
+      <ul>
+        <li>[Mansione o risultato principale 1.]</li>
+        <li>[Mansione o risultato principale 2.]</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Formazione</h2>
+
+      <div class="edu-detail">
+        <div class="degree">[Titolo di Studio (es. Laurea Magistrale in ...)]</div>
+        <div class="school">[Nome Universit&agrave;] &mdash; [Citt&agrave;]</div>
+        <div class="year">[AAAA] &bull; Votazione: [XX/110 o equivalente]</div>
+      </div>
+
+      <div class="edu-detail">
+        <div class="degree">[Titolo di Studio (es. Laurea Triennale in ...)]</div>
+        <div class="school">[Nome Universit&agrave;] &mdash; [Citt&agrave;]</div>
+        <div class="year">[AAAA] &bull; Votazione: [XX/110 o equivalente]</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Competenze</h2>
+
+      <div class="skills-group">
+        <strong>Hard Skills:</strong>
+        [Elenco separato da barre, es. JavaScript | TypeScript | React | Node.js | Python | SQL | Docker | AWS | REST API | Git]
+      </div>
+      <div class="skills-group">
+        <strong>Soft Skills:</strong>
+        [Elenco separato da barre, es. Comunicazione efficace | Problem solving | Lavoro di squadra | Gestione del tempo | Leadership | Adattabilit&agrave; | Pensiero critico]
+      </div>
+      <div class="skills-group">
+        <strong>Lingue:</strong>
+        [Italiano &ndash; Madrelingua | Inglese &ndash; [Livello (es. C1 Avanzato)] | [Altra lingua] &ndash; [Livello]]
+      </div>
+      <div class="skills-group">
+        <strong>Certificazioni:</strong>
+        [Certificazione 1] &bull; [Certificazione 2] &bull; [Certificazione 3]
+      </div>
+    </section>
+
+    <footer>
+      Autorizzo il trattamento dei dati personali contenuti nel presente curriculum ai sensi del Regolamento UE 2016/679 (GDPR).
+    </footer>
+
+  </div>
+</div>
+</body>
+</html>
