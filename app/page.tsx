@@ -2,7 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Briefcase, CheckCircle, Users, BarChart3, ArrowRight } from "lucide-react";
+import { CheckCircle, Users, BarChart3, ArrowRight } from "lucide-react";
+import Logo from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { getAuthContext } from "@/utils/authz";
 
@@ -25,12 +26,7 @@ export default async function Home() {
       <div className="fixed top-1/2 left-1/3 w-[600px] h-[600px] bg-primary/3 rounded-full blur-[120px] -z-10" />
 
       <header className="max-w-7xl mx-auto px-6 sm:px-12 py-6 flex justify-between items-center animate-in fade-in slide-in-from-top-4 duration-700">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-2xl shadow-lg shadow-primary/20">
-             <Briefcase className="text-white w-5 h-5" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Job <span className="text-primary">Aletheia</span></h1>
-        </div>
+        <Logo size={34} textClassName="text-2xl" />
         
         <div className="flex items-center gap-3">
           {!userId ? (

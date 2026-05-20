@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glassmorphism ATS Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+<style>
+  /* === VARIABILI CSS GLOBALI === */
+  :root {
+    --primary: #008c95;
+    --primary-010: rgba(0, 140, 149, 0.10);
+    --primary-020: rgba(0, 140, 149, 0.20);
+    --primary-040: rgba(0, 140, 149, 0.40);
+    --primary-080: rgba(0, 140, 149, 0.80);
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.50);
+    --glass-highlight: rgba(255, 255, 255, 0.70);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --text-primary: #0a1a1c;
+    --text-secondary: #4a5a5c;
+    --radius-card: 20px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    min-height: 100vh;
+    background-color: #f0f4f8;
+    background-image:
+      linear-gradient(135deg, rgba(11, 25, 38, 0.06) 0%, rgba(0, 76, 90, 0.08) 50%, transparent 100%),
+      radial-gradient(at 0% 0%, rgba(0, 140, 149, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(0, 140, 149, 0.04) 0px, transparent 50%);
+    overflow-x: hidden;
+    display: flex;
+  }
+
+  /* === SFONDO: GRADIENTE + FORME GEOMETRICHE SFOCATE === */
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .bg-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0b1926 0%, #004d5a 50%, #008c95 100%);
+  }
+
+  .bg-shape-1 {
+    position: absolute;
+    top: -120px;
+    left: -80px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0, 140, 149, 0.40) 0%, transparent 70%);
+    filter: blur(80px);
+    border-radius: 50%;
+    animation: float-slow 20s ease-in-out infinite;
+  }
+
+  .bg-shape-2 {
+    position: absolute;
+    bottom: -160px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0, 140, 149, 0.30) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 70%);
+    filter: blur(100px);
+    border-radius: 50%;
+    animation: float-medium 25s ease-in-out infinite;
+  }
+
+  .bg-shape-3 {
+    position: absolute;
+    top: 30%;
+    left: 60%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(0, 140, 149, 0.25) 0%, transparent 65%);
+    filter: blur(90px);
+    border-radius: 50%;
+    animation: float-fast 15s ease-in-out infinite;
+  }
+
+  .bg-shape-4 {
+    position: absolute;
+    bottom: 25%;
+    left: 15%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0, 140, 149, 0.20) 0%, transparent 65%);
+    filter: blur(70px);
+    border-radius: 50%;
+    animation: float-slow 22s ease-in-out infinite reverse;
+  }
+
+  .bg-shape-5 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0, 140, 149, 0.08) 0%, transparent 60%);
+    filter: blur(120px);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse-glow 8s ease-in-out infinite;
+  }
+
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* === ANIMAZIONI === */
+  @keyframes float-slow {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(30px, -30px) scale(1.05); }
+    66%      { transform: translate(-20px, 20px) scale(0.95); }
+  }
+
+  @keyframes float-medium {
+    0%, 100% { transform: translate(0, 0); }
+    25%      { transform: translate(-40px, 20px); }
+    50%      { transform: translate(20px, 50px); }
+    75%      { transform: translate(40px, -20px); }
+  }
+
+  @keyframes float-fast {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(50px, -30px) scale(1.1); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.7; }
+  }
+
+  /* === COMPONENTE GLASS BASE === */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    position: relative;
+  }
+
+  .glass::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  }
+
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 var(--glass-highlight);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .glass-card:hover {
+    border-color: var(--primary-040);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(0, 140, 149, 0.10),
+      inset 0 1px 0 var(--glass-highlight);
+    transform: translateY(-2px);
+  }
+
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 250px;
+    height: 100vh;
+    padding: 28px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-right: 1px solid var(--glass-border);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.06);
+  }
+
+  .sidebar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 4px 28px 4px;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-logo .logo-img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+  }
+
+  .sidebar-logo .logo-text {
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-logo .logo-text span {
+    color: var(--primary);
+  }
+
+  .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+
+  .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .sidebar-nav a:hover {
+    background: var(--primary-010);
+    color: var(--primary);
+    border-color: var(--primary-020);
+  }
+
+  .sidebar-nav a.active {
+    background: rgba(0, 140, 149, 0.08);
+    color: var(--primary);
+    border-color: var(--primary-040);
+    font-weight: 600;
+  }
+
+  .sidebar-nav a .ico {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+
+  .sidebar-nav a .badge {
+    margin-left: auto;
+    background: var(--primary-010);
+    border: 1px solid var(--primary-040);
+    border-radius: 20px;
+    padding: 1px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+
+  .sidebar-footer .version {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* === MAIN CONTENT === */
+  .main {
+    margin-left: 250px;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    padding: 32px 36px;
+    min-height: 100vh;
+  }
+
+  .main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .main-header h1 {
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+  }
+
+  .main-header h1 span {
+    color: var(--primary);
+  }
+
+  .main-header h1 small {
+    font-weight: 400;
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-left: 10px;
+  }
+
+  .main-header .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    background: var(--primary-080);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 16px rgba(0, 140, 149, 0.30);
+  }
+
+  .btn-primary:hover {
+    background: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(0, 140, 149, 0.45);
+  }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.30);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .btn-ghost:hover {
+    background: var(--primary-010);
+    border-color: var(--primary-040);
+    color: var(--text-primary);
+  }
+
+  /* === STATS ROW (glass-card riutilizzata) === */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    margin-bottom: 36px;
+  }
+
+  .stat-card {
+    padding: 22px 24px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 8px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.8px;
+    text-shadow: 0 2px 8px rgba(0, 140, 149, 0.20);
+  }
+
+  .stat-card .stat-change {
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 6px;
+    color: #10b981;
+  }
+
+  .stat-card .stat-change.down { color: #ef4444; }
+
+  /* === CARD CANDIDATO (con statistiche + tag) === */
+  .candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+    margin-bottom: 40px;
+  }
+
+  .candidate-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .candidate-card .top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .candidate-card .avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: var(--primary-020);
+    border: 2px solid var(--primary-040);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-primary);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 140, 149, 0.15);
+  }
+
+  .candidate-card .candidate-info { flex: 1; }
+
+  .candidate-card .candidate-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+  }
+
+  .candidate-card .candidate-role {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .candidate-card .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .candidate-card .tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--primary-040);
+    background: var(--primary-010);
+    color: var(--text-primary);
+    backdrop-filter: blur(4px);
+  }
+
+  .candidate-card .tag.green {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.30);
+    color: #059669;
+  }
+
+  .candidate-card .tag.yellow {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.30);
+    color: #b45309;
+  }
+
+  .candidate-card .tag.blue {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.30);
+    color: #2563eb;
+  }
+
+  .candidate-card .tag.purple {
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.30);
+    color: #7c3aed;
+  }
+
+  .candidate-card .stats-mini {
+    display: flex;
+    gap: 20px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .candidate-card .stats-mini .stat-item {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .candidate-card .stats-mini .stat-item strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  /* === KANBAN BOARD === */
+  .kanban-section { margin-top: 8px; }
+
+  .kanban-section .section-title {
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+  }
+
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+    align-items: start;
+  }
+
+  .kanban-column {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 var(--glass-highlight);
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .kanban-column:hover {
+    border-color: var(--primary-030);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.10),
+      inset 0 1px 0 var(--glass-highlight);
+  }
+
+  .kanban-column::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  }
+
+  .kanban-column .col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .kanban-column .col-header .col-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .kanban-column .col-header .col-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-060);
+    box-shadow: 0 0 8px rgba(0, 140, 149, 0.20);
+  }
+
+  .kanban-column .col-header .count {
+    background: var(--primary-010);
+    border: 1px solid var(--primary-040);
+    border-radius: 20px;
+    padding: 1px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .kanban-item {
+    background: rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: grab;
+    transition: all 0.25s ease;
+  }
+
+  .kanban-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-040);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .kanban-item .ki-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .kanban-item .ki-role {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .kanban-item .ki-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .kanban-item .ki-tags span {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--primary-010);
+    border: 1px solid var(--primary-020);
+    color: var(--text-secondary);
+  }
+
+  .kanban-item .ki-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .kanban-item .ki-score {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.10);
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+  }
+
+  .kanban-item .ki-date {
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  .kanban-add {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px dashed rgba(0, 0, 0, 0.12);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(4px);
+  }
+
+  .kanban-add:hover {
+    background: var(--primary-010);
+    border-color: var(--primary-040);
+    color: var(--primary);
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1024px) {
+    .sidebar {
+      width: 220px;
+      padding: 24px 14px;
+    }
+    .main { margin-left: 220px; padding: 28px 24px; }
+  }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+
+    .sidebar {
+      position: relative;
+      width: 100%;
+      height: auto;
+      flex-direction: row;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      gap: 4px;
+      backdrop-filter: blur(30px);
+      border-right: none;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .sidebar-logo {
+      width: 100%;
+      padding-bottom: 10px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; width: 100%; }
+    .sidebar-nav a { padding: 8px 12px; font-size: 12px; }
+    .sidebar-nav a .badge { display: none; }
+    .sidebar-footer { display: none; }
+
+    .main {
+      margin-left: 0;
+      padding: 20px 18px;
+    }
+
+    .main-header h1 { font-size: 22px; }
+    .main-header h1 small { display: block; margin-left: 0; margin-top: 4px; }
+
+    .candidates-grid { grid-template-columns: 1fr; }
+    .kanban-board { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SFONDO: Gradiente + forme geometriche animate + griglia
+     ============================================================ -->
+<div class="bg-layer">
+  <div class="bg-gradient"></div>
+  <div class="bg-shape-1"></div>
+  <div class="bg-shape-2"></div>
+  <div class="bg-shape-3"></div>
+  <div class="bg-shape-4"></div>
+  <div class="bg-shape-5"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<!-- ============================================================
+     SIDEBAR DI NAVIGAZIONE (effetto vetro)
+     ============================================================ -->
+  <nav class="sidebar">
+  <div class="sidebar-logo">
+    <img src="/logo-brand.png" alt="Aletheia" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <div class="logo-text" style="display:none;">Job <span>Aletheia</span></div>
+  </div>
+
+  <div class="sidebar-nav">
+    <a href="#" class="active">
+      <span class="ico">&#9632;</span> Dashboard
+      <span class="badge">6</span>
+    </a>
+    <a href="#">
+      <span class="ico">&#9679;</span> Candidati
+      <span class="badge">142</span>
+    </a>
+    <a href="#">
+      <span class="ico">&#9670;</span> Posizioni
+      <span class="badge">12</span>
+    </a>
+    <a href="#">
+      <span class="ico">&#9733;</span> Kanban
+    </a>
+    <a href="#">
+      <span class="ico">&#9998;</span> Calendario
+    </a>
+    <a href="#">
+      <span class="ico">&#9881;</span> Impostazioni
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div style="font-size:12px;font-weight:600;color:var(--primary);">Agenzia per il Lavoro</div>
+    <div class="version">Versione 1.2.0</div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     CONTENUTO PRINCIPALE
+     ============================================================ -->
+<div class="main">
+
+  <!-- HEADER -->
+  <div class="main-header">
+    <h1>
+      Bentornato su <span>Aletheia</span>
+      <small>Panoramica selezioni in corso</small>
+    </h1>
+    <div class="actions">
+      <button class="btn-ghost">&#x2699; Filtri</button>
+      <button class="btn-primary">+ Nuovo candidato</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       STATISTICHE (glass-card)
+       ============================================================ -->
+  <div class="stats-row">
+    <div class="glass-card stat-card">
+      <div class="stat-label">Candidati totali</div>
+      <div class="stat-value">248</div>
+      <div class="stat-change">&#9650; +12% rispetto al mese scorso</div>
+    </div>
+    <div class="glass-card stat-card">
+      <div class="stat-label">In fase di review</div>
+      <div class="stat-value">47</div>
+      <div class="stat-change">&#9650; +5% rispetto al mese scorso</div>
+    </div>
+    <div class="glass-card stat-card">
+      <div class="stat-label">Colloqui schedulati</div>
+      <div class="stat-value">23</div>
+      <div class="stat-change down">&#9660; -3% rispetto al mese scorso</div>
+    </div>
+    <div class="glass-card stat-card">
+      <div class="stat-label">Offerte inviate</div>
+      <div class="stat-value">12</div>
+      <div class="stat-change">&#9650; +8% rispetto al mese scorso</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       CARD CANDIDATI (con tag di stato e statistiche)
+       ============================================================ -->
+  <h2 class="kanban-section" style="font-weight:600;font-size:20px;color:#fff;margin-bottom:18px;">
+    Candidati in evidenza
+  </h2>
+
+  <div class="candidates-grid">
+
+    <!-- Candidato 1 -->
+    <div class="glass-card candidate-card">
+      <div class="top-row">
+        <div class="avatar">MR</div>
+        <div class="candidate-info">
+          <div class="candidate-name">Marco Rossi</div>
+          <div class="candidate-role">Frontend Lead &bull; 8 anni exp.</div>
+        </div>
+      </div>
+      <div class="tag-list">
+        <span class="tag green">Disponibile</span>
+        <span class="tag blue">React</span>
+        <span class="tag blue">TypeScript</span>
+      </div>
+      <div class="stats-mini">
+        <div class="stat-item"><strong>92%</strong> Match</div>
+        <div class="stat-item"><strong>4.8</strong> Rating</div>
+        <div class="stat-item"><strong>2gg</strong> Risposta</div>
+      </div>
+    </div>
+
+    <!-- Candidato 2 -->
+    <div class="glass-card candidate-card">
+      <div class="top-row">
+        <div class="avatar">SG</div>
+        <div class="candidate-info">
+          <div class="candidate-name">Sofia Galli</div>
+          <div class="candidate-role">UX Designer &bull; 5 anni exp.</div>
+        </div>
+      </div>
+      <div class="tag-list">
+        <span class="tag yellow">In valutazione</span>
+        <span class="tag purple">Figma</span>
+        <span class="tag purple">Design System</span>
+      </div>
+      <div class="stats-mini">
+        <div class="stat-item"><strong>88%</strong> Match</div>
+        <div class="stat-item"><strong>4.6</strong> Rating</div>
+        <div class="stat-item"><strong>1gg</strong> Risposta</div>
+      </div>
+    </div>
+
+    <!-- Candidato 3 -->
+    <div class="glass-card candidate-card">
+      <div class="top-row">
+        <div class="avatar">LB</div>
+        <div class="candidate-info">
+          <div class="candidate-name">Luca Bianchi</div>
+          <div class="candidate-role">Backend Developer &bull; 6 anni exp.</div>
+        </div>
+      </div>
+      <div class="tag-list">
+        <span class="tag green">Disponibile</span>
+        <span class="tag blue">Node.js</span>
+        <span class="tag blue">Python</span>
+      </div>
+      <div class="stats-mini">
+        <div class="stat-item"><strong>95%</strong> Match</div>
+        <div class="stat-item"><strong>4.9</strong> Rating</div>
+        <div class="stat-item"><strong>4gg</strong> Risposta</div>
+      </div>
+    </div>
+
+    <!-- Candidato 4 -->
+    <div class="glass-card candidate-card">
+      <div class="top-row">
+        <div class="avatar">AV</div>
+        <div class="candidate-info">
+          <div class="candidate-name">Anna Verdi</div>
+          <div class="candidate-role">Product Manager &bull; 7 anni exp.</div>
+        </div>
+      </div>
+      <div class="tag-list">
+        <span class="tag yellow">In valutazione</span>
+        <span class="tag purple">Agile</span>
+        <span class="tag purple">Scrum</span>
+      </div>
+      <div class="stats-mini">
+        <div class="stat-item"><strong>84%</strong> Match</div>
+        <div class="stat-item"><strong>4.5</strong> Rating</div>
+        <div class="stat-item"><strong>3gg</strong> Risposta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       KANBAN BOARD (fasi di selezione)
+       ============================================================ -->
+  <div class="kanban-section">
+    <h2 class="section-title">Kanban &mdash; Fasi di selezione</h2>
+
+    <div class="kanban-board">
+
+      <!-- Colonna 1: Da revisionare -->
+      <div class="kanban-column">
+        <div class="col-header">
+          <div class="col-title">
+            <span class="dot" style="background:#f59e0b;"></span>
+            Da revisionare
+          </div>
+          <span class="count">8</span>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Elena Neri</div>
+          <div class="ki-role">Data Scientist &bull; 4 anni</div>
+          <div class="ki-tags"><span>Python</span><span>ML</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 87%</span>
+            <span class="ki-date">2 giorni fa</span>
+          </div>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Davide Gori</div>
+          <div class="ki-role">DevOps &bull; 5 anni</div>
+          <div class="ki-tags"><span>Docker</span><span>AWS</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 91%</span>
+            <span class="ki-date">1 giorno fa</span>
+          </div>
+        </div>
+
+        <div class="kanban-add">+ Aggiungi candidato</div>
+      </div>
+
+      <!-- Colonna 2: Colloquio HR -->
+      <div class="kanban-column">
+        <div class="col-header">
+          <div class="col-title">
+            <span class="dot" style="background:#3b82f6;"></span>
+            Colloquio HR
+          </div>
+          <span class="count">5</span>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Martina Sala</div>
+          <div class="ki-role">Marketing Specialist &bull; 3 anni</div>
+          <div class="ki-tags"><span>SEO</span><span>Content</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 82%</span>
+            <span class="ki-date">15 Mar</span>
+          </div>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Giovanni Riva</div>
+          <div class="ki-role">Full Stack &bull; 6 anni</div>
+          <div class="ki-tags"><span>React</span><span>Node.js</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 94%</span>
+            <span class="ki-date">14 Mar</span>
+          </div>
+        </div>
+
+        <div class="kanban-add">+ Aggiungi candidato</div>
+      </div>
+
+      <!-- Colonna 3: Colloquio Tecnico -->
+      <div class="kanban-column">
+        <div class="col-header">
+          <div class="col-title">
+            <span class="dot" style="background:#8b5cf6;"></span>
+            Colloquio Tecnico
+          </div>
+          <span class="count">4</span>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Alessandro Fava</div>
+          <div class="ki-role">Frontend Dev &bull; 4 anni</div>
+          <div class="ki-tags"><span>Vue.js</span><span>CSS</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 89%</span>
+            <span class="ki-date">18 Mar</span>
+          </div>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Chiara Monti</div>
+          <div class="ki-role">Backend Dev &bull; 5 anni</div>
+          <div class="ki-tags"><span>Go</span><span>Postgres</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 93%</span>
+            <span class="ki-date">17 Mar</span>
+          </div>
+        </div>
+
+        <div class="kanban-add">+ Aggiungi candidato</div>
+      </div>
+
+      <!-- Colonna 4: Offerta -->
+      <div class="kanban-column">
+        <div class="col-header">
+          <div class="col-title">
+            <span class="dot" style="background:#10b981;"></span>
+            Offerta
+          </div>
+          <span class="count">3</span>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Francesco Tosi</div>
+          <div class="ki-role">CTO &bull; 12 anni</div>
+          <div class="ki-tags"><span>Leadership</span><span>Strategy</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 96%</span>
+            <span class="ki-date">In attesa</span>
+          </div>
+        </div>
+
+        <div class="kanban-item">
+          <div class="ki-name">Sara Fiori</div>
+          <div class="ki-role">HR Manager &bull; 8 anni</div>
+          <div class="ki-tags"><span>Recruiting</span><span>Payroll</span></div>
+          <div class="ki-footer">
+            <span class="ki-score">Match 90%</span>
+            <span class="ki-date">Offerta inviata</span>
+          </div>
+        </div>
+
+        <div class="kanban-add">+ Aggiungi candidato</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

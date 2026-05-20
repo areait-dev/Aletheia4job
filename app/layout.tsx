@@ -95,9 +95,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: [{ url: "/favicon.ico", sizes: "any" }],
-    apple: [{ url: "/logo.svg", type: "image/svg+xml" }],
-    shortcut: "/favicon.ico",
+    icon: [{ url: "/logo-brand.png", sizes: "any" }],
+    apple: [{ url: "/logo-brand.png", type: "image/png" }],
+    shortcut: "/logo-brand.png",
   },
   openGraph: {
     type: "website",

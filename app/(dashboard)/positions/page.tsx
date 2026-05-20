@@ -66,27 +66,27 @@ export default async function PositionsPage() {
               <div className="flex flex-col items-end gap-2 shrink-0">
                 <div className="flex items-center gap-1.5">
                   {job.postToCareerPage && (
-                    <div title="Pubblicato su Career Page" className="w-5 h-5 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600 border border-emerald-200">
+                    <div title="Pubblicato su Career Page" className="w-5 h-5 rounded-md bg-emerald-500/15 flex items-center justify-center text-emerald-500 border border-emerald-500/30">
                       <span className="text-[10px] font-bold">C</span>
                     </div>
                   )}
                   {job.postToLinkedIn && (
-                    <div title="Postato su LinkedIn" className="w-5 h-5 rounded-md bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200">
+                    <div title="Postato su LinkedIn" className="w-5 h-5 rounded-md bg-blue-500/15 flex items-center justify-center text-blue-400 border border-blue-500/30">
                       <span className="text-[10px] font-bold">L</span>
                     </div>
                   )}
                   {job.postToIndeed && (
-                    <div title="Postato su Indeed" className="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center text-blue-700 border border-blue-100">
+                    <div title="Postato su Indeed" className="w-5 h-5 rounded-md bg-blue-500/15 flex items-center justify-center text-blue-400 border border-blue-500/30">
                       <span className="text-[10px] font-bold">i</span>
                     </div>
                   )}
                   {job.postToJooble && (
-                    <div title="Postato su Jooble" className="w-5 h-5 rounded-md bg-orange-100 flex items-center justify-center text-orange-600 border border-orange-200">
+                    <div title="Postato su Jooble" className="w-5 h-5 rounded-md bg-orange-500/15 flex items-center justify-center text-orange-400 border border-orange-500/30">
                       <span className="text-[10px] font-bold">J</span>
                     </div>
                   )}
                   {job.broadbeanStatus === "PUBLISHED" && (
-                    <div title="Pubblicato su Broadbean" className="w-5 h-5 rounded-md bg-purple-100 flex items-center justify-center text-purple-600 border border-purple-200">
+                    <div title="Pubblicato su Broadbean" className="w-5 h-5 rounded-md bg-purple-500/15 flex items-center justify-center text-purple-400 border border-purple-500/30">
                       <span className="text-[10px] font-bold">B</span>
                     </div>
                   )}

@@ -65,7 +65,7 @@ function FolderGroup({ title, candidates, variant }: { title: string, candidates
       </button>
 
       {isOpen && (
-        <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch animate-in fade-in slide-in-from-top-2 duration-300">
           {candidates.map(candidate => (
             <CandidateCard key={candidate.id} candidate={candidate} />
           ))}

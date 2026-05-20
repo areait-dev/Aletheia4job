@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import BackgroundDecorations from '@/components/BackgroundDecorations';
 import { getAuthContext, type AuthContext } from '@/utils/authz';
 import { redirect } from 'next/navigation';
 
@@ -21,12 +22,13 @@ async function layout({ children }: PropsWithChildren) {
   if (!auth) redirect('/login');
 
   return (
-    <main className='grid lg:grid-cols-5'>
-      <div className='hidden lg:block lg:col-span-1 lg:min-h-screen'>
+    <main className='grid lg:grid-cols-5 relative'>
+      <BackgroundDecorations />
+      <div className='hidden lg:block lg:col-span-1 lg:min-h-screen relative z-10'>
         <Sidebar role={auth.role} />
       </div>
 
-      <div className='lg:col-span-4'>
+      <div className='lg:col-span-4 relative z-10'>
         <Navbar role={auth.role} />
         <div className='py-16 px-4 sm:px-8 lg:px-16'>{children}</div>
       </div>

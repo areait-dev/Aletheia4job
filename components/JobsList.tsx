@@ -57,7 +57,7 @@ function CandidatesList() {
         )}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-2 gap-8 items-stretch">
         {candidates.map((candidate) => {
           return <CandidateCard key={candidate.id} candidate={candidate} />;
         })}

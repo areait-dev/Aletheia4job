@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Briefcase, Mail, Lock, ArrowRight, Github } from "lucide-react";
+import { Mail, Lock, ArrowRight, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -54,8 +55,8 @@ export function LoginForm() {
 
       <div className="w-full max-w-md glass rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 dark:shadow-black/20 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="bg-gradient-to-br from-primary to-primary/80 p-3.5 rounded-2xl shadow-xl shadow-primary/30 mb-6">
-            <Briefcase className="text-white w-7 h-7" />
+          <div className="mb-6">
+            <Logo size={56} showText={false} />
           </div>
           <h1 className="text-3xl font-black tracking-tight">Job <span className="text-primary">Aletheia</span></h1>
           <p className="text-muted-foreground mt-1.5 text-sm font-medium">Bentornato! Accedi per gestire i tuoi candidati.</p>

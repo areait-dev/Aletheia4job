@@ -153,28 +153,28 @@ const KanbanColumn = React.memo(function KanbanColumn({ status, candidates: allC
   );
 
   return (
-    <div 
-      ref={setNodeRef}
-      className={cn(
-        'w-full flex flex-col gap-3 rounded-3xl transition-all duration-300 border-2 border-transparent p-3',
-        isOver && 'bg-primary/[0.04] border-primary/20 shadow-inner'
-      )}
-    >
-      <div className={cn(
-        'flex items-center justify-between p-3 backdrop-blur-md rounded-2xl border transition-all duration-300 shadow-sm',
-        isOver ? 'bg-primary/20 border-primary shadow-lg' : 'bg-card/50 border-border/50'
-      )}>
-        <div className='flex items-center gap-3'>
-          <div className={cn(
-            'w-2.5 h-2.5 rounded-full',
-            isOver ? 'bg-primary animate-pulse' : 'bg-primary/60'
-          )} />
-          <h3 className='font-bold text-sm uppercase tracking-wider'>{status}</h3>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'w-full flex flex-col gap-3 rounded-3xl transition-all duration-300 border-2 border-transparent p-3',
+          isOver && 'bg-primary/[0.06] border-primary/30 shadow-inner'
+        )}
+      >
+        <div className={cn(
+          'flex items-center justify-between p-3 backdrop-blur-2xl rounded-2xl border transition-all duration-300 shadow-md',
+          isOver ? 'bg-primary/25 border-primary/50 shadow-lg shadow-primary/10' : 'glass-card'
+        )}>
+          <div className='flex items-center gap-3'>
+            <div className={cn(
+              'w-2.5 h-2.5 rounded-full ring-1 ring-primary/30',
+              isOver ? 'bg-primary animate-pulse' : 'bg-primary/60'
+            )} />
+            <h3 className='font-bold text-sm uppercase tracking-wider text-foreground'>{status}</h3>
+          </div>
+          <Badge className='rounded-xl px-3 py-0.5 bg-primary/15 text-primary backdrop-blur-sm border border-primary/20 font-bold text-xs shadow-sm'>
+            {columnCandidates.length}
+          </Badge>
         </div>
-        <Badge className='rounded-xl px-3 py-0.5 bg-primary/10 text-primary border-none font-bold text-xs'>
-          {columnCandidates.length}
-        </Badge>
-      </div>
 
       <SortableContext 
         id={status}

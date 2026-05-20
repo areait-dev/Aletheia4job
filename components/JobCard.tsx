@@ -1,20 +1,8 @@
 import { CandidateType, CandidateStatus } from '@/utils/types';
-import { MapPin, Briefcase, User, Mail, Phone, FileText, ChevronRight, GraduationCap, Download, Edit, Trash2, Loader2 } from 'lucide-react';
+import { MapPin, Mail, Phone, Download, Trash2, Loader2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import JobInfo from './JobInfo';
-import DeleteJobButton from './DeleteJobButton';
 import { exportCandidateToPDF } from '@/utils/pdfExport';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Select,
   SelectContent,
@@ -25,24 +13,22 @@ import {
 import { updateCandidateStatusAction, deleteCandidateAction } from '@/utils/actions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from './ui/use-toast';
-import { cn, getScoreColor, getScoreLabel } from '@/lib/utils';
+import { cn, getScoreColor } from '@/lib/utils';
 
-import { calculateMatchingScoreAction } from '@/utils/actions/ai';
-import { useRouter } from 'next/navigation';
 import AnalyzeAIButton from './AnalyzeAIButton';
 
 function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
-  const router = useRouter();
 
-  const handleExport = async () => {
+  const initials = `${candidate.firstName?.[0] ?? ''}${candidate.lastName?.[0] ?? ''}`.toUpperCase();
+
+  const handleExport = useCallback(async () => {
     setIsExporting(true);
     await exportCandidateToPDF(candidate);
     setIsExporting(false);
-  };
+  }, [candidate]);
 
-  // Mutazione per aggiornare lo stato
   const updateStatusMutation = useMutation({
     mutationFn: ({ candidateId, status }: { candidateId: string; status: string }) =>
       updateCandidateStatusAction(candidateId, status),
@@ -51,29 +37,14 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
         queryClient.invalidateQueries({ queryKey: ['candidates-grouped'] });
         queryClient.invalidateQueries({ queryKey: ['candidates'] });
         queryClient.invalidateQueries({ queryKey: ['stats'] });
-        toast({
-          title: "Stato aggiornato",
-          description: `Il candidato è ora "${updatedCandidate.status}"`,
-        });
+        toast({ title: "Stato aggiornato", description: `Il candidato è ora "${updatedCandidate.status}"` });
       }
     },
     onError: () => {
-      toast({
-        title: "Errore",
-        description: "Impossibile aggiornare lo stato del candidato",
-        variant: "destructive",
-      });
+      toast({ title: "Errore", description: "Impossibile aggiornare lo stato del candidato", variant: "destructive" });
     },
   });
 
-  const handleStatusChange = (newStatus: string) => {
-    updateStatusMutation.mutate({
-      candidateId: candidate.id,
-      status: newStatus,
-    });
-  };
-
-  // Mutazione per eliminare il candidato
   const deleteMutation = useMutation({
     mutationFn: () => deleteCandidateAction(candidate.id),
     onSuccess: (success) => {
@@ -96,149 +67,124 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
     }
   };
 
+  const parsingStatus = candidate.applications?.[0]?.parsingStatus;
+  const showScore = candidate.matchingScore !== null && candidate.matchingScore !== undefined;
+  const bgColors = ['bg-blue-50 text-blue-600', 'bg-emerald-50 text-emerald-600', 'bg-violet-50 text-violet-600', 'bg-amber-50 text-amber-600', 'bg-rose-50 text-rose-600'];
+  const avatarColor = bgColors[candidate.firstName?.charCodeAt(0) ?? 0 % bgColors.length];
+
   return (
-    <Card className='glass shadow-lg border-white/20 hover:shadow-2xl transition-all duration-300 group overflow-hidden rounded-2xl'>
-      <CardHeader className='pb-2 relative'>
-        <div className='flex justify-between items-start'>
-          <div className='space-y-1'>
-            <CardTitle className='text-2xl font-bold flex items-center gap-2'>
-              <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary'>
-                <User className='w-4 h-4' />
-              </div>
+    <Link
+      href={`/jobs/${candidate.id}`}
+      className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+    >
+      {/* Header: avatar + name/role (left), badges (right) */}
+      <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0", avatarColor)}>
+            {initials || <Mail className="w-4 h-4" />}
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-bold text-slate-900 truncate">
               {candidate.firstName} {candidate.lastName}
-            </CardTitle>
-            <div className='flex items-center gap-2'>
-              <CardDescription className='text-primary font-semibold text-base py-1 px-3 bg-primary/5 rounded-lg inline-block'>
-                {candidate.role}
-              </CardDescription>
-              {candidate.source && (
-                <Badge variant='outline' className='text-[10px] uppercase tracking-wider font-bold border-primary/20 text-primary/70'>
-                  {candidate.source}
-                </Badge>
-              )}
-              {(() => {
-                const ps = candidate.applications?.[0]?.parsingStatus;
-                if (ps === "PENDING" || ps === "PROCESSING") {
-                  return (
-                    <Badge variant="outline" className="font-bold border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-950/20 gap-1.5">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Analisi AI in corso...
-                    </Badge>
-                  );
-                }
-                if (ps === "FAILED") {
-                  return (
-                    <Badge variant="destructive" className="font-bold gap-1">
-                      Parsing Fallito
-                    </Badge>
-                  );
-                }
-                if (candidate.matchingScore !== null && candidate.matchingScore !== undefined) {
-                  return (
-                    <Badge variant="outline" className={cn("font-bold border", getScoreColor(candidate.matchingScore))}>
-                      {candidate.matchingScore}% · {getScoreLabel(candidate.matchingScore)}
-                    </Badge>
-                  );
-                }
-                return null;
-              })()}
-            </div>
-          </div>
-          <div className='flex flex-col items-end gap-2'>
-            {/* Dropdown sempre visibile per modificare lo stato */}
-            <div className='flex items-center gap-2'>
-              <Select
-                value={candidate.status}
-                onValueChange={handleStatusChange}
-                disabled={updateStatusMutation.isPending}
-              >
-                <SelectTrigger className='h-8 w-32 text-xs'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(CandidateStatus).map((status) => (
-                    <SelectItem key={status} value={status} className='text-xs'>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Edit className='w-3 h-3 text-muted-foreground' />
-            </div>
-            <div className='flex items-center gap-2'>
-              {candidate.applications?.[0]?.jobId && (
-                <AnalyzeAIButton 
-                  candidateId={candidate.id} 
-                  jobId={candidate.applications[0].jobId}
-                />
-              )}
-              <Button 
-                variant='ghost' 
-                size='icon' 
-                className='h-8 w-8 text-muted-foreground hover:text-primary rounded-full hover:bg-primary/10'
-                onClick={handleExport}
-                disabled={isExporting}
-                title='Scarica Scheda PDF'
-              >
-                <Download className='w-4 h-4' />
-              </Button>
-              <Button 
-                variant='ghost' 
-                size='icon' 
-                className='h-8 w-8 text-muted-foreground hover:text-destructive rounded-full hover:bg-destructive/10'
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-                title='Elimina candidato'
-              >
-                {deleteMutation.isPending ? <Loader2 className='w-4 h-4 animate-spin' /> : <Trash2 className='w-4 h-4' />}
-              </Button>
-            </div>
+            </h3>
+            <p className="text-[13px] text-slate-500 truncate mt-0.5">{candidate.role}</p>
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent className='mt-4 space-y-4'>
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 p-4 bg-muted/50 rounded-xl'>
-          <JobInfo icon={<Mail className='w-4 h-4 text-primary' />} text={candidate.email} />
-          <JobInfo icon={<Phone className='w-4 h-4 text-primary' />} text={candidate.phone || 'N/D'} />
-          <JobInfo icon={<MapPin className='w-4 h-4 text-primary' />} text={`${candidate.city}${candidate.province ? ` (${candidate.province.toUpperCase()})` : ''}`} />
-          <JobInfo icon={<Briefcase className='w-4 h-4 text-primary' />} text={candidate.seniority} />
-          {candidate.education && (
-            <JobInfo icon={<GraduationCap className='w-4 h-4 text-primary' />} text={candidate.education} />
+
+        {/* Right column: compact status + actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {candidate.source && (
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100">
+              {candidate.source}
+            </span>
           )}
+          {showScore && (
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-md border", getScoreColor(candidate.matchingScore))}>
+              {candidate.matchingScore}%
+            </span>
+          )}
+          {parsingStatus === "PENDING" || parsingStatus === "PROCESSING" ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-200 text-amber-600 bg-amber-50 flex items-center gap-1">
+              <Loader2 className="w-2.5 h-2.5 animate-spin" /> AI
+            </span>
+          ) : parsingStatus === "FAILED" ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-red-200 text-red-600 bg-red-50">
+              Errore
+            </span>
+          ) : null}
         </div>
-        
-        {candidate.matchedKeywords && candidate.matchedKeywords.length > 0 && (
-          <div className='flex flex-wrap gap-2'>
-            {candidate.matchedKeywords.slice(0, 5).map((skill, index) => (
-              <Badge key={index} variant='secondary' className='text-[10px] bg-primary/5 text-primary border-primary/10'>
-                {skill}
-              </Badge>
-            ))}
-          </div>
-        )}
+      </div>
 
-        {candidate.cvUrl && (
-          <Button asChild variant='link' className='p-0 h-auto text-primary hover:text-primary/80 font-medium group/cv'>
-            <a href={candidate.cvUrl} target="_blank" rel="noopener noreferrer" className='flex items-center gap-2'>
-              <FileText className="w-4 h-4" /> 
-              Visualizza Curriculum PDF
-              <ChevronRight className='w-4 h-4 group-hover/cv:translate-x-1 transition-transform' />
-            </a>
-          </Button>
-        )}
-      </CardContent>
+      {/* Contact row */}
+      <div className="grid grid-cols-3 gap-2 px-5 pb-3 text-xs text-slate-400">
+        <span className="flex items-center gap-1.5 min-w-0">
+          <Mail className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">{candidate.email}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Phone className="w-3.5 h-3.5 shrink-0" />
+          <span>{candidate.phone || '—'}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">{candidate.city}{candidate.province ? ` (${candidate.province.toUpperCase()})` : ''}</span>
+        </span>
+      </div>
 
-      <CardFooter className='flex gap-3 bg-muted/30 p-4'>
-        <Button asChild size='sm' className='flex-1 rounded-xl font-semibold'>
-          <Link href={`/jobs/${candidate.id}`}>Modifica Profilo</Link>
-        </Button>
-        {/* TODO: Add proper delete candidate button */}
-        {/* <DeleteJobButton id={candidate.id} /> */}
-      </CardFooter>
-      
-      <div className='absolute bottom-0 left-0 w-full h-1 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-500' />
-    </Card>
+      {/* Tags */}
+      {candidate.matchedKeywords && candidate.matchedKeywords.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-5 pb-3">
+          {candidate.matchedKeywords.slice(0, 5).map((skill, i) => (
+            <span key={i} className="text-[11px] font-medium text-slate-600 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-100">
+              {skill}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Bottom bar: status select + actions */}
+      <div className="mt-auto pt-4 flex items-center justify-between gap-2 px-5 pb-2.5 border-t border-slate-100 bg-slate-50/50 rounded-b-xl">
+        <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+          <Select
+            value={candidate.status}
+            onValueChange={(v) => updateStatusMutation.mutate({ candidateId: candidate.id, status: v })}
+            disabled={updateStatusMutation.isPending}
+          >
+            <SelectTrigger className="h-7 text-[11px] w-[110px] border-slate-200 bg-white shadow-none px-2 rounded-lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(CandidateStatus).map((s) => (
+                <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+          {candidate.applications?.[0]?.jobId && (
+            <AnalyzeAIButton candidateId={candidate.id} jobId={candidate.applications[0].jobId} />
+          )}
+          <button
+            onClick={(e) => { e.preventDefault(); handleExport(); }}
+            disabled={isExporting}
+            className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors"
+            title="Scarica PDF"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); handleDelete(); }}
+            disabled={deleteMutation.isPending}
+            className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            title="Elimina"
+          >
+            {deleteMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+          </button>
+          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors ml-1" />
+        </div>
+      </div>
+    </Link>
   );
 }
 
