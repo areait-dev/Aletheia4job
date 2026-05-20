@@ -62,7 +62,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex gap-2 shrink-0">
           <Link
-            href="/add-candidate"
+            href="/add-job"
             className="group h-10 px-5 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97]"
           >
             <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
