@@ -116,7 +116,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
       </div>
 
       {/* Contact row */}
-      <div className="grid grid-cols-3 gap-2 px-5 pb-3 text-xs text-slate-400">
+      <div className="flex flex-col gap-1.5 px-5 pb-3 text-xs text-slate-400 md:grid md:grid-cols-3 md:gap-2">
         <span className="flex items-center gap-1.5 min-w-0">
           <Mail className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{candidate.email}</span>
@@ -133,7 +133,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
 
       {/* Tags */}
       {candidate.matchedKeywords && candidate.matchedKeywords.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 px-5 pb-3">
+        <div className="flex flex-wrap gap-1 px-5 pb-3 md:gap-1.5">
           {candidate.matchedKeywords.slice(0, 5).map((skill, i) => (
             <span key={i} className="text-[11px] font-medium text-slate-600 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-100">
               {skill}
@@ -150,7 +150,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
             onValueChange={(v) => updateStatusMutation.mutate({ candidateId: candidate.id, status: v })}
             disabled={updateStatusMutation.isPending}
           >
-            <SelectTrigger className="h-7 text-[11px] w-[110px] border-slate-200 bg-white shadow-none px-2 rounded-lg">
+            <SelectTrigger className="h-7 text-[11px] w-[110px] border-slate-200 bg-white shadow-none px-2 rounded-lg max-sm:h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -168,7 +168,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
           <button
             onClick={(e) => { e.preventDefault(); handleExport(); }}
             disabled={isExporting}
-            className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors"
+            className="h-7 w-7 max-sm:h-9 max-sm:w-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors"
             title="Scarica PDF"
           >
             <Download className="w-3.5 h-3.5" />
@@ -176,7 +176,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
           <button
             onClick={(e) => { e.preventDefault(); handleDelete(); }}
             disabled={deleteMutation.isPending}
-            className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            className="h-7 w-7 max-sm:h-9 max-sm:w-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
             title="Elimina"
           >
             {deleteMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
