@@ -116,7 +116,7 @@ export default async function CareersPage({
         </div>
 
         {/* Results count */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
             {filtered.length === 1 ? "posizione trovata" : "posizioni trovate"}

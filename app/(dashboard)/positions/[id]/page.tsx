@@ -36,14 +36,14 @@ export default async function JobDetailPage({ params }: { params: { id: string }
           >
             <ArrowLeft className="w-4 h-4" /> Torna alle posizioni
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{job.title}</h1>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" />{job.company}</span>
             <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{job.location}</span>
             <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{job.mode}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
           <Link
             href={`/careers/${job.id}`}
             target="_blank"
@@ -66,7 +66,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         <div className="lg:col-span-2 space-y-6">
           <div className="glass rounded-3xl p-6 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
                 Candidature Ricevute ({applications.length})
               </h2>
@@ -135,7 +135,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
                       {app.jobId && (
                         <AnalyzeAIButton 
                           candidateId={app.candidateId} 
@@ -162,7 +162,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
 
         {/* Right Column: Job Info & Stats */}
         <div className="space-y-6">
-          <div className="glass rounded-3xl p-6 space-y-6">
+          <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-6">
             <h3 className="font-bold text-lg">Dettagli Job</h3>
             <div className="space-y-4">
               <InfoItem icon={<Calendar className="w-4 h-4" />} label="Data Pubblicazione" value={job.postedAt ? new Date(job.postedAt).toLocaleDateString("it-IT") : 'N/D'} />
@@ -184,7 +184,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             broadbeanError={job.broadbeanError}
           />
 
-          <div className="glass rounded-3xl p-6 space-y-4 bg-primary/5 border-primary/10">
+          <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 bg-primary/5 border-primary/10">
             <h3 className="font-bold flex items-center gap-2 italic">
               <FileText className="w-4 h-4" /> Anteprima Requisiti
             </h3>

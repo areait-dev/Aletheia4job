@@ -59,10 +59,10 @@ export default async function CareerJobPage({ params }: { params: { id: string }
               </Link>
             )}
           </div>
-          <a
-            href="#apply"
-            className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"
-          >
+              <a
+                href="#apply"
+                className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"
+              >
             Candidati ora
           </a>
         </div>
@@ -70,7 +70,7 @@ export default async function CareerJobPage({ params }: { params: { id: string }
 
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
         {/* Hero */}
-        <div className="glass rounded-3xl p-8 space-y-5">
+        <div className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             {/* Company logo placeholder */}
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20 shrink-0">
@@ -158,7 +158,7 @@ export default async function CareerJobPage({ params }: { params: { id: string }
           <div className="space-y-6">
             {/* Quick Benefits */}
             {benefits.length > 0 && (
-              <div className="glass rounded-3xl p-6 space-y-4">
+              <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4">
                 <h3 className="font-bold text-lg">Cosa offriamo</h3>
                 <ul className="space-y-3">
                   {benefits.map((b, i) => (
@@ -172,7 +172,7 @@ export default async function CareerJobPage({ params }: { params: { id: string }
             )}
 
             {/* Why apply? */}
-            <div className="glass rounded-3xl p-6 space-y-4 bg-primary/5 border-primary/20">
+            <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 bg-primary/5 border-primary/20">
               <h3 className="font-bold">Perché unirsi a noi?</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Entra a far parte di un team dinamico e innovativo. Offriamo un ambiente di lavoro flessibile, opportunità di crescita continua e un pacchetto benefit competitivo.
