@@ -32,7 +32,7 @@ function DropdownLinks({ role }: { role: MembershipRole }) {
       >
         {filteredLinks.map((link) => {
           return (
-            <DropdownMenuItem key={link.href}>
+            <DropdownMenuItem key={link.href} asChild>
               <Link href={link.href} className='flex items-center gap-x-2 '>
                 {link.icon} <span className='capitalize'>{link.label}</span>
               </Link>
