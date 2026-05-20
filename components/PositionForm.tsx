@@ -42,7 +42,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
   const remoteOptions = ['Onsite', 'Remote', 'Hybrid'];
   const salaryCurrencyOptions = ['EUR', 'USD', 'GBP'];
   const salaryIntervalOptions = ['Yearly', 'Monthly', 'Hourly'];
-  const sectorOptions = ['Information Technology', 'Finance', 'Healthcare', 'Marketing', 'Sales', 'Engineering', 'Human Resources', 'Legal', 'Education', 'Manufacturing', 'Retail', 'Other'];
+  const sectorOptions = ['Information Technology', 'Commerciale', 'Finance', 'Healthcare', 'Marketing', 'Sales', 'Engineering', 'Human Resources', 'Legal', 'Education', 'Manufacturing', 'Retail', 'Other'];
 
   // 🔥 NUOVO: stato per il caricamento AI
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);

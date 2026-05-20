@@ -214,12 +214,12 @@ function CreateCandidateForm() {
   return (
     <Form {...form}>
       <form
-        className='glass p-8 rounded-3xl shadow-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700'
+        className='glass p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700'
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <div className='flex items-center justify-between border-b pb-6'>
+        <div className='flex items-center justify-between gap-3 flex-wrap border-b pb-6'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight text-primary'>Job Aletheia</h2>
+            <h2 className='text-2xl sm:text-3xl font-bold tracking-tight text-primary'>Job Aletheia</h2>
             <p className='text-muted-foreground mt-1'>Creazione nuovo profilo candidato</p>
           </div>
           <div className='bg-primary/10 p-3 rounded-2xl'>
@@ -245,7 +245,7 @@ function CreateCandidateForm() {
             </div>
             <div className='grid gap-4 sm:grid-cols-2'>
               <CustomFormField name='phone' control={form.control} labelText='Telefono' />
-              <div className='grid grid-cols-[1fr,100px] gap-2'>
+              <div className='grid grid-cols-[1fr,80px] sm:grid-cols-[1fr,100px] gap-2'>
                 <CustomFormField name='city' control={form.control} labelText='Città' />
                 <CustomFormField name='province' control={form.control} labelText='Provincia' />
               </div>
@@ -324,10 +324,10 @@ function CreateCandidateForm() {
             <CustomFormTextarea name='notes' control={form.control} labelText='Note Recruiter/Valutazione' />
           </div>
 
-          <div className='md:col-span-2 flex justify-end mt-4'>
+          <div className='md:col-span-2 flex justify-center sm:justify-end mt-4'>
             <Button
               type='submit'
-              className='px-8 py-6 text-lg rounded-2xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all'
+              className='px-8 py-5 sm:py-6 text-base sm:text-lg rounded-2xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all w-full sm:w-auto'
               disabled={isPending || isUploading || emailExists}
             >
               {isPending ? 'Salvataggio...' : 'Salva Candidato'}

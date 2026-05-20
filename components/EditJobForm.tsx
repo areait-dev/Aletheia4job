@@ -132,11 +132,11 @@ function EditCandidateForm({ candidateId }: { candidateId: string }) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit, onInvalid)}
-        className='glass p-8 rounded-3xl shadow-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700'
+        className='glass p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700'
       >
-        <div className='flex items-center justify-between border-b pb-6'>
+        <div className='flex items-center justify-between gap-3 flex-wrap border-b pb-6'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight text-primary'>Modifica Candidato</h2>
+            <h2 className='text-2xl sm:text-3xl font-bold tracking-tight text-primary'>Modifica Candidato</h2>
             <p className='text-muted-foreground mt-1'>Aggiornamento profilo di {data?.firstName} {data?.lastName}</p>
           </div>
           <div className='bg-primary/10 p-3 rounded-2xl'>
@@ -154,7 +154,7 @@ function EditCandidateForm({ candidateId }: { candidateId: string }) {
             <CustomFormField name='email' control={form.control} labelText='Email' type='email' />
             <div className='grid gap-4 sm:grid-cols-2'>
               <CustomFormField name='phone' control={form.control} labelText='Telefono' />
-              <div className='grid grid-cols-[1fr,100px] gap-2'>
+              <div className='grid grid-cols-[1fr,80px] sm:grid-cols-[1fr,100px] gap-2'>
                 <CustomFormField name='city' control={form.control} labelText='Città' />
                 <CustomFormField name='province' control={form.control} labelText='Provincia' />
               </div>
@@ -218,18 +218,18 @@ function EditCandidateForm({ candidateId }: { candidateId: string }) {
             <CustomFormTextarea name='notes' control={form.control} labelText='Note' />
           </div>
 
-          <div className='md:col-span-2 flex justify-end gap-4 mt-4'>
+          <div className='md:col-span-2 flex flex-col sm:flex-row justify-end gap-3 mt-4'>
             <Button
               type='button'
               variant='outline'
               onClick={() => router.back()}
-              className='rounded-xl'
+              className='rounded-xl w-full sm:w-auto'
             >
               Annulla
             </Button>
             <Button
               type='submit'
-              className='px-8 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all'
+              className='px-8 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all w-full sm:w-auto'
               disabled={isPending || isUploading}
             >
               {isPending ? 'Salvataggio...' : 'Salva Modifiche'}
