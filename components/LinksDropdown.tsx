@@ -19,8 +19,8 @@ function DropdownLinks({ role }: { role: MembershipRole }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className='lg:hidden'>
-        <Button variant='outline' size='icon'>
-          <AlignLeft />
+        <Button variant='outline' size='icon' className='max-sm:h-10 max-sm:w-10'>
+          <AlignLeft className='max-sm:h-5 max-sm:w-5' />
 
           <span className='sr-only'>Toggle links</span>
         </Button>
