@@ -47,7 +47,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
   // 🔥 NUOVO: stato per il caricamento AI
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
-  const {  jobData, isPending: isLoadingJob } = useQuery({
+  const { data: jobData, isPending: isLoadingJob } = useQuery({
     queryKey: ['job', jobId],
     queryFn: () => getSingleJobAction(jobId!),
     enabled: !!jobId,
