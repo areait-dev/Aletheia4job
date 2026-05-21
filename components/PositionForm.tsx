@@ -242,90 +242,66 @@ function PositionForm({ jobId }: { jobId?: string }) {
 
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start'>
           {/* title */}
-          <CustomFormField name='title' control={form.control} labelText='job title' />
-          {/* company */}
-          <CustomFormField name='company' control={form.control} />
-          {/* location */}
-          <CustomFormField name='location' control={form.control} />
-          {/* description */}
-          <CustomFormTextarea name='description' control={form.control} labelText='job description' />
-          {/* requirements */}
-          <CustomFormTextarea name='requirements' control={form.control} labelText='requirements' />
-          {/* sector */}
+          <CustomFormField name='title' control={form.control} labelText='titolo annuncio' />
+          <CustomFormField name='company' control={form.control} labelText='azienda' />
+          <CustomFormField name='location' control={form.control} labelText='località' />
+          <CustomFormTextarea name='description' control={form.control} labelText='descrizione' />
+          <CustomFormTextarea name='requirements' control={form.control} labelText='requisiti' />
           <CustomFormSelect
             name='sector'
             control={form.control}
-            labelText='sector'
+            labelText='settore'
             items={sectorOptions}
           />
-          {/* salary min */}
-          <CustomFormField name='salaryMin' control={form.control} labelText='salary min' type='number' />
-          {/* salary max */}
-          <CustomFormField name='salaryMax' control={form.control} labelText='salary max' type='number' />
-          {/* salary currency */}
+          <CustomFormField name='salaryMin' control={form.control} labelText='stipendio min' type='number' />
+          <CustomFormField name='salaryMax' control={form.control} labelText='stipendio max' type='number' />
           <CustomFormSelect
             name='salaryCurrency'
             control={form.control}
-            labelText='salary currency'
+            labelText='valuta'
             items={salaryCurrencyOptions}
           />
-          {/* experience level */}
           <CustomFormSelect
             name='experienceLevel'
             control={form.control}
-            labelText='experience level'
+            labelText='esperienza'
             items={experienceLevels}
           />
-          {/* remote type */}
           <CustomFormSelect
             name='remoteType'
             control={form.control}
-            labelText='remote type'
+            labelText='modalità remoto'
             items={remoteOptions}
           />
-          {/* salary interval */}
           <CustomFormSelect
             name='salaryInterval'
             control={form.control}
-            labelText='salary interval'
+            labelText='intervallo stipendio'
             items={salaryIntervalOptions}
           />
-          {/* category */}
-          <CustomFormField name='category' control={form.control} labelText='job category' />
-          {/* industry */}
-          <CustomFormField name='industry' control={form.control} labelText='industry' />
-          {/* location formatted */}
-          <CustomFormField name='locationFormatted' control={form.control} labelText='location formatted' />
-          {/* city */}
-          <CustomFormField name='city' control={form.control} />
-          {/* province */}
-          <CustomFormField name='province' control={form.control} />
-          {/* country */}
-          <CustomFormField name='country' control={form.control} />
-          {/* postal code */}
-          <CustomFormField name='postalCode' control={form.control} labelText='postal code' />
-          {/* responsibilities */}
-          <CustomFormTextarea name='responsibilities' control={form.control} labelText='responsibilities' />
-          {/* benefits */}
-          <CustomFormTextarea name='benefits' control={form.control} labelText='benefits' />
-          {/* salary text */}
-          <CustomFormField name='salaryText' control={form.control} labelText='salary text' />
-          {/* job status */}
+          <CustomFormField name='category' control={form.control} labelText='categoria' />
+          <CustomFormField name='industry' control={form.control} labelText='industria' />
+          <CustomFormField name='locationFormatted' control={form.control} labelText='località formattata' />
+          <CustomFormField name='city' control={form.control} labelText='città' />
+          <CustomFormField name='province' control={form.control} labelText='provincia' />
+          <CustomFormField name='country' control={form.control} labelText='paese' />
+          <CustomFormField name='postalCode' control={form.control} labelText='CAP' />
+          <CustomFormTextarea name='responsibilities' control={form.control} labelText='responsabilità' />
+          <CustomFormTextarea name='benefits' control={form.control} labelText='benefit' />
+          <CustomFormField name='salaryText' control={form.control} labelText='testo stipendio' />
           <CustomFormSelect
             name='status'
             control={form.control}
-            labelText='job status'
+            labelText='stato'
             items={Object.values(JobStatus)}
           />
-          {/* job  type */}
           <CustomFormSelect
             name='mode'
             control={form.control}
-            labelText='job mode'
+            labelText='tipologia'
             items={Object.values(JobMode)}
           />
-          {/* application URL */}
-          <CustomFormField name='applicationUrl' control={form.control} labelText='application URL' type='url' />
+          <CustomFormField name='applicationUrl' control={form.control} labelText='URL candidatura' type='url' />
 
           <div className='col-span-full border-t border-border pt-6 mt-2'>
             <h3 className='text-sm font-bold uppercase tracking-wider text-primary mb-4'>Canali di pubblicazione</h3>
