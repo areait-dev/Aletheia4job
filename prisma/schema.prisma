@@ -135,6 +135,7 @@ model Application {
   jobId          String
   status         String       @default("Nuovo")
   notes          String?
+  appliedLocation String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   candidate      Candidate    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
@@ -249,6 +250,11 @@ model Job {
   postToIndeed       Boolean       @default(false)
   postToJooble       Boolean       @default(false)
   postToLinkedIn     Boolean       @default(false)
+
+  // --- CAMPO SEDE DINAMICO (career page) ---
+  locationInputType String?  @default("single") // "single" | "select" | "free_text"
+  locationOptions   String[] @default([])       // popolato solo se locationInputType = "select"
+  // ------------------------------------------
 
   // --- BROADBEAN MULTIPOSTING ---
   broadbeanJobId        String?       @unique

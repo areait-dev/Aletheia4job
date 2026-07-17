@@ -9,9 +9,11 @@ import { uploadCV } from "@/utils/supabase";
 interface JobApplicationFormProps {
   jobId: string;
   jobTitle: string;
+  locationInputType?: string | null;
+  locationOptions?: string[];
 }
 
-export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFormProps) {
+export default function JobApplicationForm({ jobId, jobTitle, locationInputType, locationOptions }: JobApplicationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -25,14 +27,15 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
     city: "",
     cvUrl: "",
     source: "Career Page",
+    appliedLocation: "",
   });
 
-  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; email?: string; city?: string }>({});
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; email?: string; city?: string; appliedLocation?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const validateField = (field: "firstName" | "lastName" | "email" | "city", value: string) => {
+  const validateField = (field: "firstName" | "lastName" | "email" | "city" | "appliedLocation", value: string) => {
     switch (field) {
       case "firstName":
         return value.trim().length < 2 ? "Inserisci il tuo nome (almeno 2 caratteri)." : undefined;
@@ -42,6 +45,8 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
         return !EMAIL_REGEX.test(value.trim()) ? "Inserisci un indirizzo email valido." : undefined;
       case "city":
         return value.trim().length < 2 ? "Inserisci la tua città." : undefined;
+      case "appliedLocation":
+        return value.trim().length < 2 ? "Indica per quale sede ti candidi." : undefined;
     }
   };
 
@@ -51,6 +56,9 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
       lastName: validateField("lastName", formData.lastName),
       email: validateField("email", formData.email),
       city: validateField("city", formData.city),
+      appliedLocation: locationInputType && locationInputType !== "single"
+        ? validateField("appliedLocation", formData.appliedLocation)
+        : undefined,
     };
     setErrors(nextErrors);
     return !Object.values(nextErrors).some(Boolean);
@@ -268,6 +276,48 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
           {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
         </div>
       </div>
+
+      {locationInputType === "select" && locationOptions && locationOptions.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Sede</label>
+          <select
+            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.appliedLocation ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            }`}
+            value={formData.appliedLocation}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, appliedLocation: e.target.value }));
+              setErrors(prev => ({ ...prev, appliedLocation: undefined }));
+            }}
+            onBlur={e => setErrors(prev => ({ ...prev, appliedLocation: validateField("appliedLocation", e.target.value) }))}
+          >
+            <option value="">Seleziona una sede…</option>
+            {locationOptions.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+          {errors.appliedLocation && <p className="text-xs text-red-600">{errors.appliedLocation}</p>}
+        </div>
+      )}
+
+      {locationInputType === "free_text" && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Sede</label>
+          <input
+            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.appliedLocation ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            }`}
+            placeholder="Indica per quale sede tra quelle elencate nell'annuncio ti candidi"
+            value={formData.appliedLocation}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, appliedLocation: e.target.value }));
+              setErrors(prev => ({ ...prev, appliedLocation: undefined }));
+            }}
+            onBlur={e => setErrors(prev => ({ ...prev, appliedLocation: validateField("appliedLocation", e.target.value) }))}
+          />
+          {errors.appliedLocation && <p className="text-xs text-red-600">{errors.appliedLocation}</p>}
+        </div>
+      )}
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Carica CV (PDF, DOCX)</label>

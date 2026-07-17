@@ -162,7 +162,12 @@ export default async function CareerJobPage({ params }: { params: { id: string }
 
             {/* Application Form anchor */}
             <div id="apply" className="scroll-mt-24 pt-4">
-              <JobApplicationForm jobId={job.id} jobTitle={job.title} />
+              <JobApplicationForm
+                jobId={job.id}
+                jobTitle={job.title}
+                locationInputType={job.locationInputType}
+                locationOptions={job.locationOptions}
+              />
             </div>
           </div>
 

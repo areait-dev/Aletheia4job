@@ -145,6 +145,7 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
         id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
         experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
+        locationInputType: true, locationOptions: true,
       },
     });
   } catch (error) {
@@ -161,6 +162,7 @@ export async function getPublicJobByIdAction(id: string) {
         id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
         experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
+        locationInputType: true, locationOptions: true,
       },
     });
   } catch (error) {
@@ -170,7 +172,7 @@ export async function getPublicJobByIdAction(id: string) {
 }
 
 export async function applyToJobAction(values: {
-  jobId: string; firstName: string; lastName: string; email: string; phone?: string; city: string; cvUrl?: string; source?: string;
+  jobId: string; firstName: string; lastName: string; email: string; phone?: string; city: string; cvUrl?: string; source?: string; appliedLocation?: string;
 }) {
   try {
     const job = await prisma.job.findUnique({
@@ -241,6 +243,7 @@ export async function applyToJobAction(values: {
           organizationId,
           status: "Nuovo",
           parsingStatus: values.cvUrl ? "PENDING" : undefined,
+          appliedLocation: values.appliedLocation || undefined,
         }
       });
 
