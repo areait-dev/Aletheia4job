@@ -69,11 +69,11 @@ export default async function CareerJobPage({ params }: { params: { id: string }
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
         {/* Immagine annuncio */}
         {job.imageUrl && (
-          <div className="w-full h-48 sm:h-64 rounded-2xl sm:rounded-3xl bg-muted/40 flex items-center justify-center overflow-hidden">
+          <div className="w-full rounded-2xl sm:rounded-3xl bg-muted/40 overflow-hidden">
             <img
               src={job.imageUrl}
               alt={job.title}
-              className="w-full h-full object-contain"
+              className="w-full h-auto"
             />
           </div>
         )}
