@@ -138,7 +138,15 @@ export default async function CareersPage({
           <div className="grid sm:grid-cols-2 gap-4">
             {filtered.map(job => (
               <div key={job.id}
-                className="group glass rounded-2xl p-5 space-y-4 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
+                className="group glass rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
+                {job.imageUrl && (
+                  <img
+                    src={job.imageUrl}
+                    alt={job.title}
+                    className="w-full h-36 object-cover"
+                  />
+                )}
+                <div className="p-5 space-y-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -197,6 +205,7 @@ export default async function CareersPage({
                   >
                     Scopri di più <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
+                </div>
                 </div>
               </div>
             ))}

@@ -142,7 +142,7 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
       where,
       orderBy: { postedAt: "desc" },
       select: {
-        id: true, title: true, company: true, companyLogoUrl: true, location: true, sector: true, mode: true,
+        id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
         experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
       },
@@ -158,7 +158,7 @@ export async function getPublicJobByIdAction(id: string) {
     return await prisma.job.findFirst({
       where: { id, isActive: true, status: "Aperto", postToCareerPage: { not: false } },
       select: {
-        id: true, title: true, company: true, companyLogoUrl: true, location: true, sector: true, mode: true,
+        id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
         experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
       },

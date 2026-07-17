@@ -212,6 +212,7 @@ model Job {
   title             String
   company           String
   companyLogoUrl    String?
+  imageUrl          String?
   location          String
   locationFormatted String?
   city              String?
