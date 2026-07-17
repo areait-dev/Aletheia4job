@@ -188,7 +188,7 @@ export default async function CareerJobPage({ params }: { params: { id: string }
           </section>
         )}
 
-        <div className={cn("grid gap-8", benefits.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-1 max-w-3xl mx-auto w-full")}>
+        <div className={cn("grid gap-8", benefits.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-1 w-full")}>
           {/* Main content */}
           <div className={cn(benefits.length > 0 ? "lg:col-span-2" : "", "space-y-8")}>
             {/* Description */}
