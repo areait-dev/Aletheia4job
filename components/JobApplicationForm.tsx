@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { applyToJobAction } from "@/utils/actions";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Upload, CheckCircle2 } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, MapPinned } from "lucide-react";
 import { uploadCV } from "@/utils/supabase";
 
 interface JobApplicationFormProps {
@@ -186,7 +186,7 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
   return (
     <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 sm:p-8 space-y-6">
       <div className="space-y-2">
-        <h3 className="text-xl font-bold">Candidati per questa posizione</h3>
+        <h3 className="text-xl font-bold">Candidati per: <span className="text-primary">{jobTitle}</span></h3>
         <p className="text-sm text-muted-foreground">Completa i campi sottostanti per inviare il tuo profilo.</p>
       </div>
 
@@ -278,11 +278,13 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
       </div>
 
       {locationInputType === "select" && locationOptions && locationOptions.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Sede</label>
+        <div className="space-y-2 p-4 rounded-2xl border-2 border-primary/30 bg-primary/5">
+          <label className="text-sm font-bold flex items-center gap-1.5 text-primary">
+            <MapPinned className="w-4 h-4" /> Per quale sede ti candidi?
+          </label>
           <select
-            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
-              errors.appliedLocation ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            className={`w-full bg-background border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.appliedLocation ? 'border-red-500/50 focus:border-red-500' : 'border-primary/30 focus:border-primary'
             }`}
             value={formData.appliedLocation}
             onChange={e => {
@@ -301,11 +303,13 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
       )}
 
       {locationInputType === "free_text" && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Sede</label>
+        <div className="space-y-2 p-4 rounded-2xl border-2 border-primary/30 bg-primary/5">
+          <label className="text-sm font-bold flex items-center gap-1.5 text-primary">
+            <MapPinned className="w-4 h-4" /> Per quale sede ti candidi?
+          </label>
           <input
-            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
-              errors.appliedLocation ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            className={`w-full bg-background border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.appliedLocation ? 'border-red-500/50 focus:border-red-500' : 'border-primary/30 focus:border-primary'
             }`}
             placeholder="Indica per quale sede tra quelle elencate nell'annuncio ti candidi"
             value={formData.appliedLocation}

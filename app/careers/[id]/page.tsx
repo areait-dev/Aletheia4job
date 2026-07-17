@@ -1,6 +1,6 @@
 import { getPublicJobByIdAction } from '@/utils/actions';
 import { notFound } from 'next/navigation';
-import { MapPin, Briefcase, Clock, Euro, Wifi, ArrowLeft, CheckCircle2, Star, LayoutDashboard } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, LayoutDashboard, MapPinned, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
@@ -20,19 +20,47 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
+// Marcatori che nel testo originale introducono l'elenco delle sedi (es. "Sedi:",
+// "SEDI", "Sede di lavoro:"). Per gli annunci multi-sede questo elenco viene
+// mostrato nella sezione dedicata "Sedi disponibili", quindi va tagliato via dal
+// testo di descrizione/requisiti per non ripeterlo due volte. Puramente
+// presentazionale: non modifica i dati salvati, solo cosa viene renderizzato.
+const LOCATION_TAIL_MARKERS = [
+  /\bSEDI\b/,
+  /\bSedi\b/,
+  /\bSede di lavoro\b/i,
+  /\bSedi di lavoro\b/i,
+];
+
+function stripLocationTail(text: string | null | undefined): string {
+  if (!text) return '';
+  let cutIndex = text.length;
+  for (const re of LOCATION_TAIL_MARKERS) {
+    const m = text.match(re);
+    if (m && m.index !== undefined && m.index < cutIndex) cutIndex = m.index;
+  }
+  return text.slice(0, cutIndex).trim();
+}
+
 export default async function CareerJobPage({ params }: { params: { id: string } }) {
   const job = await getPublicJobByIdAction(params.id);
   if (!job) notFound();
 
-  const requirements = job.requirements
-    ?.split('\n')
-    .map(r => r.replace(/^[-•*]\s*/, '').trim())
-    .filter(Boolean) ?? [];
+  const hasMultipleSites = job.locationInputType === 'select' || job.locationInputType === 'free_text';
+
+  const description = hasMultipleSites ? stripLocationTail(job.description) : job.description;
+  const requirementsText = hasMultipleSites ? stripLocationTail(job.requirements) : job.requirements;
 
   const benefits = job.benefits
     ?.split('\n')
     .map(b => b.replace(/^[-•*]\s*/, '').trim())
     .filter(Boolean) ?? [];
+
+  const sedeMetaValue = job.locationInputType === 'select'
+    ? `${job.locationOptions.length} sedi disponibili`
+    : job.locationInputType === 'free_text'
+    ? 'Più sedi disponibili'
+    : job.location;
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -106,7 +134,7 @@ export default async function CareerJobPage({ params }: { params: { id: string }
 
           {/* Meta grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <MetaCard icon={<MapPin className="w-4 h-4" />} label="Sede" value={job.location} />
+            <MetaCard icon={<MapPin className="w-4 h-4" />} label="Sede" value={sedeMetaValue} />
             <MetaCard icon={<Briefcase className="w-4 h-4" />} label="Settore" value={job.sector} />
             {(job.salaryMin || job.salaryMax) && (
               <MetaCard
@@ -134,29 +162,53 @@ export default async function CareerJobPage({ params }: { params: { id: string }
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* Sedi disponibili — solo per annunci multi-sede */}
+        {hasMultipleSites && (
+          <section className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinned className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-lg">Sedi disponibili</h2>
+            </div>
+            {job.locationInputType === 'select' ? (
+              <div className="flex flex-wrap gap-2">
+                {job.locationOptions.map(loc => (
+                  <span
+                    key={loc}
+                    className="text-sm font-medium px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20"
+                  >
+                    {loc}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Questo annuncio è disponibile per numerose sedi diverse: consulta l&apos;elenco completo nel testo dell&apos;annuncio qui sotto, poi indica nel form la sede per cui ti candidi.
+              </p>
+            )}
+          </section>
+        )}
+
+        <div className={cn("grid gap-8", benefits.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-1 max-w-3xl mx-auto w-full")}>
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className={cn(benefits.length > 0 ? "lg:col-span-2" : "", "space-y-8")}>
             {/* Description */}
             <section className="glass rounded-3xl p-6 sm:p-8 space-y-4">
               <h2 className="font-bold text-xl">Descrizione della posizione</h2>
               <div className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {job.description}
+                {description}
               </div>
             </section>
 
             {/* Requirements */}
-            {requirements.length > 0 && (
+            {requirementsText && (
               <section className="glass rounded-3xl p-6 sm:p-8 space-y-4">
-                <h2 className="font-bold text-xl">Requisiti</h2>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {requirements.map((req, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground bg-primary/5 p-3 rounded-xl border border-primary/10">
-                      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      {req}
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex items-center gap-2">
+                  <ListChecks className="w-5 h-5 text-primary" />
+                  <h2 className="font-bold text-xl">Requisiti</h2>
+                </div>
+                <div className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {requirementsText}
+                </div>
               </section>
             )}
 
@@ -172,9 +224,8 @@ export default async function CareerJobPage({ params }: { params: { id: string }
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Benefits */}
-            {benefits.length > 0 && (
+          {benefits.length > 0 && (
+            <div className="space-y-6">
               <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4">
                 <h3 className="font-bold text-lg">Cosa offriamo</h3>
                 <ul className="space-y-3">
@@ -186,31 +237,8 @@ export default async function CareerJobPage({ params }: { params: { id: string }
                   ))}
                 </ul>
               </div>
-            )}
-
-            {/* Why apply? */}
-            <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 bg-primary/5 border-primary/20">
-              <h3 className="font-bold">Perché unirsi a noi?</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Entra a far parte di un team dinamico e innovativo. Offriamo un ambiente di lavoro flessibile, opportunità di crescita continua e un pacchetto benefit competitivo.
-              </p>
-              <div className="pt-2 border-t border-primary/10">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold">
-                      U{i}
-                    </div>
-                  ))}
-                  <div className="w-8 h-8 rounded-full border-2 border-background bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
-                    +12
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  Unisciti ad altri 15 talenti nel nostro team.
-                </p>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
