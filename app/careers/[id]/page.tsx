@@ -81,16 +81,12 @@ export default async function CareerJobPage({ params }: { params: { id: string }
         {/* Hero */}
         <div className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            {job.companyLogoUrl ? (
+            {job.companyLogoUrl && (
               <img
                 src={job.companyLogoUrl}
                 alt={`Logo ${job.company}`}
                 className="w-16 h-16 rounded-2xl object-contain bg-white border border-border/50 shadow-lg shadow-primary/10 shrink-0"
               />
-            ) : (
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20 shrink-0">
-                {job.company[0]}
-              </div>
             )}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">

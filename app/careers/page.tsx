@@ -152,16 +152,12 @@ export default async function CareersPage({
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
-                    {job.companyLogoUrl ? (
+                    {job.companyLogoUrl && (
                       <img
                         src={job.companyLogoUrl}
                         alt={`Logo ${job.company}`}
                         className="w-10 h-10 rounded-xl object-contain bg-white border border-border/50 shrink-0"
                       />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                        {job.company[0]}
-                      </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <h2 className="font-bold text-base leading-tight group-hover:text-primary transition-colors">{job.title}</h2>
