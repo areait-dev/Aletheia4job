@@ -140,11 +140,13 @@ export default async function CareersPage({
               <div key={job.id}
                 className="group glass rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (
-                  <img
-                    src={job.imageUrl}
-                    alt={job.title}
-                    className="w-full h-36 object-cover"
-                  />
+                  <div className="w-full h-36 bg-muted/40 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={job.imageUrl}
+                      alt={job.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 )}
                 <div className="p-5 space-y-4">
                 {/* Header */}
