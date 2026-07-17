@@ -200,6 +200,7 @@ export async function applyToJobAction(values: {
             lastName: values.lastName,
             phone: values.phone || candidate.phone,
             city: values.city,
+            role: job.title,
             ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
           },
         });
