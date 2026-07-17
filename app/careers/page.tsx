@@ -141,9 +141,22 @@ export default async function CareersPage({
                 className="group glass rounded-2xl p-5 space-y-4 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="font-bold text-base leading-tight group-hover:text-primary transition-colors">{job.title}</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">{job.company}</p>
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {job.companyLogoUrl ? (
+                      <img
+                        src={job.companyLogoUrl}
+                        alt={`Logo ${job.company}`}
+                        className="w-10 h-10 rounded-xl object-contain bg-white border border-border/50 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                        {job.company[0]}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h2 className="font-bold text-base leading-tight group-hover:text-primary transition-colors">{job.title}</h2>
+                      <p className="text-sm text-muted-foreground mt-0.5">{job.company}</p>
+                    </div>
                   </div>
                   <span className={cn("text-xs px-2.5 py-1 rounded-xl font-semibold shrink-0", modeColor[job.mode] ?? "bg-gray-100 text-gray-600")}>
                     {job.mode}

@@ -44,38 +44,52 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   });
 
   if (!membership) {
-    // Se non ha una membership, cerchiamo se il suo dominio email è mappato a un'organizzazione
-    const domain = email?.split("@")[1] ?? null;
-    const mapped = domain
-      ? await prisma.organizationDomain.findFirst({
-          where: { domain },
-        })
-      : null;
+    // Nessuna membership trovata: serializziamo la creazione con un advisory
+    // lock Postgres per-utente, per evitare che richieste concorrenti (es. più
+    // Server Components che chiamano getAuthContext in parallelo al primo
+    // login) creino ciascuna una propria organizzazione duplicata.
+    membership = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
 
-    if (mapped) {
-      membership = await prisma.membership.create({
-        data: {
-          userId,
-          organizationId: mapped.organizationId,
-          role: MembershipRole.VIEWER,
-        },
+      const existing = await tx.membership.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
       });
-    } else {
+      if (existing) return existing;
+
+      // Se non ha una membership, cerchiamo se il suo dominio email è mappato a un'organizzazione
+      const domain = email?.split("@")[1] ?? null;
+      const mapped = domain
+        ? await tx.organizationDomain.findFirst({
+            where: { domain },
+          })
+        : null;
+
+      if (mapped) {
+        return tx.membership.create({
+          data: {
+            userId,
+            organizationId: mapped.organizationId,
+            role: MembershipRole.VIEWER,
+          },
+        });
+      }
+
       // Altrimenti creiamo una nuova organizzazione per lui (Personal Org)
-      const organization = await prisma.organization.create({
+      const organization = await tx.organization.create({
         data: {
           name: `Org di ${user.user_metadata?.full_name || email || userId.slice(0, 8)}`,
         },
       });
 
-      membership = await prisma.membership.create({
+      return tx.membership.create({
         data: {
           userId,
           organizationId: organization.id,
           role: MembershipRole.OWNER,
         },
       });
-    }
+    });
   }
 
   return {

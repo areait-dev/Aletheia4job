@@ -85,11 +85,6 @@ export default async function PositionsPage() {
                       <span className="text-[10px] font-bold">J</span>
                     </div>
                   )}
-                  {job.broadbeanStatus === "PUBLISHED" && (
-                    <div title="Pubblicato su Broadbean" className="w-5 h-5 rounded-md bg-purple-500/15 flex items-center justify-center text-purple-400 border border-purple-500/30">
-                      <span className="text-[10px] font-bold">B</span>
-                    </div>
-                  )}
                 </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end">
                   <span className={cn(

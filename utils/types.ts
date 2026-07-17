@@ -130,6 +130,7 @@ export type JobType = {
   organizationId: string;
   title: string;
   company: string;
+  companyLogoUrl?: string | null;
   location: string;
   locationFormatted?: string | null;
   city?: string | null;
@@ -174,6 +175,7 @@ export const createAndEditJobSchema = z.object({
   company: z.string().min(2, {
     message: 'Il nome dell\'azienda deve essere di almeno 2 caratteri.',
   }),
+  companyLogoUrl: z.string().url().optional().nullable(),
   location: z.string().min(2, {
     message: 'La località deve essere di almeno 2 caratteri.',
   }),

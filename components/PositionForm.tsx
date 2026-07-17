@@ -35,7 +35,8 @@ import { createJobAction, getSingleJobAction, updateJobAction, generateJobDescri
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react'; // 🔥 NUOVO: icone per UI
+import { Sparkles, Loader2, Upload, CheckCircle2 } from 'lucide-react'; // 🔥 NUOVO: icone per UI
+import { uploadCV } from '@/utils/supabase';
 
 function PositionForm({ jobId }: { jobId?: string }) {
   const experienceLevels = ['Entry Level', 'Mid Level', 'Senior Level', 'Director / Executive'];
@@ -46,6 +47,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
 
   // 🔥 NUOVO: stato per il caricamento AI
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const { data: jobData, isPending: isLoadingJob } = useQuery({
     queryKey: ['job', jobId],
@@ -58,6 +60,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
     defaultValues: {
       title: '',
       company: '',
+      companyLogoUrl: undefined,
       location: '',
       locationFormatted: '',
       city: '',
@@ -91,6 +94,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
       form.reset({
         title: jobData.title,
         company: jobData.company,
+        companyLogoUrl: jobData.companyLogoUrl || undefined,
         location: jobData.location,
         locationFormatted: jobData.locationFormatted || '',
         city: jobData.city || '',
@@ -244,6 +248,57 @@ function PositionForm({ jobId }: { jobId?: string }) {
           {/* title */}
           <CustomFormField name='title' control={form.control} labelText='titolo annuncio' />
           <CustomFormField name='company' control={form.control} labelText='azienda' />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Logo azienda cliente (opzionale)</label>
+            <div className="relative">
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,.svg,.webp"
+                disabled={isUploadingLogo}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 5 * 1024 * 1024) {
+                    toast({ description: 'Il logo non deve superare i 5MB.', variant: 'destructive' });
+                    return;
+                  }
+                  setIsUploadingLogo(true);
+                  try {
+                    const { url, error } = await uploadCV(file, { bucket: 'logos', jobId });
+                    if (error || !url) {
+                      toast({ description: error || 'Caricamento logo fallito.', variant: 'destructive' });
+                      return;
+                    }
+                    form.setValue('companyLogoUrl', url);
+                    toast({ description: 'Logo caricato correttamente.' });
+                  } finally {
+                    setIsUploadingLogo(false);
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className={`border-2 border-dashed rounded-xl px-4 py-2.5 text-sm flex items-center gap-2 ${
+                form.watch('companyLogoUrl') ? 'border-green-500/30 bg-green-500/5' : 'border-border'
+              }`}>
+                {isUploadingLogo ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-muted-foreground">Caricamento...</span>
+                  </>
+                ) : form.watch('companyLogoUrl') ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span className="text-green-600">Logo caricato — clicca per cambiare</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Carica logo (PNG, JPG, SVG, WEBP — max 5MB)</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
           <CustomFormField name='location' control={form.control} labelText='località' />
           <CustomFormTextarea name='description' control={form.control} labelText='descrizione' />
           <CustomFormTextarea name='requirements' control={form.control} labelText='requisiti' />

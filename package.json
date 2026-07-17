@@ -15,7 +15,10 @@
     "db:migrate-clerkid": "tsx scripts/db-migrate-clerkid.ts",
     "db:fix-status": "tsx scripts/db-fix-status.ts",
     "db:fix-future-dates": "tsx scripts/db-fix-future-dates.ts",
-    "db:seed-test-user": "tsx scripts/seed-test-user-jobs.ts"
+    "db:seed-test-user": "tsx scripts/seed-test-user-jobs.ts",
+    "storage:find-orphans": "tsx scripts/storage-find-orphans.ts",
+    "storage:recover-orphans": "tsx scripts/storage-recover-orphans.ts",
+    "storage:fix-names": "tsx scripts/storage-recover-fix-names.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.31.0",

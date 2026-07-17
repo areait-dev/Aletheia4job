@@ -1,4 +1,4 @@
-import EditCandidateForm from '@/components/EditJobForm';
+import EditCandidateForm from '@/components/EditCandidateForm';
 import { getSingleCandidateAction } from '@/utils/actions';
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import { notFound } from 'next/navigation';

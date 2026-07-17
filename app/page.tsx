@@ -40,7 +40,7 @@ export default async function Home() {
             </>
           ) : (
             <Button asChild className="rounded-2xl px-6 shadow-lg shadow-primary/20">
-              <Link href="/add-job">Dashboard</Link>
+              <Link href="/dashboard">Dashboard</Link>
             </Button>
           )}
         </div>
@@ -65,7 +65,7 @@ export default async function Home() {
           <div className="flex flex-wrap gap-4 pt-2">
             {userId ? (
               <Button asChild size="lg" className="group">
-                <Link href="/add-job" className="flex items-center gap-2">
+                <Link href="/dashboard" className="flex items-center gap-2">
                   Vai alla Dashboard <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>

@@ -63,7 +63,8 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute    = request.nextUrl.pathname.startsWith('/login')
   const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
   const isCareersRoute = request.nextUrl.pathname.startsWith('/careers')
-  const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds')
+  const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||
+                         request.nextUrl.pathname.startsWith('/api/upload-cv')
   
   if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
     // If not authenticated and not on an auth route, redirect to login
@@ -73,9 +74,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && isAuthRoute) {
-     // If authenticated trying to access login, redirect to dashboard or add-job
+     // If authenticated trying to access login, redirect to dashboard
     const url = request.nextUrl.clone()
-    url.pathname = '/add-job'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

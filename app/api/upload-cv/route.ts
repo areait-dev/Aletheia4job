@@ -3,9 +3,13 @@ import { createServiceClient } from '@/utils/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_BUCKETS = ['candidates', 'cvs'] as const;
+const ALLOWED_BUCKETS = ['candidates', 'cvs', 'logos'] as const;
 const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED_EXT = new Set(['pdf', 'doc', 'docx']);
+const ALLOWED_EXT_BY_BUCKET: Record<(typeof ALLOWED_BUCKETS)[number], Set<string>> = {
+  candidates: new Set(['pdf', 'doc', 'docx']),
+  cvs: new Set(['pdf', 'doc', 'docx']),
+  logos: new Set(['png', 'jpg', 'jpeg', 'svg', 'webp']),
+};
 
 function isBucketNotFound(message: string) {
   return /bucket not found/i.test(message);
@@ -36,8 +40,9 @@ export async function POST(request: Request) {
     }
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-    if (!ALLOWED_EXT.has(ext)) {
-      return NextResponse.json({ error: 'Formato non supportato (PDF, DOC, DOCX)' }, { status: 400 });
+    const allowedExt = ALLOWED_EXT_BY_BUCKET[bucketName as (typeof ALLOWED_BUCKETS)[number]];
+    if (!allowedExt.has(ext)) {
+      return NextResponse.json({ error: `Formato non supportato (${[...allowedExt].join(', ').toUpperCase()})` }, { status: 400 });
     }
 
     const supabase = createServiceClient();

@@ -27,6 +27,35 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
     source: "Career Page",
   });
 
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; email?: string; city?: string }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateField = (field: "firstName" | "lastName" | "email" | "city", value: string) => {
+    switch (field) {
+      case "firstName":
+        return value.trim().length < 2 ? "Inserisci il tuo nome (almeno 2 caratteri)." : undefined;
+      case "lastName":
+        return value.trim().length < 2 ? "Inserisci il tuo cognome (almeno 2 caratteri)." : undefined;
+      case "email":
+        return !EMAIL_REGEX.test(value.trim()) ? "Inserisci un indirizzo email valido." : undefined;
+      case "city":
+        return value.trim().length < 2 ? "Inserisci la tua città." : undefined;
+    }
+  };
+
+  const validateForm = () => {
+    const nextErrors = {
+      firstName: validateField("firstName", formData.firstName),
+      lastName: validateField("lastName", formData.lastName),
+      email: validateField("email", formData.email),
+      city: validateField("city", formData.city),
+    };
+    setErrors(nextErrors);
+    return !Object.values(nextErrors).some(Boolean);
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const utmSource = params.get('utm_source');
@@ -84,38 +113,38 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 [JobApplicationForm] Tentativo di invio candidatura...', { 
-        jobId, 
-        email: formData.email, 
-        cvUrl: formData.cvUrl 
-      });
-
       const result = await applyToJobAction({
         jobId,
         ...formData
       });
 
       if (result.ok) {
-        console.log('✅ [JobApplicationForm] Candidatura inviata con successo');
         setIsSuccess(true);
         toast({
           title: "Candidatura inviata!",
           description: "Abbiamo ricevuto la tua candidatura. Ti ricontatteremo presto.",
         });
       } else {
-        console.error('❌ [JobApplicationForm] Errore restituito dall\'azione:', result.error);
+        const message = result.error || "Si è verificato un errore durante l'invio.";
+        setSubmitError(message);
         toast({
           title: "Errore",
-          description: result.error || "Si è verificato un errore durante l'invio.",
+          description: message,
           variant: "destructive",
         });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Errore imprevisto';
-      console.error('💥 [JobApplicationForm] Eccezione durante il submit:', error);
+      setSubmitError(`Errore di rete o di sistema: ${message}`);
       toast({
         title: "Errore",
         description: `Errore di rete o di sistema: ${message}`,
@@ -153,39 +182,63 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
         <p className="text-sm text-muted-foreground">Completa i campi sottostanti per inviare il tuo profilo.</p>
       </div>
 
+      {submitError && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600">
+          {submitError}
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">Nome</label>
           <input
-            required
-            className="w-full bg-background/50 border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-colors"
+            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.firstName ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            }`}
             placeholder="Mario"
             value={formData.firstName}
-            onChange={e => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, firstName: e.target.value }));
+              setErrors(prev => ({ ...prev, firstName: undefined }));
+            }}
+            onBlur={e => setErrors(prev => ({ ...prev, firstName: validateField("firstName", e.target.value) }))}
           />
+          {errors.firstName && <p className="text-xs text-red-600">{errors.firstName}</p>}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">Cognome</label>
           <input
-            required
-            className="w-full bg-background/50 border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-colors"
+            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.lastName ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            }`}
             placeholder="Rossi"
             value={formData.lastName}
-            onChange={e => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, lastName: e.target.value }));
+              setErrors(prev => ({ ...prev, lastName: undefined }));
+            }}
+            onBlur={e => setErrors(prev => ({ ...prev, lastName: validateField("lastName", e.target.value) }))}
           />
+          {errors.lastName && <p className="text-xs text-red-600">{errors.lastName}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Email</label>
         <input
-          required
           type="email"
-          className="w-full bg-background/50 border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-colors"
+          className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+            errors.email ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+          }`}
           placeholder="mario.rossi@esempio.it"
           value={formData.email}
-          onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+          onChange={e => {
+            setFormData(prev => ({ ...prev, email: e.target.value }));
+            setErrors(prev => ({ ...prev, email: undefined }));
+          }}
+          onBlur={e => setErrors(prev => ({ ...prev, email: validateField("email", e.target.value) }))}
         />
+        {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -201,12 +254,18 @@ export default function JobApplicationForm({ jobId, jobTitle }: JobApplicationFo
         <div className="space-y-2">
           <label className="text-sm font-medium">Città</label>
           <input
-            required
-            className="w-full bg-background/50 border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-colors"
+            className={`w-full bg-background/50 border rounded-xl px-4 py-2.5 text-sm outline-none transition-colors ${
+              errors.city ? 'border-red-500/50 focus:border-red-500' : 'border-border focus:border-primary/50'
+            }`}
             placeholder="Milano"
             value={formData.city}
-            onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
+            onChange={e => {
+              setFormData(prev => ({ ...prev, city: e.target.value }));
+              setErrors(prev => ({ ...prev, city: undefined }));
+            }}
+            onBlur={e => setErrors(prev => ({ ...prev, city: validateField("city", e.target.value) }))}
           />
+          {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
         </div>
       </div>
 

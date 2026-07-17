@@ -1,4 +1,4 @@
-import { getPublicJobsAction } from '@/utils/actions';
+import { getPublicJobByIdAction } from '@/utils/actions';
 import { notFound } from 'next/navigation';
 import { MapPin, Briefcase, Clock, Euro, Wifi, ArrowLeft, CheckCircle2, Star, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
@@ -13,8 +13,7 @@ const modeColor: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const jobs = await getPublicJobsAction();
-  const job = jobs.find(j => j.id === params.id);
+  const job = await getPublicJobByIdAction(params.id);
   return {
     title: job ? `${job.title} | Job Aletheia Careers` : 'Posizione non trovata',
     description: job?.description?.slice(0, 160),
@@ -22,8 +21,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 export default async function CareerJobPage({ params }: { params: { id: string } }) {
-  const jobs = await getPublicJobsAction();
-  const job = jobs.find(j => j.id === params.id);
+  const job = await getPublicJobByIdAction(params.id);
   if (!job) notFound();
 
   const requirements = job.requirements
@@ -72,10 +70,17 @@ export default async function CareerJobPage({ params }: { params: { id: string }
         {/* Hero */}
         <div className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            {/* Company logo placeholder */}
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20 shrink-0">
-              {job.company[0]}
-            </div>
+            {job.companyLogoUrl ? (
+              <img
+                src={job.companyLogoUrl}
+                alt={`Logo ${job.company}`}
+                className="w-16 h-16 rounded-2xl object-contain bg-white border border-border/50 shadow-lg shadow-primary/10 shrink-0"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20 shrink-0">
+                {job.company[0]}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className={cn("text-xs px-2.5 py-1 rounded-xl font-semibold", modeColor[job.mode] ?? "bg-gray-100 text-gray-600")}>

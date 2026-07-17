@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
-import BroadbeanSection from "@/components/BroadbeanSection";
 import PositionApplicationsList from "@/components/PositionApplicationsList";
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
@@ -83,12 +82,6 @@ export default async function JobDetailPage({ params }: { params: { id: string }
               </div>
             </div>
           </div>
-
-          <BroadbeanSection
-            jobId={job.id}
-            broadbeanStatus={job.broadbeanStatus}
-            broadbeanError={job.broadbeanError}
-          />
 
           <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 bg-primary/5 border-primary/10">
             <h3 className="font-bold flex items-center gap-2 italic">

@@ -211,6 +211,7 @@ model Job {
   updatedAt         DateTime      @updatedAt
   title             String
   company           String
+  companyLogoUrl    String?
   location          String
   locationFormatted String?
   city              String?

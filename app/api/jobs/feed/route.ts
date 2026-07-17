@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/utils/db';
+import { buildIndeedXmlFeed } from '@/utils/aggregator';
+import { JobStatus, JobMode } from '@/utils/types';
+
+const AUTH_TOKEN = process.env.AGGREGATOR_FEED_TOKEN;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const token = url.searchParams.get('token');
+
+  if (!AUTH_TOKEN || token !== AUTH_TOKEN) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const jobs = await prisma.job.findMany({
       where: {
@@ -14,47 +26,25 @@ export async function GET() {
           { postToJooble: true },
         ],
       },
-      include: {
-        organization: {
-          select: { name: true }
-        }
-      }
+      orderBy: { postedAt: 'desc' },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://job-aletheia.vercel.app';
+    const transformedJobs = jobs.map(job => ({
+      ...job,
+      status: job.status as JobStatus,
+      mode: job.mode as JobMode,
+    }));
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<source>
-  <publisher>Job Aletheia ATS</publisher>
-  <publisherurl>${baseUrl}</publisherurl>
-  <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-  ${jobs.map(job => `
-  <job>
-    <title><![CDATA[${job.title}]]></title>
-    <date><![CDATA[${job.postedAt?.toUTCString() || job.createdAt.toUTCString()}]]></date>
-    <referencenumber><![CDATA[${job.id}]]></referencenumber>
-    <url><![CDATA[${baseUrl}/careers/${job.id}]]></url>
-    <company><![CDATA[${job.company}]]></company>
-    <city><![CDATA[${job.city || ''}]]></city>
-    <state><![CDATA[${job.province || ''}]]></state>
-    <country><![CDATA[${job.country || 'IT'}]]></country>
-    <description><![CDATA[${job.description}\n\nRequisiti:\n${job.requirements}]]></description>
-    <salary><![CDATA[${job.salaryText || (job.salaryMin ? `${job.salaryMin} - ${job.salaryMax} ${job.salaryCurrency}` : '')}]]></salary>
-    <education><![CDATA[${job.educationLevel || ''}]]></education>
-    <jobtype><![CDATA[${job.mode}]]></jobtype>
-    <category><![CDATA[${job.category || job.sector}]]></category>
-    <experience><![CDATA[${job.experienceLevel || ''}]]></experience>
-  </job>`).join('')}
-</source>`;
+    const xml = buildIndeedXmlFeed(transformedJobs, SITE_URL);
 
     return new NextResponse(xml, {
       headers: {
-        'Content-Type': 'application/xml',
+        'Content-Type': 'application/xml; charset=utf-8',
         'Cache-Control': 's-maxage=3600, stale-while-revalidate',
       },
     });
   } catch (error) {
     console.error('Error generating job feed:', error);
-    return new NextResponse('Error generating job feed', { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

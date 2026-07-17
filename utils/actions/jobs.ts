@@ -142,14 +142,30 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
       where,
       orderBy: { postedAt: "desc" },
       select: {
-        id: true, title: true, company: true, location: true, sector: true, mode: true,
+        id: true, title: true, company: true, companyLogoUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
         experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
       },
     });
-  } catch (error) { 
+  } catch (error) {
     console.error("Errore fetch public jobs:", error);
-    return []; 
+    return [];
+  }
+}
+
+export async function getPublicJobByIdAction(id: string) {
+  try {
+    return await prisma.job.findFirst({
+      where: { id, isActive: true, status: "Aperto", postToCareerPage: { not: false } },
+      select: {
+        id: true, title: true, company: true, companyLogoUrl: true, location: true, sector: true, mode: true,
+        salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
+        experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
+      },
+    });
+  } catch (error) {
+    console.error("Errore fetch public job by id:", error);
+    return null;
   }
 }
 
@@ -157,15 +173,12 @@ export async function applyToJobAction(values: {
   jobId: string; firstName: string; lastName: string; email: string; phone?: string; city: string; cvUrl?: string; source?: string;
 }) {
   try {
-    console.log('🔍 [applyToJobAction] Inizio processo per jobId:', values.jobId, 'email:', values.email);
-    
     const job = await prisma.job.findUnique({
       where: { id: values.jobId },
       select: { organizationId: true, sector: true, title: true, userId: true, category: true }
     });
-    
+
     if (!job) {
-      console.warn('⚠️ [applyToJobAction] Job non trovato:', values.jobId);
       return { ok: false, error: "Posizione non trovata" };
     }
 
@@ -246,7 +259,6 @@ export async function applyToJobAction(values: {
             cvUrl: values.cvUrl,
           },
         });
-        console.log("[applyToJobAction] Inngest event cv/process.requested inviato per:", result.applicationId);
       } catch (e) {
         console.error("[applyToJobAction] Errore invio a Inngest:", e);
       }
@@ -257,7 +269,7 @@ export async function applyToJobAction(values: {
     if (error instanceof Error && error.message === "DUPLICATE_APPLICATION") {
       return { ok: false, error: "Hai già inviato una candidatura per questa posizione." };
     }
-    console.error("❌ [applyToJobAction] Errore critico durante l'invio:", error);
+    console.error("[applyToJobAction] Errore critico durante l'invio:", error);
     const errorMessage = error instanceof Error ? error.message : "Errore interno del server";
     return { ok: false, error: `Impossibile completare l'invio: ${errorMessage}` };
   }

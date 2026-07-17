@@ -35,7 +35,7 @@ const links: NavLink[] = [
     icon: <LayoutDashboard />,
   },
   {
-    href: '/add-job',
+    href: '/add-candidate',
     label: 'nuovo candidato',
     icon: <UserPlus />,
     permission: canWrite,

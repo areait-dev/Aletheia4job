@@ -1,5 +1,5 @@
-/** `candidates` = form pubblico candidature; `cvs` = upload admin (CreateCandidateForm) */
-export type CvUploadBucket = 'candidates' | 'cvs';
+/** `candidates` = form pubblico candidature; `cvs` = upload admin (CreateCandidateForm); `logos` = logo azienda cliente su annuncio */
+export type CvUploadBucket = 'candidates' | 'cvs' | 'logos';
 
 /**
  * Upload CV tramite API server (Service Role).

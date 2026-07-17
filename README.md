@@ -116,7 +116,7 @@ Jobify is a comprehensive job application tracking system that allows users to:
 job-tracking-app/
 ├── app/                          # Next.js App Router directory
 │   ├── (dashboard)/              # Route group for dashboard pages
-│   │   ├── add-job/
+│   │   ├── add-candidate/
 │   │   │   └── page.tsx          # Add new job page
 │   │   ├── jobs/
 │   │   │   ├── [id]/             # Dynamic route for job details
@@ -143,7 +143,7 @@ job-tracking-app/
 │   ├── CreateJobForm.tsx         # Form to create new job
 │   ├── DeleteJobButton.tsx       # Delete job button
 │   ├── DownloadDropdown.tsx      # CSV/Excel export dropdown
-│   ├── EditJobForm.tsx           # Form to edit job
+│   ├── EditCandidateForm.tsx           # Form to edit candidate
 │   ├── JobCard.tsx               # Job card component
 │   ├── JobsList.tsx               # Jobs listing component
 │   ├── Navbar.tsx                # Top navigation bar
@@ -270,8 +270,8 @@ DIRECT_URL="postgresql://username:password@localhost:5432/jobify_db?schema=publi
 - In Clerk Dashboard, go to **Settings** → **Paths**
 - Set **Sign-in path** to: `/sign-in`
 - Set **Sign-up path** to: `/sign-up`
-- Set **After sign-in URL** to: `/add-job`
-- Set **After sign-up URL** to: `/add-job`
+- Set **After sign-in URL** to: `/add-candidate`
+- Set **After sign-up URL** to: `/add-candidate`
 
 #### 2. PostgreSQL Database Connection
 
@@ -474,16 +474,16 @@ When users click "Get Started":
 
 1. Clerk middleware checks authentication
 2. Unauthenticated users are redirected to sign-in
-3. After sign-in/sign-up, users are redirected to `/add-job`
+3. After sign-in/sign-up, users are redirected to `/add-candidate`
 
 **Protected Routes:**
 
-- `/add-job` - Add new job application
+- `/add-candidate` - Add new candidate
 - `/jobs` - View all jobs
 - `/jobs/[id]` - Edit specific job
 - `/stats` - View statistics dashboard
 
-### 3. Add Job Page (`/add-job`)
+### 3. Add Candidate Page (`/add-candidate`)
 
 **Features:**
 
@@ -729,9 +729,9 @@ function StatsPage() {
 
 ---
 
-#### 7. **EditJobForm Component**
+#### 7. **EditCandidateForm Component**
 
-**Location:** `components/EditJobForm.tsx`
+**Location:** `components/EditCandidateForm.tsx`
 
 **Purpose:** Form to edit existing job applications.
 
@@ -1002,8 +1002,8 @@ app/
 ├── providers.tsx               # Global providers
 ├── (dashboard)/                # Route group (doesn't affect URL)
 │   ├── layout.tsx              # Dashboard layout
-│   ├── add-job/
-│   │   └── page.tsx            # /add-job
+│   ├── add-candidate/
+│   │   └── page.tsx            # /add-candidate
 │   ├── jobs/
 │   │   ├── page.tsx            # /jobs
 │   │   ├── loading.tsx         # Loading UI
@@ -1020,7 +1020,7 @@ Routes are protected using Clerk middleware in `middleware.ts`:
 
 ```typescript
 const isProtectedRoute = createRouteMatcher([
-  "/add-job",
+  "/add-candidate",
   "/jobs(.*)",
   "/stats",
 ]);
@@ -1415,7 +1415,7 @@ async function JobsPage() {
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isProtectedRoute = createRouteMatcher([
-  "/add-job",
+  "/add-candidate",
   "/jobs(.*)",
   "/stats",
 ]);

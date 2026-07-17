@@ -217,14 +217,10 @@ async function AdminPage({
           <div className="p-3 bg-background rounded-lg border">
             <p className="text-xs font-bold uppercase tracking-wider mb-1">XML Job Feed (Indeed, Jooble, LinkedIn)</p>
             <div className="flex items-center gap-3">
-              <code className="text-xs flex-1 truncate">/api/jobs/feed</code>
-              <a 
-                href="/api/jobs/feed" 
-                target="_blank"
-                className="text-xs font-bold text-primary hover:underline"
-              >
-                Apri Feed →
-              </a>
+              <code className="text-xs flex-1 truncate">/api/jobs/feed?token=***</code>
+              <span className="text-xs text-muted-foreground">
+                Protetto da token (AGGREGATOR_FEED_TOKEN)
+              </span>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2 italic">
               Configura questo URL nei tuoi account recruiter su Indeed, Jooble o LinkedIn per l'importazione automatica.
