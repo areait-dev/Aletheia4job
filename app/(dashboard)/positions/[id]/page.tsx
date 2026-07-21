@@ -40,7 +40,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         </div>
                     <div className="flex items-center gap-3 flex-wrap">
           <Link
-            href={`/careers/${job.id}`}
+            href={`/offerte-di-lavoro/${job.id}`}
             target="_blank"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-all"
           >

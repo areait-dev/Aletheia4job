@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  redirect("/careers");
+  redirect("/offerte-di-lavoro");
 }

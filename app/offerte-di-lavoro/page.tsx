@@ -103,12 +103,12 @@ export default async function CareersPage({
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Settore:</span>
-          <Link href="/careers"
+          <Link href="/offerte-di-lavoro"
             className={cn("text-xs px-3 py-1.5 rounded-xl font-medium border transition-all",
               !searchParams.sector ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-primary/5"
             )}>Tutti</Link>
           {sectors.map(s => (
-            <Link key={s} href={`/careers?sector=${encodeURIComponent(s)}`}
+            <Link key={s} href={`/offerte-di-lavoro?sector=${encodeURIComponent(s)}`}
               className={cn("text-xs px-3 py-1.5 rounded-xl font-medium border transition-all",
                 searchParams.sector === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-primary/5"
               )}>{s}</Link>
@@ -198,7 +198,7 @@ export default async function CareersPage({
                 {/* CTA */}
                 <div className="pt-2 border-t border-border/40">
                   <Link
-                    href={`/careers/${job.id}`}
+                    href={`/offerte-di-lavoro/${job.id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:gap-3 transition-all"
                   >
                     Scopri di più <ArrowRight className="w-3.5 h-3.5" />

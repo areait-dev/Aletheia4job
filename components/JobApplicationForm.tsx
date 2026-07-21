@@ -174,7 +174,7 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
           Grazie per l&apos;interesse. Il nostro team valuterà il tuo profilo e ti contatterà al più presto per la posizione di <strong>{jobTitle}</strong>.
         </p>
         <button 
-          onClick={() => window.location.href = '/careers'}
+          onClick={() => window.location.href = '/offerte-di-lavoro'}
           className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
         >
           Torna alle posizioni

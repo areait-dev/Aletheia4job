@@ -60,7 +60,7 @@ const links: NavLink[] = [
     icon: <Calendar />,
   },
   {
-    href: '/careers',
+    href: '/offerte-di-lavoro',
     label: 'offerte di lavoro',
     icon: <Globe />,
   },
