@@ -160,7 +160,7 @@ export async function getPublicJobSlugMapAction() {
     const jobs = await prisma.job.findMany({
       where: { isActive: true, status: "Aperto", postToCareerPage: { not: false } },
       orderBy: [{ postedAt: "asc" }, { id: "asc" }],
-      select: { id: true, title: true },
+      select: { id: true, title: true, location: true },
     });
     return buildJobSlugMap(jobs);
   } catch (error) {

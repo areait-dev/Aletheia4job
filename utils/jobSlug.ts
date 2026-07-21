@@ -22,12 +22,33 @@ export type JobSlugEntry = { id: string; slug: string };
 
 // jobs deve arrivare gia' ordinato in modo stabile (es. per data di pubblicazione)
 // cosi' che, a parita' di titolo, lo stesso annuncio riceva sempre lo stesso slug.
-export function buildJobSlugMap(jobs: { id: string; title: string }[]): JobSlugEntry[] {
-  const used = new Map<string, number>();
+// Se due annunci hanno lo stesso titolo, si disambigua con la sede
+// (es. "pizzaiolo-milano"); se anche titolo+sede coincidono, si aggiunge
+// infine un numero progressivo per garantire comunque l'unicita'.
+export function buildJobSlugMap(jobs: { id: string; title: string; location?: string | null }[]): JobSlugEntry[] {
+  const titleCount = new Map<string, number>();
+  for (const job of jobs) {
+    const base = slugify(job.title);
+    titleCount.set(base, (titleCount.get(base) ?? 0) + 1);
+  }
+
+  const usedSlugs = new Set<string>();
   return jobs.map((job) => {
     const base = slugify(job.title);
-    const count = used.get(base) ?? 0;
-    used.set(base, count + 1);
-    return { id: job.id, slug: count === 0 ? base : `${base}-${count + 1}` };
+    let slug = base;
+
+    if ((titleCount.get(base) ?? 0) > 1) {
+      const location = job.location ? slugify(job.location) : '';
+      slug = location ? `${base}-${location}` : base;
+    }
+
+    if (usedSlugs.has(slug)) {
+      let n = 2;
+      while (usedSlugs.has(`${slug}-${n}`)) n++;
+      slug = `${slug}-${n}`;
+    }
+
+    usedSlugs.add(slug);
+    return { id: job.id, slug };
   });
 }
