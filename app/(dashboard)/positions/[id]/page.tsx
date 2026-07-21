@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
 import PositionApplicationsList from "@/components/PositionApplicationsList";
+import { buildJobSlug } from "@/utils/jobSlug";
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
   const job = await getSingleJobAction(params.id);
@@ -40,7 +41,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         </div>
                     <div className="flex items-center gap-3 flex-wrap">
           <Link
-            href={`/offerte-di-lavoro/${job.id}`}
+            href={`/offerte-di-lavoro/${buildJobSlug(job.title, job.id)}`}
             target="_blank"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-all"
           >

@@ -5,6 +5,7 @@ import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, LayoutDashboa
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/server';
+import { buildJobSlug } from '@/utils/jobSlug';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -199,7 +200,7 @@ export default async function CareersPage({
                 {/* CTA */}
                 <div className="pt-2 border-t border-border/40">
                   <Link
-                    href={`/offerte-di-lavoro/${job.id}`}
+                    href={`/offerte-di-lavoro/${buildJobSlug(job.title, job.id)}`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:gap-3 transition-all"
                   >
                     Scopri di più <ArrowRight className="w-3.5 h-3.5" />

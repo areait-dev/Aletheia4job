@@ -1,10 +1,11 @@
 import { getPublicJobByIdAction } from '@/utils/actions';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, LayoutDashboard, MapPinned, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
 import { createClient } from '@/utils/supabase/server';
+import { buildJobSlug, extractJobIdFromSlug } from '@/utils/jobSlug';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -12,13 +13,14 @@ const modeColor: Record<string, string> = {
   'Freelance': 'bg-orange-500/15 text-orange-600',
 };
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const job = await getPublicJobByIdAction(params.id);
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const id = extractJobIdFromSlug(params.slug);
+  const job = await getPublicJobByIdAction(id);
   if (!job) return { title: 'Posizione non trovata' };
 
   const title = `${job.title} - ${job.company}`;
   const description = job.description?.slice(0, 160) ?? `Candidati ora per la posizione di ${job.title} presso ${job.company}.`;
-  const url = `/offerte-di-lavoro/${job.id}`;
+  const url = `/offerte-di-lavoro/${buildJobSlug(job.title, job.id)}`;
   const images = job.imageUrl ? [job.imageUrl] : job.companyLogoUrl ? [job.companyLogoUrl] : undefined;
 
   return {
@@ -78,7 +80,7 @@ function jobPostingJsonLd(job: NonNullable<Awaited<ReturnType<typeof getPublicJo
       },
     } : undefined,
     directApply: true,
-    url: `${siteUrl}/offerte-di-lavoro/${job.id}`,
+    url: `${siteUrl}/offerte-di-lavoro/${buildJobSlug(job.title, job.id)}`,
   };
 }
 
@@ -104,9 +106,13 @@ function stripLocationTail(text: string | null | undefined): string {
   return text.slice(0, cutIndex).trim();
 }
 
-export default async function CareerJobPage({ params }: { params: { id: string } }) {
-  const job = await getPublicJobByIdAction(params.id);
+export default async function CareerJobPage({ params }: { params: { slug: string } }) {
+  const id = extractJobIdFromSlug(params.slug);
+  const job = await getPublicJobByIdAction(id);
   if (!job) notFound();
+
+  const canonicalSlug = buildJobSlug(job.title, job.id);
+  if (params.slug !== canonicalSlug) redirect(`/offerte-di-lavoro/${canonicalSlug}`);
 
   const hasMultipleSites = job.locationInputType === 'select' || job.locationInputType === 'free_text';
 
