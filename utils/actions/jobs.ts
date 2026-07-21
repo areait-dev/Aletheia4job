@@ -11,7 +11,7 @@ import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry } from "../authz";
 import { authenticateAndRedirect } from "./shared";
 import { inngest } from "@/inngest/client";
-import { buildJobSlugMap } from "@/utils/jobSlug";
+import { buildJobSlugMap, extractJobIdFromSlug } from "@/utils/jobSlug";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -167,6 +167,23 @@ export async function getPublicJobSlugMapAction() {
     console.error("Errore generazione slug annunci:", error);
     return [];
   }
+}
+
+// Risolve lo slug pubblico (basato sul solo titolo) all'id del job.
+// Supporta anche i vecchi formati di link (id nudo o "titolo-<uuid>")
+// cosi' i link gia' condivisi non si rompono: vengono reindirizzati
+// allo slug canonico corrente. Condivisa tra la pagina annuncio e la
+// generazione dell'immagine Open Graph, cosi' restano sempre in sync.
+export async function resolvePublicJobSlugAction(slug: string): Promise<{ id: string; canonicalSlug: string } | null> {
+  const slugMap = await getPublicJobSlugMapAction();
+  const bySlug = slugMap.find(e => e.slug === slug);
+  if (bySlug) return { id: bySlug.id, canonicalSlug: bySlug.slug };
+
+  const legacyId = extractJobIdFromSlug(slug);
+  const byId = slugMap.find(e => e.id === legacyId);
+  if (byId) return { id: byId.id, canonicalSlug: byId.slug };
+
+  return null;
 }
 
 export async function getPublicJobByIdAction(id: string) {

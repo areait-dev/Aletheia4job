@@ -1,11 +1,11 @@
-import { getPublicJobByIdAction, getPublicJobSlugMapAction } from '@/utils/actions';
+import { getPublicJobByIdAction, resolvePublicJobSlugAction } from '@/utils/actions';
 import { notFound, redirect } from 'next/navigation';
 import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, LayoutDashboard, MapPinned, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
 import { createClient } from '@/utils/supabase/server';
-import { extractJobIdFromSlug } from '@/utils/jobSlug';
+import { truncateAtWordBoundary } from '@/utils/text';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -13,33 +13,21 @@ const modeColor: Record<string, string> = {
   'Freelance': 'bg-orange-500/15 text-orange-600',
 };
 
-// Risolve lo slug pubblico (basato sul solo titolo) all'id del job.
-// Supporta anche i vecchi formati di link (id nudo o "titolo-<uuid>")
-// cosi' i link gia' condivisi non si rompono: vengono reindirizzati
-// allo slug canonico corrente.
-async function resolveJobId(slug: string): Promise<{ id: string; canonicalSlug: string } | null> {
-  const slugMap = await getPublicJobSlugMapAction();
-  const bySlug = slugMap.find(e => e.slug === slug);
-  if (bySlug) return { id: bySlug.id, canonicalSlug: bySlug.slug };
-
-  const legacyId = extractJobIdFromSlug(slug);
-  const byId = slugMap.find(e => e.id === legacyId);
-  if (byId) return { id: byId.id, canonicalSlug: byId.slug };
-
-  return null;
-}
-
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const resolved = await resolveJobId(params.slug);
+  const resolved = await resolvePublicJobSlugAction(params.slug);
   if (!resolved) return { title: 'Posizione non trovata' };
   const job = await getPublicJobByIdAction(resolved.id);
   if (!job) return { title: 'Posizione non trovata' };
 
   const title = `${job.title} - ${job.company}`;
-  const description = job.description?.slice(0, 160) ?? `Candidati ora per la posizione di ${job.title} presso ${job.company}.`;
+  const description = job.description
+    ? truncateAtWordBoundary(job.description, 160)
+    : `Candidati ora per la posizione di ${job.title} presso ${job.company}.`;
   const url = `/offerte-di-lavoro/${resolved.canonicalSlug}`;
-  const images = job.imageUrl ? [job.imageUrl] : job.companyLogoUrl ? [job.companyLogoUrl] : undefined;
 
+  // og:image e' generata automaticamente da opengraph-image.tsx (file
+  // convention Next.js) per questa stessa route: non va indicata qui,
+  // altrimenti sovrascriverebbe l'immagine dinamica generata.
   return {
     title,
     description,
@@ -49,13 +37,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       url,
       title,
       description,
-      images,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images,
     },
   };
 }
@@ -124,7 +110,7 @@ function stripLocationTail(text: string | null | undefined): string {
 }
 
 export default async function CareerJobPage({ params }: { params: { slug: string } }) {
-  const resolved = await resolveJobId(params.slug);
+  const resolved = await resolvePublicJobSlugAction(params.slug);
   if (!resolved) notFound();
   if (params.slug !== resolved.canonicalSlug) redirect(`/offerte-di-lavoro/${resolved.canonicalSlug}`);
 
