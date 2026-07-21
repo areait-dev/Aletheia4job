@@ -1,6 +1,15 @@
 import { MetadataRoute } from "next";
+import { headers } from "next/headers";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aletheia4job.it";
+// Vedi commento in app/sitemap.ts: preferisce l'host reale della richiesta
+// a NEXT_PUBLIC_SITE_URL, che su Vercel puo' essere mal configurato.
+function getSiteUrl(): string {
+  const host = headers().get("host");
+  if (host && !host.includes("localhost")) {
+    return `https://${host}`;
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://aletheia4job.it";
+}
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -29,6 +38,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
   };
 }
