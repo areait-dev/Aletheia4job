@@ -15,7 +15,7 @@ const modeColor: Record<string, string> = {
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const job = await getPublicJobByIdAction(params.id);
   return {
-    title: job ? `${job.title} | Job Aletheia Careers` : 'Posizione non trovata',
+    title: job ? `${job.title} | Offerte di Lavoro - Job Aletheia` : 'Posizione non trovata',
     description: job?.description?.slice(0, 160),
   };
 }

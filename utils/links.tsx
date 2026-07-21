@@ -1,23 +1,17 @@
-import { 
-  AreaChart, 
-  Layers, 
-  AppWindow, 
-  UserPlus, 
-  Shield, 
-  Users, 
-  ClipboardList, 
-  Trophy, 
-  Globe, 
-  Briefcase, 
-  Clock, 
-  Files, 
-  Calendar, 
-  LayoutDashboard 
+import {
+  AreaChart,
+  Layers,
+  AppWindow,
+  UserPlus,
+  Shield,
+  Globe,
+  Briefcase,
+  Calendar,
+  LayoutDashboard
 } from 'lucide-react';
-import { 
-  canAccessAdmin, 
-  canAccessDocuments, 
-  canWrite 
+import {
+  canAccessAdmin,
+  canWrite
 } from './permissions';
 import { MembershipRole } from '@prisma/client';
 
@@ -61,43 +55,13 @@ const links: NavLink[] = [
     icon: <AreaChart />,
   },
   {
-    href: '/employees',
-    label: 'team',
-    icon: <Users />,
-    permission: canWrite,
-  },
-  {
-    href: '/attendance',
-    label: 'presenze',
-    icon: <Clock />,
-    permission: canWrite,
-  },
-  {
     href: '/calendar',
     label: 'calendario',
     icon: <Calendar />,
   },
   {
-    href: '/documents',
-    label: 'documenti',
-    icon: <Files />,
-    permission: canAccessDocuments,
-  },
-  {
-    href: '/onboarding',
-    label: 'onboarding',
-    icon: <ClipboardList />,
-    permission: canWrite,
-  },
-  {
-    href: '/performance',
-    label: 'performance',
-    icon: <Trophy />,
-    permission: canWrite,
-  },
-  {
     href: '/careers',
-    label: 'career page',
+    label: 'offerte di lavoro',
     icon: <Globe />,
   },
   {
