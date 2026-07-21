@@ -1,25 +1,27 @@
-import { getSingleJobAction } from "@/utils/actions";
+import { getSingleJobAction, getPublicJobSlugMapAction } from "@/utils/actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  Briefcase, 
-  MapPin, 
-  Calendar, 
-  FileText, 
+import {
+  ArrowLeft,
+  Briefcase,
+  MapPin,
+  Calendar,
+  FileText,
   ExternalLink,
   Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeleteJobButton from "@/components/DeleteJobButton";
 import PositionApplicationsList from "@/components/PositionApplicationsList";
-import { buildJobSlug } from "@/utils/jobSlug";
+import { slugify } from "@/utils/jobSlug";
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
   const job = await getSingleJobAction(params.id);
   if (!job) notFound();
 
   const applications = job.applications || [];
+  const slugMap = await getPublicJobSlugMapAction();
+  const publicSlug = slugMap.find(e => e.id === job.id)?.slug ?? slugify(job.title);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -41,7 +43,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         </div>
                     <div className="flex items-center gap-3 flex-wrap">
           <Link
-            href={`/offerte-di-lavoro/${buildJobSlug(job.title, job.id)}`}
+            href={`/offerte-di-lavoro/${publicSlug}`}
             target="_blank"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-muted transition-all"
           >

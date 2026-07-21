@@ -11,6 +11,7 @@ import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry } from "../authz";
 import { authenticateAndRedirect } from "./shared";
 import { inngest } from "@/inngest/client";
+import { buildJobSlugMap } from "@/utils/jobSlug";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -150,6 +151,20 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
     });
   } catch (error) {
     console.error("Errore fetch public jobs:", error);
+    return [];
+  }
+}
+
+export async function getPublicJobSlugMapAction() {
+  try {
+    const jobs = await prisma.job.findMany({
+      where: { isActive: true, status: "Aperto", postToCareerPage: { not: false } },
+      orderBy: [{ postedAt: "asc" }, { id: "asc" }],
+      select: { id: true, title: true },
+    });
+    return buildJobSlugMap(jobs);
+  } catch (error) {
+    console.error("Errore generazione slug annunci:", error);
     return [];
   }
 }

@@ -1,11 +1,10 @@
 export const dynamic = 'force-dynamic';
 
-import { getPublicJobsAction } from '@/utils/actions';
+import { getPublicJobsAction, getPublicJobSlugMapAction } from '@/utils/actions';
 import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/server';
-import { buildJobSlug } from '@/utils/jobSlug';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -24,11 +23,15 @@ export default async function CareersPage({
 }: {
   searchParams: { sector?: string; location?: string; mode?: string; q?: string };
 }) {
-  const jobs = await getPublicJobsAction({
-    sector:   searchParams.sector,
-    location: searchParams.location,
-    mode:     searchParams.mode,
-  });
+  const [jobs, slugMap] = await Promise.all([
+    getPublicJobsAction({
+      sector:   searchParams.sector,
+      location: searchParams.location,
+      mode:     searchParams.mode,
+    }),
+    getPublicJobSlugMapAction(),
+  ]);
+  const slugById = new Map(slugMap.map(e => [e.id, e.slug]));
 
   const sectors = Array.from(new Set(jobs.map(j => j.sector))).sort();
   const modes   = Array.from(new Set(jobs.map(j => j.mode))).filter(Boolean);
@@ -200,7 +203,7 @@ export default async function CareersPage({
                 {/* CTA */}
                 <div className="pt-2 border-t border-border/40">
                   <Link
-                    href={`/offerte-di-lavoro/${buildJobSlug(job.title, job.id)}`}
+                    href={`/offerte-di-lavoro/${slugById.get(job.id) ?? job.id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:gap-3 transition-all"
                   >
                     Scopri di più <ArrowRight className="w-3.5 h-3.5" />
