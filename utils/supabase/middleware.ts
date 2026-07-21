@@ -63,10 +63,12 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute    = request.nextUrl.pathname.startsWith('/login')
   const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
   const isCareersRoute = request.nextUrl.pathname.startsWith('/offerte-di-lavoro')
+  const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
+                         request.nextUrl.pathname === '/sitemap.xml'
   const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||
                          request.nextUrl.pathname.startsWith('/api/upload-cv')
-  
-  if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
+
+  if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isSeoRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
     // If not authenticated and not on an auth route, redirect to login
     const url = request.nextUrl.clone()
     url.pathname = '/login'
