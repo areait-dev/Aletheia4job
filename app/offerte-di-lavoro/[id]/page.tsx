@@ -14,9 +14,71 @@ const modeColor: Record<string, string> = {
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const job = await getPublicJobByIdAction(params.id);
+  if (!job) return { title: 'Posizione non trovata' };
+
+  const title = `${job.title} - ${job.company}`;
+  const description = job.description?.slice(0, 160) ?? `Candidati ora per la posizione di ${job.title} presso ${job.company}.`;
+  const url = `/offerte-di-lavoro/${job.id}`;
+  const images = job.imageUrl ? [job.imageUrl] : job.companyLogoUrl ? [job.companyLogoUrl] : undefined;
+
   return {
-    title: job ? `${job.title} | Offerte di Lavoro - Job Aletheia` : 'Posizione non trovata',
-    description: job?.description?.slice(0, 160),
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'website',
+      url,
+      title,
+      description,
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images,
+    },
+  };
+}
+
+function jobPostingJsonLd(job: NonNullable<Awaited<ReturnType<typeof getPublicJobByIdAction>>>, siteUrl: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'JobPosting',
+    title: job.title,
+    description: job.description ?? job.title,
+    identifier: {
+      '@type': 'PropertyValue',
+      name: job.company,
+      value: job.id,
+    },
+    datePosted: job.postedAt ? new Date(job.postedAt).toISOString() : undefined,
+    employmentType: job.mode?.toUpperCase().replace('-', '_'),
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: job.company,
+      logo: job.companyLogoUrl || undefined,
+    },
+    jobLocation: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: job.location,
+        addressCountry: 'IT',
+      },
+    },
+    baseSalary: (job.salaryMin || job.salaryMax) ? {
+      '@type': 'MonetaryAmount',
+      currency: job.salaryCurrency || 'EUR',
+      value: {
+        '@type': 'QuantitativeValue',
+        minValue: job.salaryMin || undefined,
+        maxValue: job.salaryMax || undefined,
+        unitText: 'YEAR',
+      },
+    } : undefined,
+    directApply: true,
+    url: `${siteUrl}/offerte-di-lavoro/${job.id}`,
   };
 }
 
@@ -66,8 +128,14 @@ export default async function CareerJobPage({ params }: { params: { id: string }
   const { data: { user } } = await supabase.auth.getUser();
   const isLoggedIn = !!user;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aletheia4job.it';
+
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd(job, siteUrl)) }}
+      />
       {/* Top bar */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">

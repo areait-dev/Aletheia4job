@@ -13,8 +13,9 @@ const modeColor: Record<string, string> = {
 };
 
 export const metadata = {
-  title: 'Posizioni Aperte | Job Aletheia',
-  description: 'Scopri le posizioni aperte e candidati direttamente.',
+  title: 'Offerte di Lavoro',
+  description: 'Scopri tutte le posizioni aperte di Aletheia4Job e candidati direttamente online in pochi click.',
+  alternates: { canonical: '/' },
 };
 
 export default async function CareersPage({
