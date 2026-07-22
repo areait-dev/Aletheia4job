@@ -62,7 +62,8 @@ export async function updateSession(request: NextRequest) {
   // Protect routes conditionally based on authentication
   const isAuthRoute    = request.nextUrl.pathname.startsWith('/login')
   const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
-  const isCareersRoute = request.nextUrl.pathname.startsWith('/offerte-di-lavoro')
+  const isCareersRoute = request.nextUrl.pathname.startsWith('/offerte-di-lavoro') ||
+                         request.nextUrl.pathname.startsWith('/registrazione')
   const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
                          request.nextUrl.pathname === '/sitemap.xml'
   const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||

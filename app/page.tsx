@@ -1,10 +1,13 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { getPublicJobsAction, getPublicJobSlugMapAction } from '@/utils/actions';
-import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, LayoutDashboard } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, LayoutDashboard, Linkedin, Instagram, Facebook } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/server';
+import SectorFilterDropdown from '@/components/SectorFilterDropdown';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -12,9 +15,9 @@ const modeColor: Record<string, string> = {
   'Freelance': 'bg-orange-500/15 text-orange-600',
 };
 
-export const metadata = {
-  title: 'Offerte di Lavoro',
-  description: 'Scopri tutte le posizioni aperte di Aletheia4Job e candidati direttamente online in pochi click.',
+export const metadata: Metadata = {
+  title: "Offerte di Lavoro | Alètheia4Job – Agenzia per il Lavoro",
+  description: "Sfoglia le offerte di lavoro pubblicate su Alètheia4Job, agenzia per il lavoro autorizzata ANPAL. Annunci aggiornati, selezione professionale, supporto reale dalla candidatura all'assunzione.",
   alternates: { canonical: '/' },
 };
 
@@ -34,7 +37,6 @@ export default async function CareersPage({
   const slugById = new Map(slugMap.map(e => [e.id, e.slug]));
 
   const sectors = Array.from(new Set(jobs.map(j => j.sector))).sort();
-  const modes   = Array.from(new Set(jobs.map(j => j.mode))).filter(Boolean);
 
   // Client-side text filter (done server-side for simplicity)
   const q = searchParams.q?.toLowerCase() ?? '';
@@ -53,16 +55,17 @@ export default async function CareersPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-background border-b border-border/50">
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-muted/40 to-background border-b border-border/50 min-h-[70vh] flex items-center">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-primary/8 blur-2xl" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-primary/10 blur-2xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,0,0,0.03),transparent_60%)]" />
         </div>
-        <div className="relative max-w-5xl mx-auto px-4 py-16 text-center space-y-6">
+        <div className="relative w-full max-w-5xl mx-auto px-4 py-16 text-center space-y-6">
           <div className="flex items-center justify-center gap-3">
             <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              Posizioni Aperte
+              Offerte di lavoro
             </div>
             {isLoggedIn && (
               <Link
@@ -75,49 +78,47 @@ export default async function CareersPage({
             )}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Trova il tuo <span className="text-primary">prossimo ruolo</span>
+            Smetti di cercare. <span className="text-primary">Inizia a trovare.</span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+
+          <p className="text-base md:text-lg text-muted-foreground font-medium">
             Esplora le posizioni disponibili e candidati in pochi click.
           </p>
 
-          {/* Search bar */}
-          <form method="GET" className="max-w-xl mx-auto">
-            <div className="flex gap-2 p-1.5 glass rounded-2xl border border-white/20">
-              <div className="flex items-center gap-2 flex-1 px-3">
+          <form method="GET" className="max-w-2xl mx-auto">
+            <div className="flex items-center gap-2 p-2 bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-full border border-white/40 dark:border-white/10 shadow-sm shadow-black/5 focus-within:ring-2 focus-within:ring-primary/30 transition-shadow">
+              <div className="flex items-center gap-2.5 flex-1 px-4">
                 <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                 <input
                   name="q"
                   defaultValue={searchParams.q}
                   placeholder="Cerca per titolo, azienda o settore…"
-                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                  className="flex-1 bg-transparent text-sm py-2 outline-none placeholder:text-muted-foreground/60"
                 />
               </div>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+                className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-sm"
               >
                 Cerca
               </button>
+              <Link
+                href="/registrazione"
+                className="inline-flex items-center justify-center h-11 rounded-full bg-primary/10 border border-primary/30 px-5 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all duration-200 whitespace-nowrap"
+              >
+                Candidatura spontanea
+              </Link>
             </div>
           </form>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Settore:</span>
-          <Link href="/"
-            className={cn("text-xs px-3 py-1.5 rounded-xl font-medium border transition-all",
-              !searchParams.sector ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-primary/5"
-            )}>Tutti</Link>
-          {sectors.map(s => (
-            <Link key={s} href={`/?sector=${encodeURIComponent(s)}`}
-              className={cn("text-xs px-3 py-1.5 rounded-xl font-medium border transition-all",
-                searchParams.sector === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-primary/5"
-              )}>{s}</Link>
-          ))}
+        <div className="flex items-center">
+          <Suspense fallback={null}>
+            <SectorFilterDropdown sectors={sectors} activeSector={searchParams.sector} />
+          </Suspense>
         </div>
 
         {/* Results count */}
@@ -140,10 +141,10 @@ export default async function CareersPage({
             <p className="text-sm">Prova a cambiare i filtri di ricerca</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {filtered.map(job => (
               <div key={job.id}
-                className="group glass rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
+                className="group bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (
                   <div className="w-full bg-muted/40">
                     <img
@@ -153,7 +154,7 @@ export default async function CareersPage({
                     />
                   </div>
                 )}
-                <div className="p-5 space-y-4">
+                <div className="p-4 sm:p-5 space-y-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -165,20 +166,20 @@ export default async function CareersPage({
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <h2 className="font-bold text-base leading-tight group-hover:text-primary transition-colors">{job.title}</h2>
-                      <p className="text-sm text-muted-foreground mt-0.5">{job.company}</p>
+                      <h2 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">{job.title}</h2>
+                      <p className="text-sm text-muted-foreground mt-0.5 truncate">{job.company}</p>
                     </div>
                   </div>
-                  <span className={cn("text-xs px-2.5 py-1 rounded-xl font-semibold shrink-0", modeColor[job.mode] ?? "bg-gray-100 text-gray-600")}>
+                  <span className={cn("text-xs px-2.5 py-1 rounded-full font-semibold shrink-0", modeColor[job.mode] ?? "bg-gray-100 text-gray-600")}>
                     {job.mode}
                   </span>
                 </div>
 
                 {/* Meta */}
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
-                  <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{job.sector}</span>
-                  {job.remoteType && <span className="flex items-center gap-1"><Wifi className="w-3 h-3" />{job.remoteType}</span>}
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/60 text-muted-foreground"><MapPin className="w-3 h-3" />{job.location}</span>
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/60 text-muted-foreground"><Briefcase className="w-3 h-3" />{job.sector}</span>
+                  {job.remoteType && <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/60 text-muted-foreground"><Wifi className="w-3 h-3" />{job.remoteType}</span>}
                   {(job.salaryMin || job.salaryMax) && (
                     <span className="flex items-center gap-1">
                       <Euro className="w-3 h-3" />
@@ -215,6 +216,67 @@ export default async function CareersPage({
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white/40 dark:bg-background/40 backdrop-blur-sm border-t border-white/20 dark:border-white/10">
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {/* Info */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-foreground">Aletheia4Job</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
+                La piattaforma che connette talenti e aziende, semplificando la ricerca del lavoro e la selezione dei candidati.
+              </p>
+              <div className="flex items-center gap-3 pt-1">
+                <a href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Facebook className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Link utili */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-foreground">Link utili</h3>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li><Link href="/" className="hover:text-primary transition-colors">Candidati</Link></li>
+                <li><Link href="/login" className="hover:text-primary transition-colors">Aziende</Link></li>
+                <li><Link href="/" className="hover:text-primary transition-colors">Chi Siamo</Link></li>
+                <li><Link href="/" className="hover:text-primary transition-colors">FAQ</Link></li>
+              </ul>
+            </div>
+
+            {/* Note legali & contatti */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-foreground">Note legali &amp; contatti</h3>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li>
+                  <a href="mailto:supporto@aletheia4job.it" className="hover:text-primary transition-colors">supporto@aletheia4job.it</a>
+                </li>
+                <li>P.IVA 00000000000</li>
+                <li><Link href="/" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
+                <li>
+                  <a href="https://anpal.gov.it" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                    Autorizzazione ANPAL
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 pt-6 border-t border-white/20 dark:border-white/10 text-center">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Aletheia4Job. Tutti i diritti riservati.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

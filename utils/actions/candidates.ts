@@ -10,6 +10,68 @@ import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry, getCurrentUserDisplayName } from "../authz";
 import { authenticateAndRedirect } from "./shared";
 
+// Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
+// il proprietario destinatari sono fissati via env, perché la piattaforma è
+// multi-tenant e non c'è un job da cui derivarli come per applyToJobAction.
+export async function applySpontaneousApplicationAction(values: {
+  firstName: string; lastName: string; email: string; phone?: string; city: string;
+  sector: string; cvUrl?: string; source?: string;
+}) {
+  const organizationId = process.env.PUBLIC_SPONTANEOUS_ORG_ID;
+  const userId = process.env.PUBLIC_SPONTANEOUS_USER_ID;
+
+  if (!organizationId || !userId) {
+    console.error("PUBLIC_SPONTANEOUS_ORG_ID / PUBLIC_SPONTANEOUS_USER_ID non configurate.");
+    return { ok: false, error: "Servizio momentaneamente non disponibile. Riprova più tardi." };
+  }
+
+  try {
+    const emailLower = values.email.toLowerCase();
+
+    const existing = await prisma.candidate.findFirst({
+      where: { email: { equals: emailLower, mode: "insensitive" }, organizationId },
+    });
+
+    if (existing) {
+      await prisma.candidate.update({
+        where: { id: existing.id },
+        data: {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          phone: values.phone || existing.phone,
+          city: values.city,
+          sector: values.sector,
+          ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
+        },
+      });
+      return { ok: true };
+    }
+
+    await prisma.candidate.create({
+      data: {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: emailLower,
+        phone: values.phone,
+        city: values.city,
+        role: "Candidatura spontanea",
+        seniority: "Mid",
+        sector: values.sector,
+        status: "Nuovo",
+        source: values.source || "Candidatura Spontanea",
+        organizationId,
+        userId,
+        cvUrl: values.cvUrl,
+      },
+    });
+
+    return { ok: true };
+  } catch (error) {
+    console.error("Errore candidatura spontanea:", error);
+    return { ok: false, error: "Si è verificato un errore durante l'invio. Riprova." };
+  }
+}
+
 export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes & { jobId?: string }) {
   const { organizationId } = await authenticateAndRedirect();
   const { search, candidateStatus, province, sector, page = 1, limit = 10, jobId } = params;
