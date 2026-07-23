@@ -1,5 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getPublicJobByIdAction, resolvePublicJobSlugAction } from '@/utils/actions';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 // Prisma richiede Node.js (connessione TCP al DB), non funziona su edge.
 export const runtime = 'nodejs';
@@ -8,27 +10,16 @@ export const alt = 'Offerta di lavoro - Aletheia4Job';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-// Font esplicito per un rendering coerente (peso/stile) invece di affidarsi
-// al fallback di default di @vercel/og. Nota: su Windows il fallback interno
-// di @vercel/og ha un bug di risoluzione path (non legato a questo font
-// esplicito) che rompe ImageResponse in sviluppo locale; non si presenta
-// su Vercel (Linux), dove gira in produzione.
-let interFontPromise: Promise<ArrayBuffer> | null = null;
-function loadInterFont(): Promise<ArrayBuffer> {
+// Font caricato da un file locale del repo (public/fonts/Inter-Bold.woff),
+// non più scaricato da Google Fonts a runtime: il fetch esterno non aveva
+// nessun timeout (a differenza di quello del logo) e, se Google Fonts era
+// lento o irraggiungibile dall'istanza serverless, poteva far fallire o
+// rallentare tutta la generazione dell'immagine OG in modo silenzioso -
+// un rischio concreto per crawler con timeout stretti (es. WhatsApp).
+let interFontPromise: Promise<Buffer> | null = null;
+function loadInterFont(): Promise<Buffer> {
   if (!interFontPromise) {
-    interFontPromise = (async () => {
-      const cssRes = await fetch(
-        'https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap',
-        // UA "legacy" per farsi restituire da Google Fonts un formato
-        // (woff/ttf) supportato da satori invece del woff2 moderno.
-        { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko' } }
-      );
-      const css = await cssRes.text();
-      const fontUrl = css.match(/src: url\(([^)]+)\) format\('(?:truetype|opentype|woff)'\)/)?.[1];
-      if (!fontUrl) throw new Error('Font URL non trovato');
-      const fontRes = await fetch(fontUrl);
-      return fontRes.arrayBuffer();
-    })();
+    interFontPromise = fs.readFile(path.join(process.cwd(), 'public/fonts/Inter-Bold.woff'));
   }
   return interFontPromise;
 }

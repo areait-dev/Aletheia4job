@@ -310,15 +310,15 @@ export default function CalendarClient({ interviews, absences, cronofyEvents = [
           )}
 
           {view === "month" ? (
-            <div className="glass rounded-[2rem] overflow-hidden border-primary/10 shadow-2xl">
-              <div className="grid grid-cols-7 bg-muted/30 border-b border-primary/10">
+            <div className="glass rounded-[2rem] overflow-hidden border-primary/10 shadow-2xl overflow-x-auto">
+              <div className="grid grid-cols-7 bg-muted/30 border-b border-primary/10 min-w-[700px]">
                 {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map(day => (
                   <div key={day} className="p-4 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     {day}
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 auto-rows-[120px]">
+              <div className="grid grid-cols-7 auto-rows-[120px] min-w-[700px]">
                 {monthDays.map((day, idx) => {
                   const dayKey = day.format("YYYY-MM-DD");
                   const dayEvents = groupedEvents[dayKey] || [];
