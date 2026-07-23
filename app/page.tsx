@@ -86,28 +86,30 @@ export default async function CareersPage({
           </p>
 
           <form method="GET" className="max-w-2xl mx-auto">
-            <div className="flex items-center gap-2 p-2 bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-full border border-white/40 dark:border-white/10 shadow-sm shadow-black/5 focus-within:ring-2 focus-within:ring-primary/30 transition-shadow">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2 bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl sm:rounded-full border border-white/40 dark:border-white/10 shadow-sm shadow-black/5 focus-within:ring-2 focus-within:ring-primary/30 transition-shadow">
               <div className="flex items-center gap-2.5 flex-1 px-4">
                 <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                 <input
                   name="q"
                   defaultValue={searchParams.q}
                   placeholder="Cerca per titolo, azienda o settore…"
-                  className="flex-1 bg-transparent text-sm py-2 outline-none placeholder:text-muted-foreground/60"
+                  className="flex-1 min-w-0 bg-transparent text-sm py-2 outline-none placeholder:text-muted-foreground/60"
                 />
               </div>
-              <button
-                type="submit"
-                className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-sm"
-              >
-                Cerca
-              </button>
-              <Link
-                href="/registrazione"
-                className="inline-flex items-center justify-center h-11 rounded-full bg-primary/10 border border-primary/30 px-5 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all duration-200 whitespace-nowrap"
-              >
-                Candidatura spontanea
-              </Link>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 sm:flex-none px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-sm"
+                >
+                  Cerca
+                </button>
+                <Link
+                  href="/registrazione"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center h-11 rounded-full bg-primary/10 border border-primary/30 px-5 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all duration-200 whitespace-nowrap"
+                >
+                  Candidatura spontanea
+                </Link>
+              </div>
             </div>
           </form>
         </div>

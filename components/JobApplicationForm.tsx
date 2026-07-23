@@ -368,7 +368,7 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
             required
             checked={consents.liability}
             onChange={e => setConsents(prev => ({ ...prev, liability: e.target.checked }))}
-            className="mt-1 accent-primary shrink-0"
+            className="mt-0.5 w-5 h-5 accent-primary shrink-0 cursor-pointer"
           />
           <span className="text-sm text-muted-foreground leading-relaxed">
             <span className="text-red-500">*</span> Di essere consapevole che l&apos;Agenzia non si assume alcuna responsabilità circa la selezione, l&apos;andamento del rapporto di lavoro instauratosi tra impresa e candidato e di qualsiasi rapporto contrattuale ne scaturisca.
@@ -381,7 +381,7 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
             required
             checked={consents.confidentiality}
             onChange={e => setConsents(prev => ({ ...prev, confidentiality: e.target.checked }))}
-            className="mt-1 accent-primary shrink-0"
+            className="mt-0.5 w-5 h-5 accent-primary shrink-0 cursor-pointer"
           />
           <span className="text-sm text-muted-foreground leading-relaxed">
             <span className="text-red-500">*</span> Di osservare rigorosamente le indicazioni fornite a proposito di fatti, informazioni, documenti o altro di cui avrà comunicazione o prenderà conoscenza nello svolgimento delle funzionalità dell&apos;Agenzia e che tali informazioni non potranno in nessun modo essere cedute a terzi o utilizzate direttamente nel rispetto della vigente normativa in materia.
@@ -394,7 +394,7 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
             required
             checked={consents.privacy}
             onChange={e => setConsents(prev => ({ ...prev, privacy: e.target.checked }))}
-            className="mt-1 accent-primary shrink-0"
+            className="mt-0.5 w-5 h-5 accent-primary shrink-0 cursor-pointer"
           />
           <span className="text-sm text-muted-foreground leading-relaxed">
             <span className="text-red-500">*</span> Autorizzazione trattamento dei dati personali ai sensi del D.L.gs. 196/2003 e del regolamento G.D.P.R. N 679/2016. Informativa sulla privacy Alètheia srl
