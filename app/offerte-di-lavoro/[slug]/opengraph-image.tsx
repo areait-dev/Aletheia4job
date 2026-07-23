@@ -62,7 +62,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
 
   const displayTitle = title.length > 90 ? `${title.slice(0, 90).trimEnd()}…` : title;
 
-  return new ImageResponse(
+  const imageResponse = new ImageResponse(
     (
       <div
         style={{
@@ -148,4 +148,18 @@ export default async function Image({ params }: { params: { slug: string } }) {
         : undefined,
     }
   );
+
+  // WhatsApp (e altri crawler) scartano silenziosamente le immagini servite in
+  // streaming chunked senza Content-Length esplicito. ImageResponse di @vercel/og
+  // restituisce di default un body in streaming senza questo header: bufferizziamo
+  // qui il PNG completo e lo serviamo con Content-Length calcolato esplicitamente.
+  const buffer = await imageResponse.arrayBuffer();
+  return new Response(buffer, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType,
+      'Content-Length': String(buffer.byteLength),
+      'Cache-Control': imageResponse.headers.get('cache-control') ?? 'public, immutable, no-transform, max-age=31536000',
+    },
+  });
 }

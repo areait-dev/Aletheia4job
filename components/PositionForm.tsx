@@ -35,7 +35,7 @@ import { createJobAction, getSingleJobAction, updateJobAction, generateJobDescri
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Sparkles, Loader2, Upload, CheckCircle2 } from 'lucide-react'; // 🔥 NUOVO: icone per UI
+import { Sparkles, Loader2, Upload, CheckCircle2, Plus, X } from 'lucide-react'; // 🔥 NUOVO: icone per UI
 import { uploadCV } from '@/utils/supabase';
 
 function PositionForm({ jobId }: { jobId?: string }) {
@@ -43,11 +43,46 @@ function PositionForm({ jobId }: { jobId?: string }) {
   const remoteOptions = ['Onsite', 'Remote', 'Hybrid'];
   const salaryCurrencyOptions = ['EUR', 'USD', 'GBP'];
   const salaryIntervalOptions = ['Yearly', 'Monthly', 'Hourly'];
-  const sectorOptions = ['Information Technology', 'Commerciale', 'Finance', 'Healthcare', 'Marketing', 'Sales', 'Engineering', 'Human Resources', 'Legal', 'Education', 'Manufacturing', 'Retail', 'Other'];
+  const sectorOptions = [
+    'Informatica e Tecnologia',
+    'Commerciale e Vendite',
+    'Finanza e Contabilità',
+    'Sanità e Assistenza',
+    'Marketing e Comunicazione',
+    'Ingegneria',
+    'Risorse Umane',
+    'Legale',
+    'Istruzione e Formazione',
+    'Manifatturiero e Produzione',
+    'Retail e GDO',
+    'Logistica e Trasporti',
+    'Edilizia e Costruzioni',
+    'Turismo e Ristorazione',
+    'Agricoltura e Agroalimentare',
+    'Energia e Ambiente',
+    'Immobiliare',
+    'Assicurazioni',
+    'Telecomunicazioni',
+    'Media e Design',
+    'Consulenza',
+    'Pubblica Amministrazione',
+    'Automotive',
+    'Moda e Tessile',
+    'Farmaceutico',
+    'Facility Management',
+    'Amministrazione',
+    'Manutenzione e Meccanica',
+    'Sicurezza sul Lavoro',
+    'Altro',
+  ];
 
   // 🔥 NUOVO: stato per il caricamento AI
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  // Requisiti come lista di voci singole (una per input), invece di un unico blocco di testo.
+  // Salvate nel campo `requirements` unite da '\n', compatibile col rendering esistente in pagina.
+  const [requirementsList, setRequirementsList] = useState<string[]>(['']);
 
   const { data: jobData, isPending: isLoadingJob } = useQuery({
     queryKey: ['job', jobId],
@@ -124,8 +159,21 @@ function PositionForm({ jobId }: { jobId?: string }) {
         postToIndeed: jobData.postToIndeed || false,
         postToJooble: jobData.postToJooble || false,
       });
+
+      const existingRequirements = (jobData.requirements || '')
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+      setRequirementsList(existingRequirements.length > 0 ? existingRequirements : ['']);
     }
   }, [jobData, form]);
+
+  // Tiene sincronizzato il campo `requirements` del form con la lista di voci singole.
+  useEffect(() => {
+    form.setValue('requirements', requirementsList.filter(r => r.trim().length > 0).join('\n'), {
+      shouldValidate: form.formState.isSubmitted,
+    });
+  }, [requirementsList, form]);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -156,9 +204,14 @@ function PositionForm({ jobId }: { jobId?: string }) {
 
     // 📝 Popolamento completo del form
     form.setValue('description', result.description);
-    form.setValue('requirements', result.requirements);
     form.setValue('responsibilities', result.responsibilities);
     form.setValue('benefits', result.benefits);
+
+    const aiRequirements = String(result.requirements || '')
+      .split(/\r?\n/)
+      .map((line: string) => line.trim())
+      .filter((line: string) => line.length > 0);
+    setRequirementsList(aiRequirements.length > 0 ? aiRequirements : ['']);
     
     //  Salary (gestione sicura se l'AI restituisce stringhe invece di numeri)
     const minSal = typeof result.salaryMin === 'number' ? result.salaryMin : parseInt(String(result.salaryMin).replace(/\D/g, '')) || undefined;
@@ -300,8 +353,60 @@ function PositionForm({ jobId }: { jobId?: string }) {
             </div>
           </div>
           <CustomFormField name='location' control={form.control} labelText='località' />
-          <CustomFormTextarea name='description' control={form.control} labelText='descrizione' />
-          <CustomFormTextarea name='requirements' control={form.control} labelText='requisiti' />
+          <CustomFormTextarea
+            name='description'
+            control={form.control}
+            labelText='descrizione'
+            placeholder="Breve paragrafo introduttivo sul ruolo e sul contesto (es. 'Una figura per servizi di pulizia in uno Chalet a Cervinia.')"
+            helperText="Solo introduzione breve: compiti, offerta e requisiti vanno nei campi dedicati sotto, non ripeterli qui."
+          />
+          <div className="space-y-2 md:col-span-2 lg:col-span-3">
+            <label className="text-sm font-medium capitalize">requisiti</label>
+            <div className="space-y-2">
+              {requirementsList.map((value, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={value}
+                    placeholder={`Requisito ${index + 1}`}
+                    onChange={(e) => {
+                      const next = [...requirementsList];
+                      next[index] = e.target.value;
+                      setRequirementsList(next);
+                    }}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (requirementsList.length === 1) {
+                        setRequirementsList(['']);
+                        return;
+                      }
+                      setRequirementsList(requirementsList.filter((_, i) => i !== index));
+                    }}
+                    className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    aria-label="Rimuovi requisito"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRequirementsList([...requirementsList, ''])}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" /> Aggiungi requisito
+              </Button>
+            </div>
+            {form.formState.errors.requirements && (
+              <p className="text-sm font-medium text-destructive">
+                {form.formState.errors.requirements.message as string}
+              </p>
+            )}
+          </div>
           <CustomFormSelect
             name='sector'
             control={form.control}

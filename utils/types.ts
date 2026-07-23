@@ -196,8 +196,12 @@ export const createAndEditJobSchema = z.object({
   province: z.string().optional().nullable(),
   country: z.string().optional().nullable(),
   postalCode: z.string().optional().nullable(),
-  responsibilities: z.string().optional().nullable(),
-  benefits: z.string().optional().nullable(),
+  responsibilities: z.string().min(10, {
+    message: 'Le responsabilità devono essere di almeno 10 caratteri.',
+  }),
+  benefits: z.string().min(10, {
+    message: 'I benefit devono essere di almeno 10 caratteri.',
+  }),
   industry: z.string().optional().nullable(),
   experienceLevel: z.string().optional().nullable(),
   educationLevel: z.string().optional().nullable(),

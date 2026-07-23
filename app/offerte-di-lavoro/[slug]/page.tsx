@@ -109,6 +109,37 @@ function stripLocationTail(text: string | null | undefined): string {
   return text.slice(0, cutIndex).trim();
 }
 
+// I testi salvati iniziano quasi sempre con la stessa frase di presentazione
+// dell'agenzia ("Alètheia S.r.l., Agenzia per il Lavoro di Promotergroup
+// S.p.A., ricerca... per azienda operante nel settore..."), che ora mostriamo
+// già in modo fisso in cima alla pagina. La rimuoviamo dalla descrizione per
+// evitare di ripeterla due volte.
+function stripAgencyIntro(text: string | null | undefined): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  if (/^Al[eè]theia\s*S\.?r\.?l\.?/i.test(trimmed)) {
+    const firstSentenceEnd = trimmed.indexOf('. ');
+    if (firstSentenceEnd !== -1) {
+      return trimmed.slice(firstSentenceEnd + 2).trim();
+    }
+  }
+  return trimmed;
+}
+
+// Trasforma un campo di testo libero in un elenco di righe pulite, pronte per
+// essere renderizzate come <ul><li>. I testi salvati non hanno sempre "a capo"
+// reali tra un punto e l'altro (es. "Laurea in informatica; Disponibilità
+// immediata. Buone capacità relazionali."): oltre al newline, spezziamo quindi
+// anche su ";" o "." seguiti da una maiuscola, per ottenere comunque un vero
+// elenco puntato invece di un unico blocco di testo.
+function splitToBulletLines(text: string | null | undefined): string[] {
+  return (text ?? '')
+    .split(/\r?\n/)
+    .flatMap(line => line.split(/(?<=[;.])\s+(?=[A-ZÀ-Ú])/))
+    .map(line => line.replace(/^[-•*]\s*/, '').trim())
+    .filter(line => line.length > 0);
+}
+
 export default async function CareerJobPage({ params }: { params: { slug: string } }) {
   const resolved = await resolvePublicJobSlugAction(params.slug);
   if (!resolved) notFound();
@@ -119,13 +150,11 @@ export default async function CareerJobPage({ params }: { params: { slug: string
 
   const hasMultipleSites = job.locationInputType === 'select' || job.locationInputType === 'free_text';
 
-  const description = hasMultipleSites ? stripLocationTail(job.description) : job.description;
   const requirementsText = hasMultipleSites ? stripLocationTail(job.requirements) : job.requirements;
 
-  const benefits = job.benefits
-    ?.split('\n')
-    .map(b => b.replace(/^[-•*]\s*/, '').trim())
-    .filter(Boolean) ?? [];
+  const responsibilities = splitToBulletLines(job.responsibilities);
+  const benefits = splitToBulletLines(job.benefits);
+  const requirementsList = splitToBulletLines(requirementsText);
 
   const sedeMetaValue = job.locationInputType === 'select'
     ? `${job.locationOptions.length} sedi disponibili`
@@ -265,59 +294,75 @@ export default async function CareerJobPage({ params }: { params: { slug: string
           </section>
         )}
 
-        <div className={cn("grid gap-8", benefits.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-1 w-full")}>
-          {/* Main content */}
-          <div className={cn(benefits.length > 0 ? "lg:col-span-2" : "", "space-y-8")}>
-            {/* Description */}
-            <section className="glass rounded-3xl p-6 sm:p-8 space-y-4">
-              <h2 className="font-bold text-xl">Descrizione della posizione</h2>
-              <div className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {description}
-              </div>
-            </section>
+    {/* Testo annuncio */}
+        <section className="glass rounded-3xl p-6 sm:p-8 space-y-7">
+          {/* Introduzione */}
+          <p className="text-sm sm:text-base leading-relaxed">
+            <span className="font-semibold text-primary">Aletheia Srl</span>, Agenzia per il Lavoro di{' '}
+            <span className="font-semibold text-primary">Promotergroup S.p.A.</span>, ricerca per azienda cliente
+            operante nel settore <span className="font-semibold">{job.sector}</span>:
+          </p>
 
-            {/* Requirements */}
-            {requirementsText && (
-              <section className="glass rounded-3xl p-6 sm:p-8 space-y-4">
-                <div className="flex items-center gap-2">
-                  <ListChecks className="w-5 h-5 text-primary" />
-                  <h2 className="font-bold text-xl">Requisiti</h2>
-                </div>
-                <div className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {requirementsText}
-                </div>
-              </section>
-            )}
-
-            {/* Application Form anchor */}
-            <div id="apply" className="scroll-mt-24 pt-4">
-              <JobApplicationForm
-                jobId={job.id}
-                jobTitle={job.title}
-                locationInputType={job.locationInputType}
-                locationOptions={job.locationOptions}
-              />
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          {benefits.length > 0 && (
-            <div className="space-y-6">
-              <div className="glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4">
-                <h3 className="font-bold text-lg">Cosa offriamo</h3>
-                <ul className="space-y-3">
-                  {benefits.map((b, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {/* Principali responsabilità */}
+          {responsibilities.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="font-bold text-base sm:text-lg">La risorsa si occuperà di:</h2>
+              <ul className="list-disc pl-5 space-y-2.5 text-muted-foreground text-sm sm:text-base leading-relaxed">
+                {responsibilities.map((line, i) => <li key={i}>{line}</li>)}
+              </ul>
             </div>
           )}
+
+          {/* Si offre */}
+          {benefits.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="font-bold text-base sm:text-lg">Si offre:</h2>
+              <ul className="list-disc pl-5 space-y-2.5 text-muted-foreground text-sm sm:text-base leading-relaxed">
+                {benefits.map((line, i) => <li key={i}>{line}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* Requisiti */}
+          {requirementsList.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="font-bold text-base sm:text-lg flex items-center gap-2">
+                <ListChecks className="w-4 h-4 text-primary" />
+                Requisiti:
+              </h2>
+              <ul className="list-disc pl-5 space-y-2.5 text-muted-foreground text-sm sm:text-base leading-relaxed">
+                {requirementsList.map((line, i) => <li key={i}>{line}</li>)}
+              </ul>
+            </div>
+          )}
+
+        </section>
+
+        {/* Application Form anchor */}
+        <div id="apply" className="scroll-mt-24">
+          <JobApplicationForm
+            jobId={job.id}
+            jobTitle={job.title}
+            locationInputType={job.locationInputType}
+            locationOptions={job.locationOptions}
+          />
         </div>
       </div>
+
+      {/* Footer minimale — la CTA "Candidati" resta l'elemento con più peso visivo */}
+      <footer className="bg-white/40 dark:bg-background/40 backdrop-blur-sm border-t border-white/20 dark:border-white/10">
+        <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+          <p>© {new Date().getFullYear()} Alètheia4Job. Tutti i diritti riservati.</p>
+          <div className="flex items-center gap-4">
+            <a href="mailto:supporto@aletheia4job.it" className="hover:text-primary transition-colors">
+              supporto@aletheia4job.it
+            </a>
+            <Link href="/" className="hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

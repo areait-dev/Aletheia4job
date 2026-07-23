@@ -193,7 +193,7 @@ export async function getPublicJobByIdAction(id: string) {
       select: {
         id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
-        experienceLevel: true, postedAt: true, description: true, requirements: true, benefits: true,
+        experienceLevel: true, postedAt: true, description: true, requirements: true, responsibilities: true, benefits: true,
         locationInputType: true, locationOptions: true,
       },
     });

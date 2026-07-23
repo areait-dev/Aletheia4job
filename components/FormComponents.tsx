@@ -21,6 +21,8 @@ type CustomFormFieldProps = {
   control: Control<any>;
   labelText?: string;
   type?: string;
+  placeholder?: string;
+  helperText?: string;
 };
 
 export function CustomFormField({ name, control, labelText, type = 'text' }: CustomFormFieldProps) {
@@ -84,7 +86,7 @@ export function CustomFormSelect({
   );
 }
 
-export function CustomFormTextarea({ name, control, labelText }: CustomFormFieldProps) {
+export function CustomFormTextarea({ name, control, labelText, placeholder, helperText }: CustomFormFieldProps) {
   return (
     <FormField
       control={control}
@@ -92,8 +94,11 @@ export function CustomFormTextarea({ name, control, labelText }: CustomFormField
       render={({ field }) => (
         <FormItem>
           <FormLabel className='capitalize'>{labelText || name}</FormLabel>
+          {helperText && (
+            <p className='text-xs text-muted-foreground'>{helperText}</p>
+          )}
           <FormControl>
-            <Textarea {...field} value={field.value ?? ''} />
+            <Textarea {...field} value={field.value ?? ''} placeholder={placeholder} />
           </FormControl>
           <FormMessage />
         </FormItem>
