@@ -33,6 +33,13 @@ function loadInterFont(): Promise<ArrayBuffer> {
   return interFontPromise;
 }
 
+// Il logo viene mostrato in un riquadro di 72x72px nell'immagine OG: un file
+// sorgente molto pesante (es. logo caricato ad alta risoluzione) non migliora
+// la resa a quella dimensione, ma appesantisce inutilmente il rendering
+// (decodifica/base64) e il rischio di superare i limiti di peso di alcuni
+// crawler (es. WhatsApp). Sopra questa soglia si ricade sul design senza logo.
+const MAX_LOGO_SOURCE_BYTES = 1_000_000; // 1MB
+
 async function fetchLogoDataUrl(url: string | null | undefined): Promise<string | null> {
   if (!url) return null;
   try {
@@ -41,6 +48,7 @@ async function fetchLogoDataUrl(url: string | null | undefined): Promise<string 
     const type = res.headers.get('content-type') ?? '';
     if (!type.startsWith('image/')) return null;
     const buffer = await res.arrayBuffer();
+    if (buffer.byteLength > MAX_LOGO_SOURCE_BYTES) return null;
     return `data:${type};base64,${Buffer.from(buffer).toString('base64')}`;
   } catch {
     // Logo non raggiungibile o non valido: si ricade sul design senza logo.
@@ -72,7 +80,10 @@ export default async function Image({ params }: { params: { slug: string } }) {
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '64px',
-          background: 'linear-gradient(135deg, #0b1120 0%, #0f3d3e 55%, #0d9488 100%)',
+          // Gradiente a 2 stop invece di 3: stessa identità visiva (navy -> teal)
+          // ma con una transizione tonale più semplice, che il PNG (lossless)
+          // comprime meglio rispetto a un gradiente a più stop.
+          background: 'linear-gradient(135deg, #0b1120 0%, #0d9488 100%)',
           color: '#ffffff',
           fontFamily: interFontData ? 'Inter' : 'sans-serif',
         }}
