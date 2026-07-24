@@ -5,3 +5,10 @@ dist/
 build/
 .cache/
 node_modules/.cache/
+
+# Mai includere env file locali nel deploy: la presenza di .vercelignore
+# fa sì che Vercel IGNORI .gitignore, quindi va escluso esplicitamente qui.
+.env
+.env.local
+.env.*.local
+nested_files.json

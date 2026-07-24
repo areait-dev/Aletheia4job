@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getAllCandidatesAction } from "@/utils/actions";
+import { ARCHIVE_PAGE_SIZE } from "@/utils/types";
 import JobFolders from "./JobFolders";
 import SectorFolders from "./SectorFolders";
 import { Sparkles, Inbox, Loader2, SearchX } from "lucide-react";
@@ -12,15 +14,20 @@ export default function ArchivioManager() {
   const search = searchParams.get("search") || "";
   const candidateStatus = searchParams.get("candidateStatus") || "tutti";
   const province = searchParams.get("province") || "tutte";
-  
-  // Recuperiamo i candidati (senza limite stretto per permettere il raggruppamento locale)
-  const { data, isPending } = useQuery({
-    queryKey: ["candidates-grouped", search, candidateStatus, province],
-    queryFn: () => getAllCandidatesAction({ 
-      search, 
-      candidateStatus, 
+
+  // Paginazione reale: partiamo da ARCHIVE_PAGE_SIZE (stessa dimensione del
+  // prefetch server in jobs/page.tsx, per evitare il mismatch di limit che
+  // faceva mostrare un conteggio troncato) e la aumentiamo esplicitamente
+  // con "Carica altri", mai in modo silenzioso.
+  const [visibleLimit, setVisibleLimit] = useState(ARCHIVE_PAGE_SIZE);
+
+  const { data, isPending, isFetching } = useQuery({
+    queryKey: ["candidates-grouped", search, candidateStatus, province, visibleLimit],
+    queryFn: () => getAllCandidatesAction({
+      search,
+      candidateStatus,
       province,
-      limit: 500
+      limit: visibleLimit
     }),
   });
 
@@ -50,6 +57,9 @@ export default function ArchivioManager() {
   // Separazione logica
   const automaticCandidates = candidates.filter(c => c.applications && c.applications.length > 0);
   const manualCandidates = candidates.filter(c => !c.applications || c.applications.length === 0);
+
+  const totalInOrg = data?.count ?? candidates.length;
+  const hasMore = candidates.length < totalInOrg;
 
   return (
     <div className="space-y-16">
@@ -98,6 +108,22 @@ export default function ArchivioManager() {
           <SectorFolders candidates={manualCandidates} />
         </div>
       </section>
+
+      {hasMore && (
+        <div className="flex flex-col items-center gap-2 pb-4">
+          <p className="text-xs text-muted-foreground">
+            Stai visualizzando {candidates.length} di {totalInOrg} candidati totali.
+          </p>
+          <button
+            type="button"
+            onClick={() => setVisibleLimit((v) => v + ARCHIVE_PAGE_SIZE)}
+            disabled={isFetching}
+            className="px-6 py-2.5 rounded-2xl border border-border bg-white hover:bg-muted/50 transition-colors text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isFetching ? "Caricamento..." : "Carica altri"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

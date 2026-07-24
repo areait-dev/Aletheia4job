@@ -6,7 +6,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { getAllCandidatesAction } from "@/utils/actions";
-import { GetAllCandidatesActionTypes } from "@/utils/types";
+import { ARCHIVE_PAGE_SIZE, GetAllCandidatesActionTypes } from "@/utils/types";
 
 async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandidatesActionTypes }) {
   const queryClient = new QueryClient();
@@ -15,8 +15,8 @@ async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandida
   const province = searchParams.province || "tutte";
 
   await queryClient.prefetchQuery({
-    queryKey: ["candidates-grouped", search, candidateStatus, province],
-    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, limit: 100 }),
+    queryKey: ["candidates-grouped", search, candidateStatus, province, ARCHIVE_PAGE_SIZE],
+    queryFn: () => getAllCandidatesAction({ search, candidateStatus, province, limit: ARCHIVE_PAGE_SIZE }),
   });
 
   return (

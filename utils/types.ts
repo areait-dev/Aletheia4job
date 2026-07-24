@@ -1,5 +1,11 @@
 import * as z from 'zod';
 
+// Dimensione pagina condivisa tra il prefetch server-side (jobs/page.tsx) e
+// la query client-side (ArchivioManager.tsx): DEVONO combaciare, altrimenti
+// React Query idrata i risultati del server (limit più basso) sotto la
+// stessa queryKey usata dal client, troncando silenziosamente la vista.
+export const ARCHIVE_PAGE_SIZE = 200;
+
 export type GetAllCandidatesActionTypes = {
   search?: string;
   candidateStatus?: string;
