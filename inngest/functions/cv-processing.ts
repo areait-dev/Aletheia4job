@@ -209,3 +209,104 @@ export const processCV = inngest.createFunction(
     return { ok: true, applicationId };
   },
 );
+
+type CandidateProcessingPayload = {
+  candidateId: string;
+  organizationId: string;
+  /** Se true, non sovrascrive il campo `role` (usato per gli import da
+   *  archivio dove `role` è intenzionalmente valorizzato con la mansione
+   *  della sottocartella di provenienza, non da riconoscere via AI). */
+  preserveRole?: boolean;
+};
+
+/**
+ * Arricchimento AI di un Candidate non collegato a nessuna Application
+ * (es. import da archivio CV locale). A differenza di processCV, non
+ * richiede applicationId/jobId: legge il resumeText già salvato sul
+ * Candidate e aggiorna solo i campi anagrafici/profilo.
+ */
+export const processCandidateCV = inngest.createFunction(
+  {
+    id: "process-candidate-cv",
+    triggers: [{ event: "cv/candidate-process.requested" }],
+  },
+  async ({ event, step }) => {
+    const { candidateId, organizationId, preserveRole } = event.data as CandidateProcessingPayload;
+
+    const candidate = await step.run("fetch-candidate", async () => {
+      return prisma.candidate.findFirst({
+        where: { id: candidateId, organizationId },
+        select: { id: true, resumeText: true },
+      });
+    });
+
+    if (!candidate?.resumeText?.trim()) {
+      return { ok: false, reason: "no-resume-text", candidateId };
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return { ok: false, reason: "no-gemini-key", candidateId };
+    }
+
+    const parsedData = await step.run("ai-parse-candidate", async () => {
+      const { GoogleGenerativeAI } = require("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+      const prompt = `
+        Analizza il seguente testo estratto da un CV e restituisci un oggetto JSON con i seguenti campi (usa null se un dato non è presente, non inventare nulla):
+        - firstName: string
+        - lastName: string
+        - email: string
+        - phone: string
+        - city: string
+        - role: string
+        - seniority: string
+        - education: string
+        - skills: string
+        - sector: string
+
+        Testo del CV:
+        ${candidate.resumeText}
+
+        Restituisci ESCLUSIVAMENTE il JSON puro.
+      `;
+
+      try {
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+        const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+        return JSON.parse(jsonString);
+      } catch (e) {
+        console.warn("[process-candidate-cv] AI parsing non riuscito:", e);
+        return null;
+      }
+    });
+
+    if (!parsedData) {
+      return { ok: false, reason: "ai-parse-failed", candidateId };
+    }
+
+    await step.run("update-candidate", async () => {
+      const updateData: Record<string, any> = {};
+      if (parsedData.firstName) updateData.firstName = parsedData.firstName;
+      if (parsedData.lastName) updateData.lastName = parsedData.lastName;
+      if (parsedData.phone) updateData.phone = parsedData.phone;
+      if (parsedData.city) updateData.city = parsedData.city;
+      if (!preserveRole && parsedData.role) updateData.role = parsedData.role;
+      if (parsedData.seniority) updateData.seniority = parsedData.seniority;
+      if (parsedData.education) updateData.education = parsedData.education;
+      if (parsedData.skills) updateData.skills = parsedData.skills;
+      if (parsedData.sector) updateData.sector = parsedData.sector;
+
+      if (Object.keys(updateData).length > 0) {
+        await prisma.candidate.update({
+          where: { id: candidateId },
+          data: updateData,
+        });
+      }
+    });
+
+    return { ok: true, candidateId };
+  },
+);
