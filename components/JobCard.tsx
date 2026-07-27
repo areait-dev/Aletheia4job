@@ -17,10 +17,32 @@ import { cn, getScoreColor } from '@/lib/utils';
 
 import AnalyzeAIButton from './AnalyzeAIButton';
 
-// Email fittizia generata dagli script di import quando non è stato possibile
-// estrarre un indirizzo reale dal CV (vedi scripts/import-cv-archive.ts e
-// scripts/storage-recover-orphans.ts, dominio "@non-estratto.local").
-const PLACEHOLDER_EMAIL_DOMAIN = '@non-estratto.local';
+// Pattern di email non realmente contattabili: sia quelle fittizie generate
+// dagli script di import quando non è stato possibile estrarre un indirizzo
+// reale dal CV (vedi scripts/import-cv-archive.ts e
+// scripts/storage-recover-orphans.ts, dominio "@non-estratto.local"), sia
+// email di test/placeholder inserite dai candidati stessi tramite il form
+// della Career Page (es. "@test.it", "@testit", "@gmail.test", "@gmail.comc").
+const FAKE_EMAIL_PATTERNS = [
+  /@non-estratto\.local$/i,
+  /@test\.it$/i,
+  /@testit$/i,
+  /@gmail\.test$/i,
+  /@gmail\.comc$/i,
+];
+
+// Impone la regola "un'email reale ha sempre una @ seguita da un dominio con
+// un punto (TLD)": qualunque valore che non rispetta questo requisito, o che
+// corrisponde a un pattern noto di placeholder/test, viene trattato come non
+// disponibile invece di essere mostrato in chiaro.
+function isFakeOrInvalidEmail(email: string | null | undefined): boolean {
+  if (!email) return true;
+  const atIndex = email.indexOf('@');
+  if (atIndex === -1) return true;
+  const domain = email.slice(atIndex + 1);
+  if (!domain.includes('.')) return true;
+  return FAKE_EMAIL_PATTERNS.some((re) => re.test(email));
+}
 
 // Formattazione SOLO per la visualizzazione (non modifica il dato a DB):
 // normalizza un numero italiano in "+39 XXX XXX XXXX". Se il formato non è
@@ -96,7 +118,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const bgColors = ['bg-blue-50 text-blue-600', 'bg-emerald-50 text-emerald-600', 'bg-violet-50 text-violet-600', 'bg-amber-50 text-amber-600', 'bg-rose-50 text-rose-600'];
   const avatarColor = bgColors[candidate.firstName?.charCodeAt(0) ?? 0 % bgColors.length];
 
-  const isPlaceholderEmail = candidate.email?.toLowerCase().endsWith(PLACEHOLDER_EMAIL_DOMAIN);
+  const isPlaceholderEmail = isFakeOrInvalidEmail(candidate.email);
   const phoneDisplay = formatPhoneDisplay(candidate.phone);
   const cityDisplay = !candidate.city || candidate.city === 'N/D'
     ? 'Sede non specificata'
