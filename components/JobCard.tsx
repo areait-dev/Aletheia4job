@@ -93,7 +93,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
 
         {/* Right column: compact status + actions */}
         <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-          {candidate.source && (
+          {candidate.source && candidate.source !== 'Import manuale archivio' && candidate.source !== 'Recupero Storage' && (
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-50 rounded-md border border-slate-100">
               {candidate.source}
             </span>
