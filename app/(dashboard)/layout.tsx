@@ -24,7 +24,7 @@ async function layout({ children }: PropsWithChildren) {
   return (
     <main className='grid lg:grid-cols-5 relative'>
       <BackgroundDecorations />
-      <div className='hidden lg:block lg:col-span-1 lg:min-h-screen relative z-10'>
+      <div className='hidden lg:block lg:col-span-1 lg:h-screen lg:sticky lg:top-0 relative z-10'>
         <Sidebar role={auth.role} />
       </div>
 
