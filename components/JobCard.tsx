@@ -17,6 +17,30 @@ import { cn, getScoreColor } from '@/lib/utils';
 
 import AnalyzeAIButton from './AnalyzeAIButton';
 
+// Email fittizia generata dagli script di import quando non è stato possibile
+// estrarre un indirizzo reale dal CV (vedi scripts/import-cv-archive.ts e
+// scripts/storage-recover-orphans.ts, dominio "@non-estratto.local").
+const PLACEHOLDER_EMAIL_DOMAIN = '@non-estratto.local';
+
+// Formattazione SOLO per la visualizzazione (non modifica il dato a DB):
+// normalizza un numero italiano in "+39 XXX XXX XXXX". Se il formato non è
+// riconoscibile come numero italiano standard, mostra il valore originale
+// così com'è salvato, senza inventare o troncare cifre.
+function formatPhoneDisplay(raw: string | null): string {
+  if (!raw || !raw.trim()) return '—';
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('0039')) digits = digits.slice(4);
+  else if (digits.startsWith('39') && digits.length > 10) digits = digits.slice(2);
+
+  if (digits.length === 10) {
+    return `+39 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  }
+  if (digits.length === 9) {
+    return `+39 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  }
+  return raw;
+}
+
 function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
@@ -72,6 +96,16 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
   const bgColors = ['bg-blue-50 text-blue-600', 'bg-emerald-50 text-emerald-600', 'bg-violet-50 text-violet-600', 'bg-amber-50 text-amber-600', 'bg-rose-50 text-rose-600'];
   const avatarColor = bgColors[candidate.firstName?.charCodeAt(0) ?? 0 % bgColors.length];
 
+  const isPlaceholderEmail = candidate.email?.toLowerCase().endsWith(PLACEHOLDER_EMAIL_DOMAIN);
+  const phoneDisplay = formatPhoneDisplay(candidate.phone);
+  const cityDisplay = !candidate.city || candidate.city === 'N/D'
+    ? 'Sede non specificata'
+    : `${candidate.city}${candidate.province ? ` (${candidate.province.toUpperCase()})` : ''}`;
+  // Il DB salva "Nuovo" come default per i candidati d'archivio, valore non
+  // presente nell'enum CandidateStatus: senza un item corrispondente il
+  // Select di Radix risulta vuoto invece di mostrare lo stato reale.
+  const hasKnownStatus = (Object.values(CandidateStatus) as string[]).includes(candidate.status) || candidate.status === 'Nuovo';
+
   return (
     <Link
       href={`/jobs/${candidate.id}`}
@@ -119,15 +153,19 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
       <div className="flex flex-col gap-1.5 px-5 pb-3 text-xs text-slate-400 md:grid md:grid-cols-3 md:gap-2">
         <span className="flex items-center gap-1.5 min-w-0">
           <Mail className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">{candidate.email}</span>
+          {isPlaceholderEmail ? (
+            <span className="truncate italic text-slate-300">Email non disponibile</span>
+          ) : (
+            <span className="truncate">{candidate.email}</span>
+          )}
         </span>
         <span className="flex items-center gap-1.5">
           <Phone className="w-3.5 h-3.5 shrink-0" />
-          <span>{candidate.phone || '—'}</span>
+          <span>{phoneDisplay}</span>
         </span>
         <span className="flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">{candidate.city}{candidate.province ? ` (${candidate.province.toUpperCase()})` : ''}</span>
+          <span className="truncate">{cityDisplay}</span>
         </span>
       </div>
 
@@ -151,9 +189,15 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
             disabled={updateStatusMutation.isPending}
           >
             <SelectTrigger className="h-7 text-[11px] w-[110px] border-slate-200 bg-white shadow-none px-2 rounded-lg max-sm:h-9">
-              <SelectValue />
+              <SelectValue placeholder="Seleziona stato" />
             </SelectTrigger>
             <SelectContent>
+              {!hasKnownStatus && (
+                <SelectItem value={candidate.status} className="text-[11px]">{candidate.status}</SelectItem>
+              )}
+              {candidate.status === 'Nuovo' && (
+                <SelectItem value="Nuovo" className="text-[11px]">Nuovo</SelectItem>
+              )}
               {Object.values(CandidateStatus).map((s) => (
                 <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>
               ))}
