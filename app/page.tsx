@@ -261,8 +261,8 @@ export default async function CareersPage({
                   <a href="mailto:supporto@aletheia4job.it" className="hover:text-primary transition-colors">supporto@aletheia4job.it</a>
                 </li>
                 <li>P.IVA 00000000000</li>
-                <li><Link href="/" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
+                <li><Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/cookie-policy" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
                 <li>
                   <a href="https://anpal.gov.it" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                     Autorizzazione ANPAL

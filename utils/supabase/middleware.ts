@@ -64,7 +64,8 @@ export async function updateSession(request: NextRequest) {
   const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
   const isCareersRoute = request.nextUrl.pathname.startsWith('/offerte-di-lavoro') ||
                          request.nextUrl.pathname.startsWith('/registrazione') ||
-                         request.nextUrl.pathname.startsWith('/privacy-policy')
+                         request.nextUrl.pathname.startsWith('/privacy-policy') ||
+                         request.nextUrl.pathname.startsWith('/cookie-policy')
   const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
                          request.nextUrl.pathname === '/sitemap.xml'
   const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||
