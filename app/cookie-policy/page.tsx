@@ -24,7 +24,7 @@ export default function CookiePolicyPage() {
           <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-primary/10 blur-2xl" />
         </div>
-        <div className="relative max-w-3xl mx-auto px-4 py-10 space-y-4">
+        <div className="relative max-w-5xl mx-auto px-4 py-10 space-y-4">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors"
@@ -37,8 +37,8 @@ export default function CookiePolicyPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <article className="bg-white/70 dark:bg-background/70 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-3xl p-6 sm:p-10 shadow-sm space-y-10 text-sm leading-relaxed text-foreground">
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        <article className="bg-white/70 dark:bg-background/70 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-3xl p-6 sm:p-10 lg:p-12 shadow-sm space-y-10 text-sm leading-relaxed text-foreground">
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold">Cosa sono i cookie</h2>
