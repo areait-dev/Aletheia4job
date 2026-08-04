@@ -67,7 +67,8 @@ export async function updateSession(request: NextRequest) {
   const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
                          request.nextUrl.pathname === '/sitemap.xml'
   const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||
-                         request.nextUrl.pathname.startsWith('/api/upload-cv')
+                         request.nextUrl.pathname.startsWith('/api/upload-cv') ||
+                         request.nextUrl.pathname.startsWith('/api/public/')
 
   if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isSeoRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
     // If not authenticated and not on an auth route, redirect to login
