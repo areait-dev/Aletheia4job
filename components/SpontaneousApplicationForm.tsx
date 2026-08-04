@@ -22,6 +22,9 @@ export default function SpontaneousApplicationForm() {
     cvUrl: '',
   });
 
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyError, setPrivacyError] = useState(false);
+
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; email?: string; city?: string; sector?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -102,6 +105,11 @@ export default function SpontaneousApplicationForm() {
     setSubmitError(null);
 
     if (!validateForm()) return;
+
+    if (!privacyAccepted) {
+      setPrivacyError(true);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -301,6 +309,39 @@ export default function SpontaneousApplicationForm() {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-start gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            required
+            checked={privacyAccepted}
+            onChange={e => {
+              setPrivacyAccepted(e.target.checked);
+              setPrivacyError(false);
+            }}
+            className={`mt-0.5 w-4 h-4 shrink-0 rounded border accent-primary outline-none transition-colors ${
+              privacyError ? 'border-red-500 ring-2 ring-red-500/30' : 'border-border'
+            }`}
+          />
+          <span className="text-xs text-muted-foreground leading-relaxed">
+            Accetto il trattamento dei dati personali ai sensi della{' '}
+            <a
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary font-medium hover:underline"
+              onClick={e => e.stopPropagation()}
+            >
+              Privacy Policy
+            </a>
+            .
+          </span>
+        </label>
+        {privacyError && (
+          <p className="text-xs text-red-600">Devi accettare il trattamento dei dati personali per inviare la candidatura.</p>
+        )}
       </div>
 
       <button
