@@ -132,16 +132,29 @@ function stripAgencyIntro(text: string | null | undefined): string {
 // immediata. Buone capacità relazionali."): oltre al newline, spezziamo quindi
 // anche su ";" o "." seguiti da una maiuscola, per ottenere comunque un vero
 // elenco puntato invece di un unico blocco di testo.
-// I titoli sono salvati tutto maiuscolo (es. "PERSONALE PER SERVIZI DI PULIZIE
-// CHALET") per la resa a effetto nell'header/nelle card. Nel paragrafo
-// introduttivo, dove il titolo va a comporre una frase discorsiva, lo
-// normalizziamo in maiuscola solo iniziale per non spezzare la lettura.
+// Alcuni titoli sono salvati tutto maiuscolo (es. "PERSONALE PER SERVIZI DI
+// PULIZIE CHALET"), altri gia' in un case discorsivo curato (es. "Geometra —
+// Operativo in Cantiere"). Nel paragrafo introduttivo, dove il titolo va a
+// comporre una frase, normalizziamo in maiuscola-solo-iniziale unicamente i
+// titoli "urlati": quelli gia' ben formattati restano intatti, altrimenti si
+// perderebbero le maiuscole volute (nomi propri, acronimi a meta' frase).
+const KNOWN_ACRONYMS = ['RSPP', 'ICT', 'IT', 'CV', 'HR', 'ERP', 'CRM', 'SEO', 'FAD'];
+
+function isShoutingTitle(text: string): boolean {
+  return /[a-zà-ù]/.test(text) === false && /[A-ZÀ-Ù]/.test(text);
+}
+
 function toSentenceCase(text: string): string {
+  if (!isShoutingTitle(text)) return text;
+
   const lower = text.toLowerCase();
   const capitalized = lower.charAt(0).toUpperCase() + lower.slice(1);
-  // Acronimi tra parentesi (es. "(RSPP)") restano maiuscoli: minuscolizzarli
-  // li renderebbe irriconoscibili.
-  return capitalized.replace(/\(([a-zà-ù]{2,8})\)/gi, (_, acronym) => `(${acronym.toUpperCase()})`);
+
+  let result = capitalized;
+  for (const acronym of KNOWN_ACRONYMS) {
+    result = result.replace(new RegExp(`\\b${acronym.toLowerCase()}\\b`, 'gi'), acronym);
+  }
+  return result;
 }
 
 function splitToBulletLines(text: string | null | undefined): string[] {
