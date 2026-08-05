@@ -347,7 +347,7 @@ export default async function CareerJobPage({ params }: { params: { slug: string
             <a href="mailto:supporto@aletheia4job.it" className="hover:text-primary transition-colors">
               supporto@aletheia4job.it
             </a>
-            <Link href="/" className="hover:text-primary transition-colors">
+            <Link href="/privacy-policy" className="hover:text-primary transition-colors">
               Privacy Policy
             </Link>
           </div>

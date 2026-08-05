@@ -30,7 +30,7 @@ export default function Logo({ className, size = 28, showText = true, textClassN
       {showText && (
         <div>
           <h1 className={cn('text-xl font-bold tracking-tight text-foreground', textClassName)}>
-            Job <span className="text-primary">Aletheia</span>
+            Aletheia<span className="text-primary">4Job</span>
           </h1>
         </div>
       )}

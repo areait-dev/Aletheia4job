@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Lock, ArrowRight, Github } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
 
 export function LoginForm() {
@@ -38,15 +37,6 @@ export function LoginForm() {
     }
   }
 
-  async function handleGithubLogin() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${nextPath}`
-      }
-    });
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
       <div className="fixed top-0 left-0 w-full h-full -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
@@ -58,7 +48,7 @@ export function LoginForm() {
           <div className="mb-6">
             <Logo size={56} showText={false} />
           </div>
-          <h1 className="text-3xl font-black tracking-tight">Job <span className="text-primary">Aletheia</span></h1>
+          <h1 className="text-3xl font-black tracking-tight">Aletheia<span className="text-primary">4Job</span></h1>
           <p className="text-muted-foreground mt-1.5 text-sm font-medium">Bentornato! Accedi per gestire i tuoi candidati.</p>
         </div>
 
@@ -108,20 +98,6 @@ export function LoginForm() {
             {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
           </button>
         </form>
-
-        <div className="my-8 flex items-center gap-4">
-          <div className="h-px bg-border/50 flex-1" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Oppure continua con</span>
-          <div className="h-px bg-border/50 flex-1" />
-        </div>
-
-        <Button
-          onClick={handleGithubLogin}
-          variant="outline"
-          className="w-full h-12 rounded-2xl border-2 border-border bg-background/50 hover:bg-primary/5 hover:border-primary/30 transition-all font-bold gap-3 text-sm"
-        >
-          <Github className="w-5 h-5" /> GitHub
-        </Button>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Non hai un account?{' '}

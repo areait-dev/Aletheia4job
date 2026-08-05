@@ -219,7 +219,7 @@ function CreateCandidateForm() {
       >
         <div className='flex items-center justify-between gap-3 flex-wrap border-b pb-6'>
           <div>
-            <h2 className='text-2xl sm:text-3xl font-bold tracking-tight text-primary'>Job Aletheia</h2>
+            <h2 className='text-2xl sm:text-3xl font-bold tracking-tight text-primary'>Aletheia4Job</h2>
             <p className='text-muted-foreground mt-1'>Creazione nuovo profilo candidato</p>
           </div>
           <div className='bg-primary/10 p-3 rounded-2xl'>

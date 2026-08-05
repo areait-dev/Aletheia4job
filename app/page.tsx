@@ -236,8 +236,11 @@ export default async function CareersPage({
               <ul className="space-y-2 text-xs text-muted-foreground">
                 <li><Link href="/" className="hover:text-primary transition-colors">Candidati</Link></li>
                 <li><Link href="/login" className="hover:text-primary transition-colors">Aziende</Link></li>
-                <li><Link href="/" className="hover:text-primary transition-colors">Chi Siamo</Link></li>
-                <li><Link href="/" className="hover:text-primary transition-colors">FAQ</Link></li>
+                <li>
+                  <a href="https://aletheiasrl.vercel.app/chi-siamo" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                    Chi Siamo
+                  </a>
+                </li>
               </ul>
             </div>
 
