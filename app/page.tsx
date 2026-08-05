@@ -3,11 +3,11 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getPublicJobsAction, getPublicJobSlugMapAction } from '@/utils/actions';
-import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, LayoutDashboard, Linkedin, Instagram, Facebook } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, Linkedin, Instagram, Facebook } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/utils/supabase/server';
 import SectorFilterDropdown from '@/components/SectorFilterDropdown';
+import Logo from '@/components/Logo';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -48,10 +48,6 @@ export default async function CareersPage({
       )
     : jobs;
 
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const isLoggedIn = !!user;
-
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
@@ -62,20 +58,14 @@ export default async function CareersPage({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,0,0,0.03),transparent_60%)]" />
         </div>
         <div className="relative w-full max-w-5xl mx-auto px-4 py-16 text-center space-y-6">
+          <div className="flex justify-center">
+            <Logo size={40} showText={false} />
+          </div>
           <div className="flex items-center justify-center gap-3">
             <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               Offerte di lavoro
             </div>
-            {isLoggedIn && (
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-muted/80 px-3 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                ATS
-              </Link>
-            )}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Smetti di cercare. <span className="text-primary">Inizia a trovare.</span>
@@ -130,9 +120,6 @@ export default async function CareersPage({
             {filtered.length === 1 ? "posizione trovata" : "posizioni trovate"}
             {q && <span className="ml-1">per &quot;<em>{q}</em>&quot;</span>}
           </p>
-          <Link href="/login" className="text-xs text-primary font-medium hover:underline">
-            Sei un recruiter? Accedi →
-          </Link>
         </div>
 
         {/* Jobs grid */}

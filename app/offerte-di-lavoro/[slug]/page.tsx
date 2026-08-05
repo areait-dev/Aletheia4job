@@ -1,10 +1,9 @@
 import { getPublicJobByIdAction, resolvePublicJobSlugAction } from '@/utils/actions';
 import { notFound, redirect } from 'next/navigation';
-import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, LayoutDashboard, MapPinned, ListChecks } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
-import { createClient } from '@/utils/supabase/server';
 import { truncateAtWordBoundary } from '@/utils/text';
 
 const modeColor: Record<string, string> = {
@@ -162,10 +161,6 @@ export default async function CareerJobPage({ params }: { params: { slug: string
     ? 'Più sedi disponibili'
     : job.location;
 
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const isLoggedIn = !!user;
-
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aletheia4job.it';
 
   return (
@@ -181,15 +176,6 @@ export default async function CareerJobPage({ params }: { params: { slug: string
             <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
               <ArrowLeft className="w-4 h-4" /> Tutte le posizioni
             </Link>
-            {isLoggedIn && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-muted/80 px-2.5 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
-              >
-                <LayoutDashboard className="w-3 h-3" />
-                ATS
-              </Link>
-            )}
           </div>
               <a
                 href="#apply"
