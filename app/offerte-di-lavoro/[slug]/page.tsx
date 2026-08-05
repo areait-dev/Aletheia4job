@@ -140,7 +140,7 @@ function stripAgencyIntro(text: string | null | undefined): string {
 // anche su ";" o "." seguiti da una maiuscola, per ottenere comunque un vero
 // elenco puntato invece di un unico blocco di testo.
 // Alcuni titoli sono salvati tutto maiuscolo (es. "PERSONALE PER SERVIZI DI
-// PULIZIE CHALET"), altri gia' in un case discorsivo curato (es. "Geometra —
+// PULIZIE CHALET"), altri gia' in un case discorsivo curato (es. "Geometra -
 // Operativo in Cantiere"). Nel paragrafo introduttivo, dove il titolo va a
 // comporre una frase, normalizziamo in maiuscola-solo-iniziale unicamente i
 // titoli "urlati": quelli gia' ben formattati restano intatti, altrimenti si
