@@ -132,6 +132,18 @@ function stripAgencyIntro(text: string | null | undefined): string {
 // immediata. Buone capacità relazionali."): oltre al newline, spezziamo quindi
 // anche su ";" o "." seguiti da una maiuscola, per ottenere comunque un vero
 // elenco puntato invece di un unico blocco di testo.
+// I titoli sono salvati tutto maiuscolo (es. "PERSONALE PER SERVIZI DI PULIZIE
+// CHALET") per la resa a effetto nell'header/nelle card. Nel paragrafo
+// introduttivo, dove il titolo va a comporre una frase discorsiva, lo
+// normalizziamo in maiuscola solo iniziale per non spezzare la lettura.
+function toSentenceCase(text: string): string {
+  const lower = text.toLowerCase();
+  const capitalized = lower.charAt(0).toUpperCase() + lower.slice(1);
+  // Acronimi tra parentesi (es. "(RSPP)") restano maiuscoli: minuscolizzarli
+  // li renderebbe irriconoscibili.
+  return capitalized.replace(/\(([a-zà-ù]{2,8})\)/gi, (_, acronym) => `(${acronym.toUpperCase()})`);
+}
+
 function splitToBulletLines(text: string | null | undefined): string[] {
   return (text ?? '')
     .split(/\r?\n/)
@@ -290,7 +302,8 @@ export default async function CareerJobPage({ params }: { params: { slug: string
           <p className="text-sm sm:text-base leading-relaxed">
             <span className="font-semibold text-primary">Aletheia Srl</span>, Agenzia per il Lavoro di{' '}
             <span className="font-semibold text-primary">Promotergroup S.p.A.</span>, ricerca per azienda cliente
-            operante nel settore <span className="font-semibold">{job.sector}</span>:
+            operante nel settore <span className="font-semibold">{job.sector}</span> per la posizione di{' '}
+            <span className="font-semibold">{toSentenceCase(job.title)}</span>:
           </p>
 
           {/* Principali responsabilità */}
