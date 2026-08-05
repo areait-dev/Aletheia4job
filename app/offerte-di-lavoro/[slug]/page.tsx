@@ -1,11 +1,18 @@
 import { getPublicJobByIdAction, resolvePublicJobSlugAction } from '@/utils/actions';
 import { notFound, redirect } from 'next/navigation';
-import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks, Linkedin, Instagram, Facebook, Send } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
 import Logo from '@/components/Logo';
 import { truncateAtWordBoundary } from '@/utils/text';
+
+const SOCIAL_LINKS = [
+  { label: 'LinkedIn', href: 'https://it.linkedin.com/company/al%C3%A9theia-srl', icon: Linkedin },
+  { label: 'Facebook', href: 'https://www.facebook.com/aletheiasrl.it/?locale=it_IT', icon: Facebook },
+  { label: 'Instagram', href: 'https://www.instagram.com/aletheiasrl/', icon: Instagram },
+  { label: 'Telegram', href: 'https://t.me/alethiaapl', icon: Send },
+];
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -226,6 +233,22 @@ export default async function CareerJobPage({ params }: { params: { slug: string
             />
           </div>
         )}
+
+        {/* Social */}
+        <div className="flex items-center justify-center gap-3">
+          {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+          ))}
+        </div>
 
         {/* Hero */}
         <div className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 space-y-5">

@@ -417,32 +417,6 @@ export default function JobApplicationForm({ jobId, jobTitle, locationInputType,
         </p>
       )}
 
-      {/* Aggiornamento Telegram */}
-      <div className="rounded-2xl bg-sky-500/5 border border-sky-500/20 p-4 sm:p-5 flex items-start gap-3 text-sm text-muted-foreground leading-relaxed">
-        <a
-          href="https://t.me/alethiaapl"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Canale Telegram"
-          className="shrink-0 w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center hover:bg-sky-500/90 transition-colors"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-            <path d="M21.05 3.16 2.53 10.4c-1.26.5-1.25 1.2-.23 1.51l4.76 1.49 1.83 5.6c.22.6.36.85.75.85.31 0 .45-.14.62-.31l1.6-1.55 4.83 3.57c.9.5 1.53.24 1.75-.83l3.17-14.94c.32-1.31-.5-1.9-1.56-1.53Zm-11.9 9.1 8.44-5.32c.4-.24.76-.11.46.16l-7.06 6.38-.28 3.05-1.27-4.27Z" />
-          </svg>
-        </a>
-        <span>
-          Vuoi rimanere aggiornato sulle nostre offerte di lavoro? Seguici sui social e Iscriviti al canale Telegram:{' '}
-          <a
-            href="https://t.me/alethiaapl"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary font-semibold underline underline-offset-2 hover:text-primary/80 transition-colors"
-          >
-            https://t.me/alethiaapl
-          </a>
-        </span>
-      </div>
-
       {/* Dicitura parità di genere */}
       <p className="text-xs text-muted-foreground leading-relaxed text-justify pt-4 border-t border-border/50">
         Ogni candidato e candidata sarà valutato/a esclusivamente in base alle competenze, alle esperienze e alle
