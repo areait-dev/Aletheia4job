@@ -68,7 +68,7 @@ export async function generateMetadata(): Promise<Metadata> {
         "Scopri le offerte di lavoro attive di Aletheia4Job, agenzia per il lavoro. Candidati in pochi click alle posizioni aperte nella tua zona e nel tuo settore.",
       images: [
         {
-          url: "/logo-brand.png",
+          url: "/logo-brand-og.png",
           width: 1200,
           height: 630,
           alt: "Aletheia4Job - Offerte di Lavoro",
@@ -82,7 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
         "Scopri le offerte di lavoro attive di Aletheia4Job, agenzia per il lavoro.",
       images: [
         {
-          url: "/logo-brand.png",
+          url: "/logo-brand-og.png",
           width: 1200,
           height: 630,
           alt: "Aletheia4Job - Offerte di Lavoro",

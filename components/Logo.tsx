@@ -8,9 +8,9 @@ type LogoProps = {
   textClassName?: string;
 };
 
-// Logo originale: 1105x716 → aspect ≈ 1.54:1
+// Logo APL: 850.09x311.28 → aspect ≈ 2.73:1
 function logoSize(height: number) {
-  return { width: Math.round(height * (1105 / 716)), height };
+  return { width: Math.round(height * (850.09 / 311.28)), height };
 }
 
 export default function Logo({ className, size = 28, showText = true, textClassName }: LogoProps) {
@@ -19,7 +19,7 @@ export default function Logo({ className, size = 28, showText = true, textClassN
     <div className={cn('flex items-center gap-3', className)}>
       <div className="relative shrink-0" style={{ width: dims.width, height: dims.height }}>
         <Image
-          src="/logo-brand.png"
+          src="/logo-aletheia.svg"
           alt="Aletheia Logo"
           fill
           className="object-contain object-left"

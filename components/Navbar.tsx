@@ -13,10 +13,10 @@ function Navbar({ role }: { role: MembershipRole }) {
         </div>
         <div className="relative shrink-0 flex items-center max-sm:h-12 max-sm:w-28 sm:h-16 sm:w-36 lg:h-20 lg:w-[200px]">
           <Image
-            src="/logo-brand.png"
+            src="/logo-aletheia.svg"
             alt="Aletheia"
             fill
-            className="object-contain object-left scale-[1.6] origin-left"
+            className="object-contain object-left"
             priority
             sizes="(max-width: 640px) 112px, (max-width: 1024px) 144px, 200px"
           />
