@@ -4,6 +4,7 @@ import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks 
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
+import Logo from '@/components/Logo';
 import { truncateAtWordBoundary } from '@/utils/text';
 
 const modeColor: Record<string, string> = {
@@ -172,7 +173,10 @@ export default async function CareerJobPage({ params }: { params: { slug: string
       {/* Top bar */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Logo size={28} showText={false} />
+            </Link>
             <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
               <ArrowLeft className="w-4 h-4" /> Tutte le posizioni
             </Link>
