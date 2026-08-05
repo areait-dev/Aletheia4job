@@ -59,7 +59,7 @@ export default async function CareersPage({
         </div>
         <div className="relative w-full max-w-5xl mx-auto px-4 py-16 text-center space-y-6">
           <div className="flex justify-center">
-            <Logo size={40} showText={false} />
+            <Logo size={72} showText={false} />
           </div>
           <div className="flex items-center justify-center gap-3">
             <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 uppercase tracking-wider">
@@ -212,6 +212,7 @@ export default async function CareersPage({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {/* Info */}
             <div className="space-y-3">
+              <Logo size={28} showText={false} />
               <h3 className="text-sm font-bold text-foreground">Aletheia4Job</h3>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
                 La piattaforma che connette talenti e aziende, semplificando la ricerca del lavoro e la selezione dei candidati.
