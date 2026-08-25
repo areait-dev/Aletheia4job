@@ -1,5 +1,6 @@
 import { inngest } from "@/inngest/client";
 import prisma from "@/utils/db";
+import { setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
 import { extractTextFromCV } from "@/lib/cvParser";
 
@@ -21,6 +22,11 @@ export const processCV = inngest.createFunction(
   async ({ event, step }) => {
     const { applicationId, candidateId, jobId, organizationId, filePath, mimeType, cvUrl } =
       event.data as CvProcessingPayload;
+
+    // organizationId è già stato risolto server-side (dal Job) prima dell'invio
+    // dell'evento, mai fornito dal client; nessuna sessione utente qui (job in
+    // background), quindi va impostato esplicitamente ad ogni invocazione.
+    setTenantContext({ organizationId, source: "system" });
 
     await step.run("mark-processing", async () => {
       await prisma.application.update({
@@ -232,6 +238,8 @@ export const processCandidateCV = inngest.createFunction(
   },
   async ({ event, step }) => {
     const { candidateId, organizationId, preserveRole } = event.data as CandidateProcessingPayload;
+
+    setTenantContext({ organizationId, source: "system" });
 
     const candidate = await step.run("fetch-candidate", async () => {
       return prisma.candidate.findFirst({

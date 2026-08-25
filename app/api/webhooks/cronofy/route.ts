@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/utils/db";
+import prisma, { dbUnscoped } from "@/utils/db";
+import { setTenantContext } from "@/utils/tenant-context";
 import {
   cronofyReadManagedEvents,
   getCronofyAccessTokenForUser,
@@ -39,8 +40,12 @@ export async function POST(req: NextRequest) {
     return new NextResponse("ok", { status: 200 });
   }
 
-  const acct = await prisma.cronofyAccount.findFirst({ where: { channelId } });
+  // Nessuna sessione utente qui (webhook esterno verificato via HMAC): l'account
+  // e la sua organizzazione vanno risolti da channelId con una lettura non scoped.
+  const acct = await dbUnscoped.cronofyAccount.findFirst({ where: { channelId } });
   if (!acct) return new NextResponse("ok", { status: 200 });
+
+  setTenantContext({ organizationId: acct.organizationId, userId: acct.userId, source: "webhook" });
 
   if (notification.type !== "change") return new NextResponse("ok", { status: 200 });
   const changesSince = notification.changes_since;

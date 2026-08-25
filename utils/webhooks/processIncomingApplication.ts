@@ -1,4 +1,5 @@
-import prisma from "@/utils/db";
+import prisma, { dbUnscoped } from "@/utils/db";
+import { setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
 import { inngest } from "@/inngest/client";
 
@@ -43,11 +44,15 @@ export type ProcessIncomingApplicationResult = {
 export async function processIncomingApplication(
   input: IncomingApplicationInput,
 ): Promise<ProcessIncomingApplicationResult> {
-  const job = await prisma.job.findUnique({ where: { id: input.jobId } });
+  // Nessuna sessione utente qui (webhook multiposting esterno): l'organizzazione
+  // va derivata dal Job target con una lettura non scoped.
+  const job = await dbUnscoped.job.findUnique({ where: { id: input.jobId } });
 
   if (!job) {
     throw new Error(`No job found for jobId: ${input.jobId}`);
   }
+
+  setTenantContext({ organizationId: job.organizationId, userId: job.userId, source: "webhook" });
 
   let cvUrl: string | null = input.cvUrl ?? null;
   let filePath: string | null = null;

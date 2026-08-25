@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/utils/db";
+import prisma, { dbUnscoped } from "@/utils/db";
 import { DocumentSignatureStatus } from "@prisma/client";
 import { isValidDropboxSignEventHash } from "@/utils/integrations/dropboxSign";
+import { setTenantContext } from "@/utils/tenant-context";
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +42,17 @@ export async function POST(req: NextRequest) {
   if (eventType === "signature_request_signed" || eventType === "signature_request_all_signed") {
     const signatureRequestId = payload?.signature_request?.signature_request_id;
     if (signatureRequestId) {
-      await prisma.document.updateMany({
-        where: { signatureRequestId },
-        data: { signatureStatus: DocumentSignatureStatus.SIGNED },
-      });
+      // Nessuna sessione utente qui (webhook esterno verificato via hash): risolve
+      // il documento e la sua organizzazione da un id esterno univoco prima di
+      // poter scopare l'update.
+      const doc = await dbUnscoped.document.findFirst({ where: { signatureRequestId } });
+      if (doc) {
+        setTenantContext({ organizationId: doc.organizationId, source: "webhook" });
+        await prisma.document.update({
+          where: { id: doc.id },
+          data: { signatureStatus: DocumentSignatureStatus.SIGNED },
+        });
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/utils/db';
+import { dbUnscoped } from '@/utils/db';
 import { buildIndeedXmlFeed } from '@/utils/aggregator';
 import { JobStatus, JobMode } from '@/utils/types';
 
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const jobs = await prisma.job.findMany({
+    const jobs = await dbUnscoped.job.findMany({
       where: {
         isActive: true,
         OR: [

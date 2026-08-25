@@ -1,5 +1,6 @@
 import { MembershipRole, AuditAction, Prisma } from "@prisma/client";
-import prisma from "./db";
+import prisma, { dbUnscoped } from "./db";
+import { setTenantContext } from "./tenant-context";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { 
@@ -37,8 +38,10 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   const userId = user.id;
   const email = user.email?.toLowerCase() ?? null;
 
-  // Cerchiamo la membership principale dell'utente
-  let membership = await prisma.membership.findFirst({
+  // Risoluzione/creazione della Membership: avviene PRIMA che un tenant context
+  // esista (è proprio getAuthContext a doverlo stabilire), quindi usa il client
+  // unscoped anziché quello scoped di default.
+  let membership = await dbUnscoped.membership.findFirst({
     where: { userId },
     orderBy: { createdAt: "desc" },
   });
@@ -48,7 +51,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     // lock Postgres per-utente, per evitare che richieste concorrenti (es. più
     // Server Components che chiamano getAuthContext in parallelo al primo
     // login) creino ciascuna una propria organizzazione duplicata.
-    membership = await prisma.$transaction(async (tx) => {
+    membership = await dbUnscoped.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
 
       const existing = await tx.membership.findFirst({
@@ -92,11 +95,23 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     });
   }
 
-  return {
+  const ctx: AuthContext = {
     userId,
     organizationId: membership.organizationId,
     role: membership.role,
   };
+
+  // Popola il tenant context per il resto della richiesta: copre tutti i
+  // chiamanti di getAuthContext (server actions via authenticateAndRedirect,
+  // route handler via resolveAuth, pagine via protectPageByRole).
+  setTenantContext({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    role: ctx.role,
+    source: "session",
+  });
+
+  return ctx;
 }
 
 export async function getCurrentUserPrimaryEmail() {

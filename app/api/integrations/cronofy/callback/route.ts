@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/utils/db";
+import { setTenantContext } from "@/utils/tenant-context";
 import { encryptString } from "@/utils/crypto";
 import { verifyState } from "@/utils/signedState";
 import {
@@ -30,6 +31,8 @@ export async function GET(req: NextRequest) {
     if (!payload?.userId || !payload?.organizationId) {
       return NextResponse.redirect(new URL("/admin?cronofy=invalid_state", req.url));
     }
+
+    setTenantContext({ organizationId: payload.organizationId, userId: payload.userId, source: "webhook" });
 
     const token = await exchangeCronofyCode(code);
     const expiresAt =

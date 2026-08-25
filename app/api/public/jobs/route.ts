@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/utils/db';
+import { dbUnscoped } from '@/utils/db';
 import { getPublicJobSlugMapAction } from '@/utils/actions/jobs';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       ? Math.min(Math.trunc(limitParam), MAX_LIMIT)
       : DEFAULT_LIMIT;
 
-    const jobs = await prisma.job.findMany({
+    const jobs = await dbUnscoped.job.findMany({
       where: {
         isActive: true,
         status: 'Aperto',

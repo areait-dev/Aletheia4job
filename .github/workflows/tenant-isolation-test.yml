@@ -1,0 +1,63 @@
+name: Tenant Isolation Test
+
+# Schedulato (non ad ogni push/PR come l'audit statico in test.yml): verifica
+# periodicamente, con dati reali su un DB dedicato, che l'estensione
+# tenant-scope di Prisma isoli davvero le organizzazioni tra loro. Utile
+# soprattutto quando in futuro ci saranno più organizzazioni/clienti reali sul
+# sistema, per accorgersi di eventuali regressioni anche senza che qualcuno
+# lo ricordi manualmente.
+on:
+  schedule:
+    - cron: '0 3 * * *' # ogni giorno alle 03:00 UTC
+  workflow_dispatch: {} # per lanciarlo manualmente da Actions quando serve
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    # Ceiling complessivo del job: lascia sempre budget per lo step di
+    # cleanup finale anche se lo step di test viene interrotto al suo timeout.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      # .env.test viene scritto qui a runtime dai secret del repo, MAI
+      # committato. TEST_DATABASE_URL/TEST_DIRECT_URL devono puntare al
+      # progetto Supabase di test dedicato (aletheia4job-test), mai a quello
+      # di produzione — vedi il README del secret in fondo a questo file.
+      - name: Scrivi .env.test dai secret
+        run: |
+          cat <<EOF > .env.test
+          DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}
+          DIRECT_URL=${{ secrets.TEST_DIRECT_URL }}
+          ALLOW_TENANT_INTEGRATION_TESTS=true
+          EOF
+
+      - name: Esegui il test di isolamento tenant
+        # Timeout più corto del job: se il test si blocca, viene interrotto
+        # qui lasciando comunque tempo allo step di cleanup successivo di
+        # partire entro il timeout-minutes del job.
+        timeout-minutes: 10
+        run: npm run test:integration
+
+      # Rete di sicurezza: gira SEMPRE, anche se lo step precedente fallisce,
+      # va in timeout o viene cancellato — rimuove qualunque organizzazione
+      # "[test] ..." residua rimasta sul DB di test, indipendentemente dal
+      # fatto che l'afterAll del test stesso sia riuscito a eseguire.
+      - name: Cleanup forzato di eventuali organizzazioni di test residue
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: npm run cleanup:test-orgs
+
+# ─────────────────────────────────────────────────────────────────────────
+# Secret richiesti in questo repository (Settings → Secrets and variables →
+# Actions), da creare una tantum puntando al progetto Supabase di TEST
+# (aletheia4job-test, project ref lyjasyfvaxzqpyijztpn), mai a produzione:
+#
+#   TEST_DATABASE_URL = stesso valore di DATABASE_URL in .env.test
+#   TEST_DIRECT_URL   = stesso valore di DIRECT_URL in .env.test
+# ─────────────────────────────────────────────────────────────────────────

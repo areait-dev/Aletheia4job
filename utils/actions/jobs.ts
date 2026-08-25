@@ -1,7 +1,8 @@
 "use server";
 
-import prisma from "@/utils/db";
-import { 
+import prisma, { dbUnscoped } from "@/utils/db";
+import { setTenantContext } from "@/utils/tenant-context";
+import {
   JobType, 
   CreateAndEditJobType,
   JobStatus,
@@ -139,7 +140,7 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
     if (params?.location) where.location = { contains: params.location, mode: "insensitive" };
     if (params?.mode) where.mode = params.mode;
 
-    return await prisma.job.findMany({
+    return await dbUnscoped.job.findMany({
       where,
       orderBy: { postedAt: "desc" },
       select: {
@@ -155,9 +156,11 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
   }
 }
 
+// Career page pubblica: aggrega job di TUTTE le organizzazioni per design (nessuna
+// sessione utente disponibile), quindi usa deliberatamente il client non scoped.
 export async function getPublicJobSlugMapAction() {
   try {
-    const jobs = await prisma.job.findMany({
+    const jobs = await dbUnscoped.job.findMany({
       where: { isActive: true, status: "Aperto", postToCareerPage: { not: false } },
       orderBy: [{ postedAt: "asc" }, { id: "asc" }],
       select: { id: true, title: true, location: true },
@@ -188,7 +191,7 @@ export async function resolvePublicJobSlugAction(slug: string): Promise<{ id: st
 
 export async function getPublicJobByIdAction(id: string) {
   try {
-    return await prisma.job.findFirst({
+    return await dbUnscoped.job.findFirst({
       where: { id, isActive: true, status: "Aperto", postToCareerPage: { not: false } },
       select: {
         id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
@@ -207,7 +210,10 @@ export async function applyToJobAction(values: {
   jobId: string; firstName: string; lastName: string; email: string; phone?: string; city: string; cvUrl?: string; source?: string; appliedLocation?: string;
 }) {
   try {
-    const job = await prisma.job.findUnique({
+    // Nessuna sessione utente qui (form pubblico di candidatura): l'organizzazione
+    // viene derivata dal Job target con una lettura non scoped, poi il tenant
+    // context viene popolato esplicitamente per la transazione che segue.
+    const job = await dbUnscoped.job.findUnique({
       where: { id: values.jobId },
       select: { organizationId: true, sector: true, title: true, userId: true, category: true }
     });
@@ -218,6 +224,8 @@ export async function applyToJobAction(values: {
 
     const { organizationId, userId: jobCreatorId } = job;
     const emailLower = values.email.toLowerCase();
+
+    setTenantContext({ organizationId, source: "system" });
 
     // Operazioni DB atomiche in transazione
     const result = await prisma.$transaction(async (tx) => {
@@ -332,7 +340,7 @@ export async function updateApplicationStatusAction(applicationId: string, statu
 }
 
 export async function getActiveJobsForFeed() {
-  return prisma.job.findMany({ where: { isActive: true }, orderBy: { postedAt: 'desc' } });
+  return dbUnscoped.job.findMany({ where: { isActive: true }, orderBy: { postedAt: 'desc' } });
 }
 
 export async function getJobStatsBySourceAction() {

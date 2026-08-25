@@ -1,0 +1,21 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # Solo l'audit statico (nessuna scrittura sul DB): verifica che nessun file
+      # bypassi l'estensione tenant-scope di Prisma. Il test di integrazione con
+      # dati seed reali (tests/integration/) resta escluso dalla CI di default:
+      # richiede un DATABASE_URL dedicato a un DB di test, non quello di sviluppo
+      # condiviso, per evitare di scrivere/cancellare dati reali su ogni push.
+      - run: npx vitest run tests/audit

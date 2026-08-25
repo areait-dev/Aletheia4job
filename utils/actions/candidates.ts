@@ -9,6 +9,7 @@ import {
 import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry, getCurrentUserDisplayName } from "../authz";
 import { authenticateAndRedirect } from "./shared";
+import { setTenantContext } from "../tenant-context";
 
 // Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
 // il proprietario destinatari sono fissati via env, perché la piattaforma è
@@ -24,6 +25,8 @@ export async function applySpontaneousApplicationAction(values: {
     console.error("PUBLIC_SPONTANEOUS_ORG_ID / PUBLIC_SPONTANEOUS_USER_ID non configurate.");
     return { ok: false, error: "Servizio momentaneamente non disponibile. Riprova più tardi." };
   }
+
+  setTenantContext({ organizationId, userId, source: "system" });
 
   try {
     const emailLower = values.email.toLowerCase();
