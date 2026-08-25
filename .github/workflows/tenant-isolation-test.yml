@@ -23,19 +23,28 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx prisma generate
 
       # .env.test viene scritto qui a runtime dai secret del repo, MAI
-      # committato. TEST_DATABASE_URL/TEST_DIRECT_URL devono puntare al
-      # progetto Supabase di test dedicato (aletheia4job-test), mai a quello
-      # di produzione — vedi il README del secret in fondo a questo file.
-      - name: Scrivi .env.test dai secret
+      # committato (lo richiede tests/integration/setup.ts). TEST_DATABASE_URL/
+      # TEST_DIRECT_URL devono puntare al progetto Supabase di test dedicato
+      # (aletheia4job-test), mai a quello di produzione — vedi il README del
+      # secret in fondo a questo file.
+      #
+      # Esporta anche DATABASE_URL/DIRECT_URL come env var del job (via
+      # $GITHUB_ENV) perché prisma.config.ts li legge già al caricamento
+      # della config (import "dotenv/config" carica solo .env, non .env.test),
+      # quindi anche il solo "prisma generate" fallirebbe altrimenti.
+      - name: Scrivi .env.test dai secret ed esporta le env var per la CLI Prisma
         run: |
           cat <<EOF > .env.test
           DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}
           DIRECT_URL=${{ secrets.TEST_DIRECT_URL }}
           ALLOW_TENANT_INTEGRATION_TESTS=true
           EOF
+          echo "DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}" >> "$GITHUB_ENV"
+          echo "DIRECT_URL=${{ secrets.TEST_DIRECT_URL }}" >> "$GITHUB_ENV"
+
+      - run: npx prisma generate
 
       - name: Esegui il test di isolamento tenant
         # Timeout più corto del job: se il test si blocca, viene interrotto
