@@ -18,11 +18,12 @@ jobs:
     # cleanup finale anche se lo step di test viene interrotto al suo timeout.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
       - run: npm ci
+      - run: npx prisma generate
 
       # .env.test viene scritto qui a runtime dai secret del repo, MAI
       # committato. TEST_DATABASE_URL/TEST_DIRECT_URL devono puntare al
