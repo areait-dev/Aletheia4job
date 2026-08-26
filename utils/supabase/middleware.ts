@@ -60,12 +60,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protect routes conditionally based on authentication
-  const isAuthRoute    = request.nextUrl.pathname.startsWith('/login')
+  const isAuthRoute    = request.nextUrl.pathname.startsWith('/login') ||
+                         request.nextUrl.pathname.startsWith('/aziende/registrati')
   const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
   const isCareersRoute = request.nextUrl.pathname.startsWith('/offerte-di-lavoro') ||
                          request.nextUrl.pathname.startsWith('/registrazione') ||
                          request.nextUrl.pathname.startsWith('/privacy-policy') ||
-                         request.nextUrl.pathname.startsWith('/cookie-policy')
+                         request.nextUrl.pathname.startsWith('/cookie-policy') ||
+                         request.nextUrl.pathname.startsWith('/aziende/termini') ||
+                         request.nextUrl.pathname.startsWith('/aziende/privacy-azienda')
   const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
                          request.nextUrl.pathname === '/sitemap.xml'
   const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||

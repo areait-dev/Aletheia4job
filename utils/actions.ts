@@ -3,6 +3,7 @@ export * from "./actions/shared";
 export * from "./actions/candidates";
 export * from "./actions/jobs";
 export * from "./actions/members";
+export * from "./actions/organizations";
 export * from "./actions/attendance";
 export * from "./actions/documents";
 export * from "./actions/ai";

@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import LinksDropdown from './LinksDropdown';
 import ThemeToggle from './ThemeToggle';
 import UserProfileDropdown from './UserProfileDropdown';
@@ -11,16 +10,10 @@ function Navbar({ role }: { role: MembershipRole }) {
         <div className='lg:hidden'>
           <LinksDropdown role={role} />
         </div>
-        <div className="relative shrink-0 flex items-center max-sm:h-12 max-sm:w-28 sm:h-16 sm:w-36 lg:h-20 lg:w-[200px]">
-          <Image
-            src="/logo-aletheia.svg"
-            alt="Aletheia"
-            fill
-            className="object-contain object-left"
-            priority
-            sizes="(max-width: 640px) 112px, (max-width: 1024px) 144px, 200px"
-          />
-        </div>
+        {/* Wordmark testuale: la dashboard ospita organizzazioni diverse, niente logo Aletheia APL specifico */}
+        <span className="text-lg sm:text-xl font-black tracking-tight text-foreground">
+          Aletheia<span className="text-primary">4Job</span>
+        </span>
       </div>
       <div className='flex items-center gap-3'>
         <ThemeToggle />

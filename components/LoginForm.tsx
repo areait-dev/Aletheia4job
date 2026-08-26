@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
+import { isCompanySignUpEnabled } from "@/utils/featureFlags";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -99,10 +100,12 @@ export function LoginForm() {
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          Non hai un account?{' '}
-          <span className="text-primary font-bold hover:underline cursor-pointer">Contatta l'amministratore</span>
-        </p>
+        {isCompanySignUpEnabled() && (
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            Non hai un account?{' '}
+            <a href="/aziende/registrati" className="text-primary font-bold hover:underline">Registra la tua azienda</a>
+          </p>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ export * from "./interviews";
 export * from "./jobs";
 export * from "./members";
 export * from "./onboarding";
+export * from "./organizations";
 export * from "./performance";
 export * from "./shared";
 export * from "./cronofy";

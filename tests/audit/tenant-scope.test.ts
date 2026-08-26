@@ -38,6 +38,9 @@ const DB_UNSCOPED_ALLOWLIST = new Set([
   path.join("app", "api", "webhooks", "dropbox-sign", "route.ts"),
   // Il modulo che definisce ed esporta dbUnscoped stesso.
   path.join("utils", "db.ts"),
+  // Signup aziendale: crea l'Organization e la prima Membership OWNER prima
+  // che un tenant context possa esistere (stesso motivo di utils/authz.ts).
+  path.join("utils", "actions", "organizations.ts"),
 ]);
 
 function walk(dir: string, out: string[] = []): string[] {
