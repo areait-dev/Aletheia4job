@@ -133,7 +133,7 @@ export default async function CareersPage({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {filtered.map((job, i) => (
-              <Reveal key={job.id} delay={(i % 6) * 60}>
+              <Reveal key={job.id} delay={(i % 6) * 60} immediate={i < 3}>
               <div
                 className="group bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (

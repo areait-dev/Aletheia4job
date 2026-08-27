@@ -9,6 +9,8 @@ interface RevealProps {
   /** Ritardo dell'animazione in ms, utile per effetti "a cascata" su liste. */
   delay?: number;
   as?: keyof JSX.IntrinsicElements;
+  /** Salta l'attesa dello scroll: visibile fin da subito (per il contenuto già sopra la piega, es. le prime card). */
+  immediate?: boolean;
   [key: string]: any;
 }
 
@@ -16,13 +18,13 @@ interface RevealProps {
 // entra in viewport, invece che tutto insieme al caricamento della pagina.
 // Usa IntersectionObserver + le utility di tailwindcss-animate già presenti
 // nel progetto (niente nuove dipendenze). Rispetta prefers-reduced-motion.
-export default function Reveal({ children, className, delay = 0, as: Tag = 'div', ...rest }: RevealProps) {
+export default function Reveal({ children, className, delay = 0, as: Tag = 'div', immediate = false, ...rest }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(immediate);
 
   useEffect(() => {
     const node = ref.current;
-    if (!node) return;
+    if (!node || immediate) return;
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setVisible(true);
