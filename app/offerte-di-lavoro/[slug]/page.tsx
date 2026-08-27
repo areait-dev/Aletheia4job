@@ -2,9 +2,12 @@ import { getPublicJobByIdAction, resolvePublicJobSlugAction } from '@/utils/acti
 import { notFound, redirect } from 'next/navigation';
 import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks, Linkedin, Instagram, Facebook, Send } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import JobApplicationForm from '@/components/JobApplicationForm';
 import Logo from '@/components/Logo';
+import Reveal from '@/components/Reveal';
+import ThemeToggle from '@/components/ThemeToggle';
 import { truncateAtWordBoundary } from '@/utils/text';
 
 const SOCIAL_LINKS = [
@@ -205,31 +208,37 @@ export default async function CareerJobPage({ params }: { params: { slug: string
       {/* Top bar */}
       <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Link href="/" className="shrink-0">
               <Logo size={28} showText={false} />
             </Link>
-            <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
-              <ArrowLeft className="w-4 h-4" /> Tutte le posizioni
+            <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-medium min-w-0">
+              <ArrowLeft className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline truncate">Tutte le posizioni</span>
             </Link>
           </div>
-              <a
-                href="#apply"
-                className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"
-              >
-            Candidati ora
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
+            <a
+              href="#apply"
+              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"
+            >
+              Candidati ora
+            </a>
+          </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
         {/* Immagine annuncio */}
         {job.imageUrl && (
-          <div className="w-full rounded-2xl sm:rounded-3xl bg-muted/40 overflow-hidden">
-            <img
+          <div className="relative w-full aspect-[16/9] rounded-2xl sm:rounded-3xl bg-muted/40 overflow-hidden">
+            <Image
               src={job.imageUrl}
               alt={job.title}
-              className="w-full h-auto"
+              fill
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-cover"
+              priority
             />
           </div>
         )}
@@ -254,9 +263,11 @@ export default async function CareerJobPage({ params }: { params: { slug: string
         <div className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             {job.companyLogoUrl && (
-              <img
+              <Image
                 src={job.companyLogoUrl}
                 alt={`Logo ${job.company}`}
+                width={64}
+                height={64}
                 className="w-16 h-16 rounded-2xl object-contain bg-white border border-border/50 shadow-lg shadow-primary/10 shrink-0"
               />
             )}
@@ -308,6 +319,7 @@ export default async function CareerJobPage({ params }: { params: { slug: string
 
         {/* Sedi disponibili — solo per annunci multi-sede */}
         {hasMultipleSites && (
+          <Reveal>
           <section className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-3">
             <div className="flex items-center gap-2">
               <MapPinned className="w-5 h-5 text-primary" />
@@ -330,9 +342,11 @@ export default async function CareerJobPage({ params }: { params: { slug: string
               </p>
             )}
           </section>
+          </Reveal>
         )}
 
     {/* Testo annuncio */}
+        <Reveal>
         <section className="glass rounded-3xl p-6 sm:p-8 space-y-7">
           {/* Introduzione */}
           <p className="text-sm sm:text-base leading-relaxed">
@@ -376,16 +390,17 @@ export default async function CareerJobPage({ params }: { params: { slug: string
           )}
 
         </section>
+        </Reveal>
 
         {/* Application Form anchor */}
-        <div id="apply" className="scroll-mt-24">
+        <Reveal as="div" id="apply" className="scroll-mt-24">
           <JobApplicationForm
             jobId={job.id}
             jobTitle={job.title}
             locationInputType={job.locationInputType}
             locationOptions={job.locationOptions}
           />
-        </div>
+        </Reveal>
       </div>
 
       {/* Footer minimale — la CTA "Candidati" resta l'elemento con più peso visivo */}

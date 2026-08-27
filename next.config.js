@@ -9,6 +9,14 @@ const nextConfig = {
     experimental: {
         serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
     },
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: '**.supabase.co',
+            },
+        ],
+    },
 }
 
 module.exports = nextConfig

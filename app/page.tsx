@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import SectorFilterDropdown from '@/components/SectorFilterDropdown';
 import Logo from '@/components/Logo';
+import Reveal from '@/components/Reveal';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -131,8 +132,9 @@ export default async function CareersPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {filtered.map(job => (
-              <div key={job.id}
+            {filtered.map((job, i) => (
+              <Reveal key={job.id} delay={(i % 6) * 60}>
+              <div
                 className="group bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (
                   <div className="w-full bg-muted/40">
@@ -201,6 +203,7 @@ export default async function CareersPage({
                 </div>
                 </div>
               </div>
+              </Reveal>
             ))}
           </div>
         )}

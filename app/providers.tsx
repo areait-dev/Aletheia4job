@@ -72,8 +72,8 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ThemeProvider
       attribute='class' // Theme stored in HTML class attribute (e.g., <html class="dark">)
-      defaultTheme='system' // Use system preference (light/dark) by default
-      enableSystem // Allow system theme detection
+      defaultTheme='light' // Il sito parte sempre in chiaro finché l'utente non sceglie esplicitamente un tema (nessun toggle UI ancora presente)
+      enableSystem // Tenuto attivo: abilita l'opzione "sistema" per un futuro toggle manuale, senza influire sul default finché nessuno la seleziona
       disableTransitionOnChange // Disable CSS transitions when theme changes (prevents flash)
     >
       {/* Toast notification system - shows success/error messages */}

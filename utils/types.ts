@@ -115,6 +115,62 @@ export const createAndEditCandidateSchema = z.object({
 
 export type CreateAndEditCandidateType = z.infer<typeof createAndEditCandidateSchema>;
 
+// Schema condiviso dai form pubblici di candidatura (JobApplicationForm e
+// SpontaneousApplicationForm) e allineato alle regole applicate lato server
+// in applyToJobAction / applySpontaneousApplicationAction, così client e
+// server validano gli stessi vincoli minimi.
+export const jobApplicationSchema = z.object({
+  firstName: z.string().trim().min(2, { message: 'Inserisci il tuo nome (almeno 2 caratteri).' }),
+  lastName: z.string().trim().min(2, { message: 'Inserisci il tuo cognome (almeno 2 caratteri).' }),
+  email: z.string().trim().email({ message: 'Inserisci un indirizzo email valido.' }),
+  phone: z.string().trim().optional().or(z.literal('')),
+  city: z.string().trim().min(2, { message: 'Inserisci la tua città.' }),
+  appliedLocation: z.string().trim().optional().or(z.literal('')),
+  cvUrl: z.string().min(1, { message: 'Carica il tuo CV per proseguire.' }),
+  source: z.string().optional(),
+  liability: z.literal(true, {
+    errorMap: () => ({ message: 'Devi accettare questa condizione per proseguire.' }),
+  }),
+  confidentiality: z.literal(true, {
+    errorMap: () => ({ message: 'Devi accettare questa condizione per proseguire.' }),
+  }),
+  privacy: z.literal(true, {
+    errorMap: () => ({ message: 'Devi accettare questa condizione per proseguire.' }),
+  }),
+});
+
+export type JobApplicationType = z.infer<typeof jobApplicationSchema>;
+
+// Per gli annunci multi-sede (locationInputType 'select' o 'free_text') il
+// campo appliedLocation diventa obbligatorio: il vincolo dipende dall'annuncio
+// quindi non può essere fisso nello schema base.
+export function buildJobApplicationSchema(requireAppliedLocation: boolean) {
+  return jobApplicationSchema.superRefine((data, ctx) => {
+    if (requireAppliedLocation && !data.appliedLocation?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Indica per quale sede ti candidi.',
+        path: ['appliedLocation'],
+      });
+    }
+  });
+}
+
+export const spontaneousApplicationSchema = z.object({
+  firstName: z.string().trim().min(2, { message: 'Inserisci il tuo nome (almeno 2 caratteri).' }),
+  lastName: z.string().trim().min(2, { message: 'Inserisci il tuo cognome (almeno 2 caratteri).' }),
+  email: z.string().trim().email({ message: 'Inserisci un indirizzo email valido.' }),
+  phone: z.string().trim().optional().or(z.literal('')),
+  city: z.string().trim().min(2, { message: 'Inserisci la tua città.' }),
+  sector: z.string().trim().min(2, { message: 'Indica il settore di riferimento.' }),
+  cvUrl: z.string().min(1, { message: 'Carica il tuo CV per proseguire.' }),
+  privacyAccepted: z.literal(true, {
+    errorMap: () => ({ message: 'Devi accettare il trattamento dei dati personali per inviare la candidatura.' }),
+  }),
+});
+
+export type SpontaneousApplicationType = z.infer<typeof spontaneousApplicationSchema>;
+
 export enum JobStatus {
   Aperto = 'Aperto',
   Chiuso = 'Chiuso',
