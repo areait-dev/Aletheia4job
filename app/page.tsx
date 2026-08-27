@@ -133,11 +133,11 @@ export default async function CareersPage({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {filtered.map((job, i) => (
-              <Reveal key={job.id} delay={(i % 6) * 60} immediate={i < 3}>
+              <Reveal key={job.id} delay={(i % 6) * 60} immediate={i < 3} className="h-full">
               <div
-                className="group bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                className="group h-full flex flex-col bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (
-                  <div className="w-full bg-muted/40">
+                  <div className="w-full bg-muted/40 shrink-0">
                     <img
                       src={job.imageUrl}
                       alt={job.title}
@@ -145,7 +145,7 @@ export default async function CareersPage({
                     />
                   </div>
                 )}
-                <div className="p-4 sm:p-5 space-y-4">
+                <div className="flex-1 flex flex-col p-4 sm:p-5 space-y-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -188,12 +188,12 @@ export default async function CareersPage({
                 </div>
 
                 {/* Description preview */}
-                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1">
                   {job.description}
                 </p>
 
                 {/* CTA */}
-                <div className="pt-2 border-t border-border/40">
+                <div className="mt-auto pt-2 border-t border-border/40">
                   <Link
                     href={`/offerte-di-lavoro/${slugById.get(job.id) ?? job.id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:gap-3 transition-all"
