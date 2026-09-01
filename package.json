@@ -15,7 +15,6 @@
     "prisma:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:inspect": "tsx scripts/db-inspect.ts",
-    "db:migrate-clerkid": "tsx scripts/db-migrate-clerkid.ts",
     "db:fix-status": "tsx scripts/maintenance/db-fix-status.ts",
     "db:fix-future-dates": "tsx scripts/maintenance/db-fix-future-dates.ts",
     "db:seed-test-user": "tsx scripts/seed-test-user-jobs.ts",
@@ -24,7 +23,6 @@
     "storage:fix-names": "tsx scripts/maintenance/storage-recover-fix-names.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.31.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

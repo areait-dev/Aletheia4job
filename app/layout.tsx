@@ -4,7 +4,6 @@
  * This is the root layout for the entire Next.js application.
  * It wraps all pages and provides:
  * - Global metadata (SEO, Open Graph, Twitter cards)
- * - Clerk authentication provider
  * - Global providers (React Query, Theme, Toast)
  * - Global styles and fonts
  *
