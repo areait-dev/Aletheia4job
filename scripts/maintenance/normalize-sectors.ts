@@ -1,7 +1,7 @@
 // script/normalize-sectors.ts
 // Script batch one-off: nessun tenant context (nessuna sessione utente), quindi
 // usa deliberatamente il client non scoped invece del default esteso.
-import { dbUnscoped as prisma } from "../utils/db";
+import { dbUnscoped as prisma } from "../../utils/db";
 
 async function normalizeSectors() {
   const sectors = await prisma.candidate.findMany({

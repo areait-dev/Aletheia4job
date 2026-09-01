@@ -20,7 +20,7 @@ import AnalyzeAIButton from './AnalyzeAIButton';
 // Pattern di email non realmente contattabili: sia quelle fittizie generate
 // dagli script di import quando non è stato possibile estrarre un indirizzo
 // reale dal CV (vedi scripts/import-cv-archive.ts e
-// scripts/storage-recover-orphans.ts, dominio "@non-estratto.local"), sia
+// scripts/maintenance/storage-recover-orphans.ts, dominio "@non-estratto.local"), sia
 // email di test/placeholder inserite dai candidati stessi tramite il form
 // della Career Page (es. "@test.it", "@testit", "@gmail.test", "@gmail.comc").
 const FAKE_EMAIL_PATTERNS = [

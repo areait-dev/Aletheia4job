@@ -42,6 +42,10 @@ next-env.d.ts
 .vscode
 .next
 
+# scratch / temporary working files
+/tmp/
+/scratch/
+
 # Documentation
 HETZNER_VPS_MIGRATION_GUIDE.md
 DROPDOWN_TEST_CREDENTIALS_DOCS.md
