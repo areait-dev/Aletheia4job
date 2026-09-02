@@ -41,6 +41,12 @@ const DB_UNSCOPED_ALLOWLIST = new Set([
   // Signup aziendale: crea l'Organization e la prima Membership OWNER prima
   // che un tenant context possa esistere (stesso motivo di utils/authz.ts).
   path.join("utils", "actions", "organizations.ts"),
+  // Tracking eventi funnel candidatura pubblico (job_view/apply_click/
+  // application_submitted/spontaneous_submitted): scritture da richieste
+  // pubbliche non autenticate, organizationId derivato esplicitamente dal
+  // Job target (o da PUBLIC_SPONTANEOUS_ORG_ID), nessun tenant context di
+  // sessione disponibile — stesso motivo di jobs.ts/candidates.ts sopra.
+  path.join("utils", "actions", "funnelEvents.ts"),
 ]);
 
 function walk(dir: string, out: string[] = []): string[] {

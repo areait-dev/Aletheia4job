@@ -37,6 +37,7 @@ model Organization {
   domains             OrganizationDomain[]
   reviews             Review[]
   reviewCycles        ReviewCycle[]
+  publicFunnelEvents  PublicFunnelEvent[]
 }
 
 model Membership {
@@ -270,10 +271,33 @@ model Job {
   broadbeanLastSyncedAt DateTime?
   // ------------------------------
 
-  applications      Application[]
-  organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  applications        Application[]
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  publicFunnelEvents  PublicFunnelEvent[]
 
   @@index([organizationId, userId])
+}
+
+// Eventi minimali del funnel di candidatura pubblico (visualizzazione annuncio,
+// click "Candidati", invio riuscito), aggregabili per organizzazione/annuncio.
+// Nessun dato che possa identificare il singolo visitatore (niente IP, user
+// agent, cookie/session id): solo organizationId/jobId/eventType/timestamp.
+// Scritto sempre via dbUnscoped con organizationId esplicito dal chiamante
+// (vedi utils/actions/funnelEvents.ts): NON è in TENANT_SCOPED_MODELS perché
+// questi eventi arrivano da richieste pubbliche non autenticate, senza un
+// tenant context di sessione da cui derivare l'organizationId.
+model PublicFunnelEvent {
+  id             String       @id @default(uuid())
+  organizationId String
+  jobId          String?
+  eventType      String       // "job_view" | "apply_click" | "application_submitted" | "spontaneous_submitted"
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  job            Job?         @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, eventType, createdAt])
+  @@index([jobId, eventType])
 }
 
 model Employee {
