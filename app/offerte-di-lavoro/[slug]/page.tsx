@@ -1,6 +1,6 @@
 import { getPublicJobByIdAction, resolvePublicJobSlugAction } from '@/utils/actions';
 import { notFound, redirect } from 'next/navigation';
-import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks, Linkedin, Instagram, Facebook, Send } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, ArrowLeft, Star, MapPinned, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -9,13 +9,7 @@ import Logo from '@/components/Logo';
 import Reveal from '@/components/Reveal';
 import ThemeToggle from '@/components/ThemeToggle';
 import { truncateAtWordBoundary } from '@/utils/text';
-
-const SOCIAL_LINKS = [
-  { label: 'LinkedIn', href: 'https://it.linkedin.com/company/al%C3%A9theia-srl', icon: Linkedin },
-  { label: 'Facebook', href: 'https://www.facebook.com/aletheiasrl.it/?locale=it_IT', icon: Facebook },
-  { label: 'Instagram', href: 'https://www.instagram.com/aletheiasrl/', icon: Instagram },
-  { label: 'Telegram', href: 'https://t.me/alethiaapl', icon: Send },
-];
+import { SOCIAL_LINKS } from '@/utils/socialLinks';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',

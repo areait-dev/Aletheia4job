@@ -3,7 +3,8 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getPublicJobsAction, getPublicJobSlugMapAction } from '@/utils/actions';
-import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight, Linkedin, Instagram, Facebook } from 'lucide-react';
+import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight } from 'lucide-react';
+import { SOCIAL_LINKS } from '@/utils/socialLinks';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import SectorFilterDropdown from '@/components/SectorFilterDropdown';
@@ -221,15 +222,18 @@ export default async function CareersPage({
                 La piattaforma che connette talenti e aziende, semplificando la ricerca del lavoro e la selezione dei candidati.
               </p>
               <div className="flex items-center gap-3 pt-1">
-                <a href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Instagram className="w-4 h-4" />
-                </a>
-                <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Facebook className="w-4 h-4" />
-                </a>
+                {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
               </div>
             </div>
 
@@ -254,7 +258,9 @@ export default async function CareersPage({
                 <li>
                   <a href="mailto:supporto@aletheia4job.it" className="hover:text-primary transition-colors">supporto@aletheia4job.it</a>
                 </li>
-                <li>P.IVA 00000000000</li>
+                <li>Alètheia S.r.l.</li>
+                <li>Via del Carrubo snc, 97019 Vittoria (RG)</li>
+                <li>P.IVA 01524530894</li>
                 <li><Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/cookie-policy" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
                 <li>
