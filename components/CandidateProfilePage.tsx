@@ -212,7 +212,6 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
           {(() => {
             const failedApp = candidate.applications?.find(a => a.parsingStatus === "FAILED");
             if (!failedApp) return null;
-            const [retrying, startRetry] = useTransition();
             return (
               <div className="mb-6 p-5 rounded-2xl border-2 border-red-300 bg-red-50/80 dark:bg-red-950/20 dark:border-red-800">
                 <div className="flex items-start gap-3">
@@ -226,13 +225,13 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
                       variant="outline"
                       size="sm"
                       className="gap-2 rounded-xl border-red-300 text-red-600 hover:bg-red-100 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
-                      disabled={retrying}
-                      onClick={() => startRetry(async () => {
+                      disabled={isPending}
+                      onClick={() => startTransition(async () => {
                         const res = await retryCvParsingAction(failedApp.id);
                         if (res.ok) window.location.reload();
                       })}
                     >
-                      {retrying ? (
+                      {isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <RotateCcw className="w-4 h-4" />

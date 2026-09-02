@@ -103,7 +103,7 @@ export default function DocumentsClient({ documents, employees }: DocumentsClien
       {/* List */}
       <div className="lg:col-span-2 space-y-4">
         {documents.length === 0 ? (
-          <div className="glass rounded-3xl p-12 text-center text-muted-foreground italic">Nessun documento presente nell'archivio.</div>
+          <div className="glass rounded-3xl p-12 text-center text-muted-foreground italic">Nessun documento presente nell&apos;archivio.</div>
         ) : (
           documents.map((doc) => (
             <div key={doc.id} className="glass rounded-2xl p-5 hover:border-primary/20 transition-all duration-200 group">

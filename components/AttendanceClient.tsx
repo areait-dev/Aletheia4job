@@ -282,7 +282,7 @@ export default function AttendanceClient({ employees, initialAbsences, initialAt
                           <span>•</span>
                           <span>Dal {new Date(absence.startDate).toLocaleDateString()} al {new Date(absence.endDate).toLocaleDateString()}</span>
                         </div>
-                        {absence.notes && <p className="text-xs text-muted-foreground mt-2 italic">"{absence.notes}"</p>}
+                        {absence.notes && <p className="text-xs text-muted-foreground mt-2 italic">&quot;{absence.notes}&quot;</p>}
                       </div>
                     </div>
 

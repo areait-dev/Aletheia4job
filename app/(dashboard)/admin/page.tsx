@@ -223,7 +223,7 @@ async function AdminPage({
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2 italic">
-              Configura questo URL nei tuoi account recruiter su Indeed, Jooble o LinkedIn per l'importazione automatica.
+              Configura questo URL nei tuoi account recruiter su Indeed, Jooble o LinkedIn per l&apos;importazione automatica.
             </p>
           </div>
           

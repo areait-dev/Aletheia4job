@@ -27,7 +27,7 @@ async function AllCandidatesPage({ searchParams }: { searchParams: GetAllCandida
             Gestione Candidati & AI
           </h1>
           <p className="text-muted-foreground font-medium">
-            Visione unificata dell'ecosistema talenti.
+            Visione unificata dell&apos;ecosistema talenti.
           </p>
         </div>
 
