@@ -1,3 +1,5 @@
+import { extractTextFromCV } from '@/lib/cvParser';
+
 export async function extractTextFromUrl(url: string): Promise<{ text: string; success: boolean; error?: string }> {
   try {
     const response = await fetch(url);
@@ -12,29 +14,18 @@ export async function extractTextFromUrl(url: string): Promise<{ text: string; s
     }
 
     const extension = url.split('.').pop()?.toLowerCase() || '';
+    const mimeByExtension: Record<string, string> = {
+      pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      doc: 'application/msword',
+    };
 
-    if (extension === 'pdf') {
-      try {
-        const { PDFParse } = await import('pdf-parse');
-        const parser = new PDFParse({ data: buffer });
-        const result = await parser.getText();
-        await parser.destroy();
-        return { text: result.text, success: true };
-      } catch (e) {
-        console.error('[extractTextFromUrl] pdf-parse error:', e);
-        return { text: '', success: false, error: e instanceof Error ? e.message : 'PDF non leggibile' };
-      }
-    } else if (extension === 'docx' || extension === 'doc') {
-      try {
-        const mammoth = await import('mammoth');
-        const { value } = await mammoth.extractRawText({ buffer });
-        return { text: value || '', success: true };
-      } catch {
-        return { text: '', success: false, error: 'Documento Word non leggibile.' };
-      }
+    try {
+      const text = await extractTextFromCV(buffer, mimeByExtension[extension]);
+      return { text, success: true };
+    } catch (e) {
+      return { text: '', success: false, error: e instanceof Error ? e.message : 'File non leggibile.' };
     }
-
-    return { text: '', success: false, error: 'Formato file non supportato.' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Errore sconosciuto';
     return { text: '', success: false, error: message };
