@@ -11,6 +11,7 @@ import { canWrite, createAuditLogEntry, getCurrentUserDisplayName } from "../aut
 import { authenticateAndRedirect } from "./shared";
 import { setTenantContext } from "../tenant-context";
 import { logger } from "../logger";
+import { checkRateLimit, getClientIp } from "../rate-limiter";
 
 // Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
 // il proprietario destinatari sono fissati via env, perché la piattaforma è
@@ -19,6 +20,13 @@ export async function applySpontaneousApplicationAction(values: {
   firstName: string; lastName: string; email: string; phone?: string; city: string;
   sector: string; cvUrl?: string; source?: string;
 }) {
+  const clientIp = getClientIp();
+  const rateLimit = checkRateLimit(`spontaneous-application:${clientIp}`, 10, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    logger.warn("Rate limit superato su applySpontaneousApplicationAction", { clientIp });
+    return { ok: false, error: "Troppe richieste. Riprova tra qualche minuto." };
+  }
+
   const organizationId = process.env.PUBLIC_SPONTANEOUS_ORG_ID;
   const userId = process.env.PUBLIC_SPONTANEOUS_USER_ID;
 

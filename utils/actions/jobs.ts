@@ -14,6 +14,7 @@ import { authenticateAndRedirect } from "./shared";
 import { inngest } from "@/inngest/client";
 import { buildJobSlugMap, extractJobIdFromSlug } from "@/utils/jobSlug";
 import { logger } from "../logger";
+import { checkRateLimit, getClientIp } from "../rate-limiter";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -218,6 +219,13 @@ export async function getPublicJobByIdAction(id: string) {
 export async function applyToJobAction(values: {
   jobId: string; firstName: string; lastName: string; email: string; phone?: string; city: string; cvUrl?: string; source?: string; appliedLocation?: string;
 }) {
+  const clientIp = getClientIp();
+  const rateLimit = checkRateLimit(`apply-to-job:${clientIp}`, 10, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    logger.warn("Rate limit superato su applyToJobAction", { clientIp, jobId: values.jobId });
+    return { ok: false, error: "Troppe richieste. Riprova tra qualche minuto." };
+  }
+
   try {
     // Nessuna sessione utente qui (form pubblico di candidatura): l'organizzazione
     // viene derivata dal Job target con una lettura non scoped, poi il tenant
