@@ -10,6 +10,7 @@ import { AuditAction, Prisma } from "@prisma/client";
 import { canWrite, createAuditLogEntry, getCurrentUserDisplayName } from "../authz";
 import { authenticateAndRedirect } from "./shared";
 import { setTenantContext } from "../tenant-context";
+import { logger } from "../logger";
 
 // Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
 // il proprietario destinatari sono fissati via env, perché la piattaforma è
@@ -22,7 +23,7 @@ export async function applySpontaneousApplicationAction(values: {
   const userId = process.env.PUBLIC_SPONTANEOUS_USER_ID;
 
   if (!organizationId || !userId) {
-    console.error("PUBLIC_SPONTANEOUS_ORG_ID / PUBLIC_SPONTANEOUS_USER_ID non configurate.");
+    logger.error("PUBLIC_SPONTANEOUS_ORG_ID / PUBLIC_SPONTANEOUS_USER_ID non configurate.");
     return { ok: false, error: "Servizio momentaneamente non disponibile. Riprova più tardi." };
   }
 
@@ -70,7 +71,7 @@ export async function applySpontaneousApplicationAction(values: {
 
     return { ok: true };
   } catch (error) {
-    console.error("Errore candidatura spontanea:", error);
+    logger.error("Errore candidatura spontanea", error);
     return { ok: false, error: "Si è verificato un errore durante l'invio. Riprova." };
   }
 }
@@ -134,14 +135,14 @@ export async function getAllCandidatesAction(params: GetAllCandidatesActionTypes
       prisma.candidate.count({ where: whereClause }),
     ]);
 
-    return { 
-      candidates, 
-      count, 
-      page: Number(page), 
-      totalPages: Math.ceil(count / limit) 
+    return {
+      candidates,
+      count,
+      page: Number(page),
+      totalPages: Math.ceil(count / limit)
     };
   } catch (error) {
-    console.error("Errore Database:", error);
+    logger.error("Errore Database in getAllCandidatesAction", error);
     return { candidates: [], count: 0, page: 1, totalPages: 0 };
   }
 }
@@ -156,8 +157,9 @@ export async function getSectorsAction() {
       orderBy: { sector: "asc" },
     });
     return sectors.map((s) => ({ sector: s.sector, count: s._count.sector }));
-  } catch (error) { 
-    return []; 
+  } catch (error) {
+    logger.error("Errore recupero settori candidati", error, { organizationId });
+    return [];
   }
 }
 
@@ -177,7 +179,7 @@ export async function getSingleCandidateAction(id: string): Promise<CandidateTyp
     });
     return candidate as any;
   } catch (error) {
-    console.error("Errore nel recupero del candidato:", error);
+    logger.error("Errore nel recupero del candidato", error, { candidateId: id });
     return null;
   }
 }
@@ -186,23 +188,26 @@ export async function createCandidateAction(values: CreateAndEditCandidateType):
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
   try {
-    const candidate = await prisma.candidate.create({
-      data: {
-        ...values,
+    const candidate = await prisma.$transaction(async (tx) => {
+      const created = await tx.candidate.create({
+        data: {
+          ...values,
+          userId,
+          organizationId,
+        },
+      });
+      await createAuditLogEntry({
         userId,
         organizationId,
-      },
-    });
-    await createAuditLogEntry({
-      userId,
-      organizationId,
-      action: AuditAction.CREATE,
-      entity: "candidate",
-      entityId: candidate.id,
+        action: AuditAction.CREATE,
+        entity: "candidate",
+        entityId: created.id,
+      }, tx);
+      return created;
     });
     return candidate;
   } catch (error) {
-    console.error("Errore nella creazione del candidato:", error);
+    logger.error("Errore nella creazione del candidato", error, { organizationId });
     return null;
   }
 }
@@ -215,6 +220,7 @@ export async function checkEmailExistsAction(email: string): Promise<boolean> {
     });
     return !!existingCandidate;
   } catch (error) {
+    logger.error("Errore verifica esistenza email candidato", error, { organizationId });
     return false;
   }
 }
@@ -241,6 +247,7 @@ export async function getCandidateStatsAction() {
       sectorStats: sectorStats.map(s => ({ sector: s.sector, count: s._count.sector })),
     };
   } catch (error) {
+    logger.error("Errore recupero statistiche candidati", error, { organizationId });
     return { totalCandidates: 0, statusStats: [], sectorStats: [] };
   }
 }
@@ -249,24 +256,27 @@ export async function updateCandidateStatusAction(candidateId: string, status: s
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
   try {
-    await prisma.candidate.updateMany({
-      where: { id: candidateId, organizationId },
-      data: { status, updatedAt: new Date() },
-    });
-    const updated = await prisma.candidate.findFirst({
-      where: { id: candidateId, organizationId },
-    });
-    if (!updated) return null;
-    await createAuditLogEntry({
-      userId,
-      organizationId,
-      action: AuditAction.STATUS_CHANGE,
-      entity: "candidate",
-      entityId: candidateId,
-      metadata: { status },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.candidate.updateMany({
+        where: { id: candidateId, organizationId },
+        data: { status, updatedAt: new Date() },
+      });
+      if (result.count === 0) return null;
+      const current = await tx.candidate.findFirst({ where: { id: candidateId, organizationId } });
+      if (!current) return null;
+      await createAuditLogEntry({
+        userId,
+        organizationId,
+        action: AuditAction.STATUS_CHANGE,
+        entity: "candidate",
+        entityId: candidateId,
+        metadata: { status },
+      }, tx);
+      return current;
     });
     return updated;
   } catch (error) {
+    logger.error("Errore aggiornamento status candidato", error, { candidateId, status });
     return null;
   }
 }
@@ -275,20 +285,25 @@ export async function updateCandidateAction(candidateId: string, values: Partial
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
   try {
-    await prisma.candidate.updateMany({
-      where: { id: candidateId, organizationId },
-      data: values,
-    });
-    const updated = await prisma.candidate.findFirst({ where: { id: candidateId, organizationId } });
-    if (!updated) return null;
-    await createAuditLogEntry({
-      userId, organizationId,
-      action: AuditAction.UPDATE,
-      entity: "candidate",
-      entityId: candidateId,
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.candidate.updateMany({
+        where: { id: candidateId, organizationId },
+        data: values,
+      });
+      if (result.count === 0) return null;
+      const current = await tx.candidate.findFirst({ where: { id: candidateId, organizationId } });
+      if (!current) return null;
+      await createAuditLogEntry({
+        userId, organizationId,
+        action: AuditAction.UPDATE,
+        entity: "candidate",
+        entityId: candidateId,
+      }, tx);
+      return current;
     });
     return updated;
   } catch (error) {
+    logger.error("Errore aggiornamento candidato", error, { candidateId });
     return null;
   }
 }
@@ -321,6 +336,7 @@ export async function getChartsDataAction() {
       })),
     };
   } catch (error) {
+    logger.error("Errore recupero dati grafici candidati", error, { organizationId });
     return { monthlyData: [], statusData: [] };
   }
 }
@@ -329,14 +345,17 @@ export async function deleteCandidateAction(candidateId: string): Promise<boolea
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return false;
   try {
-    const result = await prisma.candidate.deleteMany({
-      where: { id: candidateId, organizationId },
+    await prisma.$transaction(async (tx) => {
+      const result = await tx.candidate.deleteMany({
+        where: { id: candidateId, organizationId },
+      });
+      if (result.count > 0) {
+        await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "candidate", entityId: candidateId }, tx);
+      }
     });
-    if (result.count > 0) {
-      await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "candidate", entityId: candidateId });
-    }
     return true;
   } catch (error) {
+    logger.error("Errore eliminazione candidato", error, { candidateId });
     return false;
   }
 }
@@ -357,19 +376,27 @@ export async function createCandidateNoteAction(values: {
 }) {
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return { ok: false, error: "Non autorizzato" };
-  const authorName = await getCurrentUserDisplayName();
-  const note = await prisma.candidateNote.create({
-    data: {
-      organizationId,
-      candidateId: values.candidateId,
-      authorId: userId,
-      authorName,
-      type: values.type as any,
-      content: values.content.trim(),
-    },
-  });
-  await createAuditLogEntry({ userId, organizationId, action: AuditAction.CREATE, entity: "candidate_note", entityId: note.id });
-  return { ok: true, note };
+  try {
+    const authorName = await getCurrentUserDisplayName();
+    const note = await prisma.$transaction(async (tx) => {
+      const created = await tx.candidateNote.create({
+        data: {
+          organizationId,
+          candidateId: values.candidateId,
+          authorId: userId,
+          authorName,
+          type: values.type as any,
+          content: values.content.trim(),
+        },
+      });
+      await createAuditLogEntry({ userId, organizationId, action: AuditAction.CREATE, entity: "candidate_note", entityId: created.id }, tx);
+      return created;
+    });
+    return { ok: true, note };
+  } catch (error) {
+    logger.error("Errore creazione nota candidato", error, { candidateId: values.candidateId });
+    return { ok: false, error: "Impossibile salvare la nota" };
+  }
 }
 
 export async function deleteCandidateNoteAction(noteId: string) {

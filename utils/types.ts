@@ -1,5 +1,12 @@
 import * as z from 'zod';
 
+// Tipo discriminato condiviso per il risultato delle Server Action che
+// necessitano di un canale d'errore strutturato (codice + messaggio) invece
+// di ritornare null/false/[] su fallimento, perdendo il motivo dell'errore.
+export type Result<T, E = { code: string; message: string }> =
+  | { ok: true; data: T }
+  | { ok: false; error: E };
+
 // Dimensione pagina condivisa tra il prefetch server-side (jobs/page.tsx) e
 // la query client-side (ArchivioManager.tsx): DEVONO combaciare, altrimenti
 // React Query idrata i risultati del server (limit più basso) sotto la

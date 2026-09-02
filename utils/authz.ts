@@ -138,15 +138,24 @@ export async function getCurrentUserDisplayName() {
 
 // ─── AUDIT ────────────────────────────────────────────────────────────────
 
-export async function createAuditLogEntry(params: {
-  userId: string;
-  organizationId: string;
-  action: AuditAction;
-  entity: string;
-  entityId?: string;
-  metadata?: Prisma.InputJsonValue;
-}) {
-  await prisma.auditLog.create({
+export async function createAuditLogEntry(
+  params: {
+    userId: string;
+    organizationId: string;
+    action: AuditAction;
+    entity: string;
+    entityId?: string;
+    metadata?: Prisma.InputJsonValue;
+  },
+  // Client di transazione opzionale: quando la scrittura dell'audit log deve
+  // essere atomica con la mutazione principale (es. create/update/delete di
+  // candidate/job), il chiamante passa il `tx` della sua prisma.$transaction.
+  // Tipizzato sul parametro reale della callback di `prisma.$transaction`
+  // (client scoped + estensione tenant-scope), non sul `Prisma.TransactionClient`
+  // "nudo" generato da Prisma, con cui non è strutturalmente compatibile.
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0] = prisma
+) {
+  await tx.auditLog.create({
     data: params,
   });
 }

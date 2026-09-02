@@ -13,6 +13,7 @@ import { canWrite, createAuditLogEntry } from "../authz";
 import { authenticateAndRedirect } from "./shared";
 import { inngest } from "@/inngest/client";
 import { buildJobSlugMap, extractJobIdFromSlug } from "@/utils/jobSlug";
+import { logger } from "../logger";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -26,10 +27,10 @@ async function ensureJobFolder(jobId: string) {
       .from('cvs')
       .upload(`${jobId}/.keep`, new Uint8Array(0), { upsert: true, contentType: 'text/plain' });
     if (error && !error.message.includes('Duplicate')) {
-      console.warn('[ensureJobFolder] Errore creazione cartella:', error.message);
+      logger.warn('[ensureJobFolder] Errore creazione cartella', { message: error.message });
     }
   } catch (e) {
-    console.warn('[ensureJobFolder] Fallito:', e);
+    logger.warn('[ensureJobFolder] Fallito', { error: e });
   }
 }
 
@@ -45,14 +46,17 @@ export async function createJobAction(values: CreateAndEditJobType): Promise<Job
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
   try {
-    const job = await prisma.job.create({
-      data: {
-        ...values,
-        userId,
-        organizationId,
-      },
+    const job = await prisma.$transaction(async (tx) => {
+      const created = await tx.job.create({
+        data: {
+          ...values,
+          userId,
+          organizationId,
+        },
+      });
+      await createAuditLogEntry({ userId, organizationId, action: AuditAction.CREATE, entity: "job", entityId: created.id }, tx);
+      return created;
     });
-    await createAuditLogEntry({ userId, organizationId, action: AuditAction.CREATE, entity: "job", entityId: job.id });
     ensureJobFolder(job.id);
     return {
       ...job,
@@ -60,7 +64,7 @@ export async function createJobAction(values: CreateAndEditJobType): Promise<Job
       mode: job.mode as JobMode,
     };
   } catch (error) {
-    console.error("Errore creazione job:", error);
+    logger.error("Errore creazione job", error, { organizationId });
     return null;
   }
 }
@@ -73,9 +77,9 @@ export async function getAllJobsAction() {
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { applications: true } } }
     });
-  } catch (error) { 
-    console.error("Errore fetch jobs:", error);
-    return []; 
+  } catch (error) {
+    logger.error("Errore fetch jobs", error, { organizationId });
+    return [];
   }
 }
 
@@ -91,9 +95,9 @@ export async function getSingleJobAction(id: string) {
         }
       }
     });
-  } catch (error) { 
-    console.error("Errore fetch singolo job:", error);
-    return null; 
+  } catch (error) {
+    logger.error("Errore fetch singolo job", error, { jobId: id });
+    return null;
   }
 }
 
@@ -101,12 +105,15 @@ export async function updateJobAction(jobId: string, values: Partial<CreateAndEd
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
   try {
-    await prisma.job.updateMany({
-      where: { id: jobId, organizationId },
-      data: values,
+    const updatedJob = await prisma.$transaction(async (tx) => {
+      const result = await tx.job.updateMany({
+        where: { id: jobId, organizationId },
+        data: values,
+      });
+      if (result.count === 0) return null;
+      await createAuditLogEntry({ userId, organizationId, action: AuditAction.UPDATE, entity: "job", entityId: jobId }, tx);
+      return tx.job.findFirst({ where: { id: jobId, organizationId } });
     });
-    await createAuditLogEntry({ userId, organizationId, action: AuditAction.UPDATE, entity: "job", entityId: jobId });
-    const updatedJob = await prisma.job.findFirst({ where: { id: jobId, organizationId } });
     if (!updatedJob) return null;
     if (updatedJob.status === "Aperto") ensureJobFolder(jobId);
     return {
@@ -114,9 +121,9 @@ export async function updateJobAction(jobId: string, values: Partial<CreateAndEd
       status: updatedJob.status as JobStatus,
       mode: updatedJob.mode as JobMode,
     };
-  } catch (error) { 
-    console.error("Errore update job:", error);
-    return null; 
+  } catch (error) {
+    logger.error("Errore update job", error, { jobId });
+    return null;
   }
 }
 
@@ -124,12 +131,14 @@ export async function deleteJobAction(id: string): Promise<boolean> {
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return false;
   try {
-    await prisma.job.delete({ where: { id, organizationId } });
-    await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "job", entityId: id });
+    await prisma.$transaction(async (tx) => {
+      await tx.job.delete({ where: { id, organizationId } });
+      await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "job", entityId: id }, tx);
+    });
     return true;
-  } catch (error) { 
-    console.error("Errore delete job:", error);
-    return false; 
+  } catch (error) {
+    logger.error("Errore delete job", error, { jobId: id });
+    return false;
   }
 }
 
@@ -151,7 +160,7 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
       },
     });
   } catch (error) {
-    console.error("Errore fetch public jobs:", error);
+    logger.error("Errore fetch public jobs", error);
     return [];
   }
 }
@@ -167,7 +176,7 @@ export async function getPublicJobSlugMapAction() {
     });
     return buildJobSlugMap(jobs);
   } catch (error) {
-    console.error("Errore generazione slug annunci:", error);
+    logger.error("Errore generazione slug annunci", error);
     return [];
   }
 }
@@ -201,7 +210,7 @@ export async function getPublicJobByIdAction(id: string) {
       },
     });
   } catch (error) {
-    console.error("Errore fetch public job by id:", error);
+    logger.error("Errore fetch public job by id", error, { jobId: id });
     return null;
   }
 }
@@ -304,7 +313,7 @@ export async function applyToJobAction(values: {
           },
         });
       } catch (e) {
-        console.error("[applyToJobAction] Errore invio a Inngest:", e);
+        logger.error("[applyToJobAction] Errore invio a Inngest", e);
       }
     }
 
@@ -313,7 +322,7 @@ export async function applyToJobAction(values: {
     if (error instanceof Error && error.message === "DUPLICATE_APPLICATION") {
       return { ok: false, error: "Hai già inviato una candidatura per questa posizione." };
     }
-    console.error("[applyToJobAction] Errore critico durante l'invio:", error);
+    logger.error("[applyToJobAction] Errore critico durante l'invio", error);
     const errorMessage = error instanceof Error ? error.message : "Errore interno del server";
     return { ok: false, error: `Impossibile completare l'invio: ${errorMessage}` };
   }
@@ -323,19 +332,22 @@ export async function updateApplicationStatusAction(applicationId: string, statu
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
   try {
-    const application = await prisma.application.update({
-      where: { id: applicationId, organizationId },
-      data: { status },
-      include: { candidate: { select: { firstName: true, lastName: true } } }
-    });
-    await createAuditLogEntry({
-      userId, organizationId, action: AuditAction.UPDATE, entity: "application", entityId: applicationId,
-      metadata: { status, candidate: `${application.candidate.firstName} ${application.candidate.lastName}` }
+    const application = await prisma.$transaction(async (tx) => {
+      const updated = await tx.application.update({
+        where: { id: applicationId, organizationId },
+        data: { status },
+        include: { candidate: { select: { firstName: true, lastName: true } } }
+      });
+      await createAuditLogEntry({
+        userId, organizationId, action: AuditAction.UPDATE, entity: "application", entityId: applicationId,
+        metadata: { status, candidate: `${updated.candidate.firstName} ${updated.candidate.lastName}` }
+      }, tx);
+      return updated;
     });
     return application;
-  } catch (error) { 
-    console.error("Errore update application:", error);
-    return null; 
+  } catch (error) {
+    logger.error("Errore update application", error, { applicationId });
+    return null;
   }
 }
 
@@ -349,7 +361,7 @@ export async function getJobStatsBySourceAction() {
     const sourceStats = await prisma.job.groupBy({ where: { organizationId }, by: ['utmSource'], _count: { utmSource: true }, orderBy: { _count: { utmSource: 'desc' } } });
     return sourceStats.map((item) => ({ source: item.utmSource || 'direct', count: item._count.utmSource }));
   } catch (error) { 
-    console.error("Errore stats:", error);
+    logger.error("Errore stats job", error, { organizationId });
     return []; 
   }
 }
@@ -425,7 +437,7 @@ export async function generateJobDescriptionAction({
     return JSON.parse(content);
 
   } catch (error) {
-    console.error("Errore generazione AI (Groq):", error);
+    logger.error("Errore generazione AI (Groq)", error);
     throw new Error("Impossibile generare la Job Description. Riprova più tardi.");
   }
 }
