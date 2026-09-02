@@ -6,6 +6,7 @@ import { getPublicJobsAction, getPublicJobSlugMapAction } from '@/utils/actions'
 import { MapPin, Briefcase, Clock, Euro, Wifi, Search, ArrowRight } from 'lucide-react';
 import { SOCIAL_LINKS } from '@/utils/socialLinks';
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import SectorFilterDropdown from '@/components/SectorFilterDropdown';
 import Logo from '@/components/Logo';
@@ -138,11 +139,13 @@ export default async function CareersPage({
               <div
                 className="group h-full flex flex-col bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (
-                  <div className="w-full bg-muted/40 shrink-0">
-                    <img
+                  <div className="relative w-full aspect-[16/9] bg-muted/40 shrink-0">
+                    <Image
                       src={job.imageUrl}
                       alt={job.title}
-                      className="w-full h-auto"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover"
                     />
                   </div>
                 )}
@@ -151,9 +154,11 @@ export default async function CareersPage({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     {job.companyLogoUrl && (
-                      <img
+                      <Image
                         src={job.companyLogoUrl}
                         alt={`Logo ${job.company}`}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-xl object-contain bg-white border border-border/50 shrink-0"
                       />
                     )}
