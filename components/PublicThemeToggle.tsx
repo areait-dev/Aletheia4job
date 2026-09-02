@@ -2,25 +2,20 @@
 
 import { usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import { isDashboardRoute } from '@/utils/publicRouteSegments';
 
-// Route (segmenti di primo livello) della dashboard autenticata: ha già un
-// proprio ThemeToggle in components/Navbar.tsx, quindi qui va nascosto per
-// non duplicarlo. Le pagine /offerte-di-lavoro/[slug] e /registrazione hanno
-// già un ThemeToggle integrato nella loro barra superiore: va nascosto anche
-// lì per lo stesso motivo. Ovunque altro nel sito pubblico compare qui,
+// Route della dashboard autenticata: ha già un proprio ThemeToggle in
+// components/Navbar.tsx, quindi qui va nascosto per non duplicarlo. Le
+// pagine /offerte-di-lavoro/[slug] e /registrazione hanno già un
+// ThemeToggle integrato nella loro barra superiore: va nascosto anche lì
+// per lo stesso motivo. Ovunque altro nel sito pubblico compare qui,
 // fluttuante, così ogni pagina pubblica ha sempre un modo di cambiare tema.
-const DASHBOARD_SEGMENTS = [
-  'dashboard', 'jobs', 'positions', 'add-candidate', 'admin', 'attendance',
-  'calendar', 'documents', 'employees', 'onboarding', 'performance', 'pipeline', 'stats',
-];
-
 const HAS_OWN_TOGGLE_PREFIXES = ['/offerte-di-lavoro', '/registrazione'];
 
 export default function PublicThemeToggle() {
   const pathname = usePathname() || '/';
-  const firstSegment = pathname.split('/')[1] || '';
 
-  if (DASHBOARD_SEGMENTS.includes(firstSegment)) return null;
+  if (isDashboardRoute(pathname)) return null;
   if (HAS_OWN_TOGGLE_PREFIXES.some(p => pathname.startsWith(p))) return null;
 
   return (

@@ -17,6 +17,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
 import PublicThemeToggle from "@/components/PublicThemeToggle";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 
 // Preferisce l'host reale della richiesta a NEXT_PUBLIC_SITE_URL, che su
 // Vercel puo' essere mal configurato (vedi app/sitemap.ts e app/robots.ts
@@ -106,6 +107,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <PublicThemeToggle />
+          <CookieConsentBanner />
         </Providers>
       </body>
     </html>
