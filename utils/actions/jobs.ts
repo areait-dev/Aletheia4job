@@ -15,6 +15,7 @@ import { inngest } from "@/inngest/client";
 import { buildJobSlugMap, extractJobIdFromSlug } from "@/utils/jobSlug";
 import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
+import { unstable_cache } from "next/cache";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -143,14 +144,20 @@ export async function deleteJobAction(id: string): Promise<boolean> {
   }
 }
 
-export async function getPublicJobsAction(params?: { sector?: string; location?: string; mode?: string; }) {
-  try {
+// Career page pubblica: nessun dato per-utente (stesso risultato per tutti i
+// visitatori a parità di filtri), quindi la query può essere messa in cache
+// invece di rieseguirla ad ogni richiesta. `unstable_cache` chiave la cache
+// anche sugli argomenti della funzione, quindi ogni combinazione di filtri
+// (sector/location/mode) ottiene la propria entry, coerente con quanto
+// mostrato all'utente; uno annuncio nuovo può impiegare fino a 60s a comparire.
+const getCachedPublicJobs = unstable_cache(
+  async (sector?: string, location?: string, mode?: string) => {
     const where: Prisma.JobWhereInput = { isActive: true, status: "Aperto", postToCareerPage: { not: false } };
-    if (params?.sector && params.sector !== "tutti") where.sector = { equals: params.sector, mode: "insensitive" };
-    if (params?.location) where.location = { contains: params.location, mode: "insensitive" };
-    if (params?.mode) where.mode = params.mode;
+    if (sector && sector !== "tutti") where.sector = { equals: sector, mode: "insensitive" };
+    if (location) where.location = { contains: location, mode: "insensitive" };
+    if (mode) where.mode = mode;
 
-    return await dbUnscoped.job.findMany({
+    return dbUnscoped.job.findMany({
       where,
       orderBy: { postedAt: "desc" },
       select: {
@@ -160,6 +167,14 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
         locationInputType: true, locationOptions: true,
       },
     });
+  },
+  ["public-jobs"],
+  { revalidate: 60, tags: ["public-jobs"] }
+);
+
+export async function getPublicJobsAction(params?: { sector?: string; location?: string; mode?: string; }) {
+  try {
+    return await getCachedPublicJobs(params?.sector, params?.location, params?.mode);
   } catch (error) {
     logger.error("Errore fetch public jobs", error);
     return [];
@@ -168,14 +183,23 @@ export async function getPublicJobsAction(params?: { sector?: string; location?:
 
 // Career page pubblica: aggrega job di TUTTE le organizzazioni per design (nessuna
 // sessione utente disponibile), quindi usa deliberatamente il client non scoped.
-export async function getPublicJobSlugMapAction() {
-  try {
+// Stessa motivazione di cache di getPublicJobsAction sopra.
+const getCachedPublicJobSlugMap = unstable_cache(
+  async () => {
     const jobs = await dbUnscoped.job.findMany({
       where: { isActive: true, status: "Aperto", postToCareerPage: { not: false } },
       orderBy: [{ postedAt: "asc" }, { id: "asc" }],
       select: { id: true, title: true, location: true },
     });
     return buildJobSlugMap(jobs);
+  },
+  ["public-job-slug-map"],
+  { revalidate: 60, tags: ["public-jobs"] }
+);
+
+export async function getPublicJobSlugMapAction() {
+  try {
+    return await getCachedPublicJobSlugMap();
   } catch (error) {
     logger.error("Errore generazione slug annunci", error);
     return [];
