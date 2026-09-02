@@ -28,6 +28,14 @@ A full-featured, production-ready job tracking application built with Next.js 14
 
 ---
 
+## 🔐 Autenticazione e Multi-Tenancy
+
+L'applicazione utilizza esclusivamente **Supabase Auth** per la gestione delle sessioni, dei JWT e del flusso di login/registrazione.
+
+> **Nota Storica sul Database:** Nel database è presente la colonna `Organization.clerkOrganizationId`. Questa colonna fa riferimento a una vecchia migrazione da Clerk ed è stata mantenuta esclusivamente come backup storico dei vecchi identificativi tenant. **Non deve essere utilizzata** in nessuna nuova feature. Il meccanismo di tenant scoping attivo si basa interamente su Prisma Client Extension e AsyncLocalStorage combinati con i metadati di Supabase.
+
+---
+
 ## 🎯 Overview
 
 Jobify is a comprehensive job application tracking system that allows users to:
