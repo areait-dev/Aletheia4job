@@ -16,6 +16,7 @@ import { buildJobSlugMap, extractJobIdFromSlug } from "@/utils/jobSlug";
 import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
 import { unstable_cache } from "next/cache";
+import { logFunnelEvent } from "./funnelEvents";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -228,7 +229,7 @@ export async function getPublicJobByIdAction(id: string) {
     return await dbUnscoped.job.findFirst({
       where: { id, isActive: true, status: "Aperto", postToCareerPage: { not: false } },
       select: {
-        id: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
+        id: true, organizationId: true, title: true, company: true, companyLogoUrl: true, imageUrl: true, location: true, sector: true, mode: true,
         salaryMin: true, salaryMax: true, salaryCurrency: true, remoteType: true,
         experienceLevel: true, postedAt: true, description: true, requirements: true, responsibilities: true, benefits: true,
         locationInputType: true, locationOptions: true,
@@ -348,6 +349,10 @@ export async function applyToJobAction(values: {
         logger.error("[applyToJobAction] Errore invio a Inngest", e);
       }
     }
+
+    // Solo dopo che la scrittura di candidato/candidatura è andata a buon
+    // fine: logFunnelEvent inghiottisce già i propri errori internamente.
+    await logFunnelEvent({ organizationId: job.organizationId, jobId: values.jobId, eventType: "application_submitted" });
 
     return { ok: true };
   } catch (error) {

@@ -10,6 +10,8 @@ import Reveal from '@/components/Reveal';
 import ThemeToggle from '@/components/ThemeToggle';
 import { truncateAtWordBoundary } from '@/utils/text';
 import { SOCIAL_LINKS } from '@/utils/socialLinks';
+import ApplyClickCta from '@/components/ApplyClickCta';
+import { logFunnelEvent } from '@/utils/actions/funnelEvents';
 
 const modeColor: Record<string, string> = {
   'Full-time': 'bg-blue-500/15 text-blue-600',
@@ -177,6 +179,13 @@ export default async function CareerJobPage({ params }: { params: { slug: string
   const job = await getPublicJobByIdAction(resolved.id);
   if (!job) notFound();
 
+  // logFunnelEvent inghiottisce già ogni errore internamente (non può mai
+  // far fallire il render): la attendiamo comunque invece di lasciarla come
+  // vera fire-and-forget, perché su un runtime serverless una promise non
+  // attesa non ha garanzia di completare dopo che la response è stata
+  // inviata, e perderemmo silenziosamente la maggior parte degli eventi.
+  await logFunnelEvent({ organizationId: job.organizationId, jobId: job.id, eventType: 'job_view' });
+
   const hasMultipleSites = job.locationInputType === 'select' || job.locationInputType === 'free_text';
 
   const requirementsText = hasMultipleSites ? stripLocationTail(job.requirements) : job.requirements;
@@ -212,12 +221,13 @@ export default async function CareerJobPage({ params }: { params: { slug: string
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle />
-            <a
-              href="#apply"
+            <ApplyClickCta
+              organizationId={job.organizationId}
+              jobId={job.id}
               className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"
             >
               Candidati ora
-            </a>
+            </ApplyClickCta>
           </div>
         </div>
       </div>

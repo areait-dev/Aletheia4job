@@ -8,6 +8,9 @@ const prismaMock = vi.hoisted(() => ({
     update: vi.fn(),
     create: vi.fn(),
   },
+  publicFunnelEvent: {
+    create: vi.fn(),
+  },
 }));
 
 vi.mock("@/utils/db", () => ({
@@ -71,6 +74,9 @@ describe("applySpontaneousApplicationAction", () => {
 
     expect(result).toEqual({ ok: true });
     expect(prismaMock.candidate.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.publicFunnelEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ organizationId: ORG_ID, eventType: "spontaneous_submitted" }) })
+    );
     expect(prismaMock.candidate.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

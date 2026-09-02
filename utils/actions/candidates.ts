@@ -12,6 +12,7 @@ import { authenticateAndRedirect } from "./shared";
 import { setTenantContext } from "../tenant-context";
 import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
+import { logFunnelEvent } from "./funnelEvents";
 
 // Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
 // il proprietario destinatari sono fissati via env, perché la piattaforma è
@@ -56,6 +57,9 @@ export async function applySpontaneousApplicationAction(values: {
           ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
         },
       });
+      // Solo dopo che la scrittura è andata a buon fine: logFunnelEvent
+      // inghiottisce già i propri errori internamente.
+      await logFunnelEvent({ organizationId, eventType: "spontaneous_submitted" });
       return { ok: true };
     }
 
@@ -77,6 +81,7 @@ export async function applySpontaneousApplicationAction(values: {
       },
     });
 
+    await logFunnelEvent({ organizationId, eventType: "spontaneous_submitted" });
     return { ok: true };
   } catch (error) {
     logger.error("Errore candidatura spontanea", error);
