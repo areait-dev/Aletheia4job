@@ -1,7 +1,7 @@
 "use server";
 
 import prisma, { dbUnscoped } from "@/utils/db";
-import { setTenantContext } from "@/utils/tenant-context";
+import { setTenantContext, runWithTenantContext } from "@/utils/tenant-context";
 import {
   JobType, 
   CreateAndEditJobType,
@@ -130,18 +130,25 @@ export async function updateJobAction(jobId: string, values: Partial<CreateAndEd
   }
 }
 
-export async function deleteJobAction(id: string): Promise<boolean> {
+export type DeleteJobResult = { success: true } | { success: false; reason: "forbidden" | "error" };
+
+export async function deleteJobAction(id: string): Promise<DeleteJobResult> {
   const { userId, organizationId, role } = await authenticateAndRedirect();
-  if (!canWrite(role)) return false;
+  if (!canWrite(role)) {
+    logger.warn("Eliminazione job negata: ruolo senza permessi di scrittura", { jobId: id, role });
+    return { success: false, reason: "forbidden" };
+  }
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.job.delete({ where: { id, organizationId } });
-      await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "job", entityId: id }, tx);
-    });
-    return true;
+    await runWithTenantContext({ organizationId, userId, role, source: "session" }, () =>
+      prisma.$transaction(async (tx) => {
+        await tx.job.delete({ where: { id, organizationId } });
+        await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "job", entityId: id }, tx);
+      })
+    );
+    return { success: true };
   } catch (error) {
     logger.error("Errore delete job", error, { jobId: id });
-    return false;
+    return { success: false, reason: "error" };
   }
 }
 

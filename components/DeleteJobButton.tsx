@@ -19,12 +19,17 @@ export default function DeleteJobButton({ jobId, jobTitle }: { jobId: string, jo
 
     setIsDeleting(true);
     try {
-      const success = await deleteJobAction(jobId);
-      if (success) {
+      const result = await deleteJobAction(jobId);
+      if (result.success) {
         toast({ description: "Posizione eliminata con successo." });
         router.push("/positions");
       } else {
-        toast({ description: "Si è verificato un errore durante l'eliminazione.", variant: "destructive" });
+        toast({
+          description: result.reason === "forbidden"
+            ? "Non hai i permessi per eliminare questa posizione (ruolo di sola lettura)."
+            : "Si è verificato un errore durante l'eliminazione.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       toast({ description: "Errore imprevisto.", variant: "destructive" });

@@ -48,6 +48,15 @@ export function setTenantContext(ctx: TenantContext) {
   }
 }
 
+/**
+ * Esegue fn con il tenant context legato esplicitamente allo scope (storage.run):
+ * a differenza di enterWith, il contesto vale per tutto fn, anche dopo gli await e
+ * dentro le callback di prisma.$transaction. Da usare nelle server action che scrivono.
+ */
+export function runWithTenantContext<T>(ctx: TenantContext, fn: () => Promise<T>): Promise<T> {
+  return storage.run(ctx, fn);
+}
+
 export function getTenantContext(): TenantContext | undefined {
   const fromStorage = storage.getStore();
   if (fromStorage) return fromStorage;
