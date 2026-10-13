@@ -42,7 +42,7 @@ export default function AnalyzeAIButton({
     setIsAnalyzing(true);
     try {
       const result = await calculateMatchingScoreAction(candidateId, jobId);
-      if (result.ok) {
+      if (result.ok && result.data) {
         toast({
           title: "Analisi completata",
           description: `Score AI: ${result.data.matchingScore}%`,

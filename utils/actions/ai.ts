@@ -1,51 +1,16 @@
 "use server";
 
 import prisma from "@/utils/db";
-import { Groq } from 'groq-sdk';
 import { extractTextFromUrl } from "../cv-extraction";
 import { authenticateAndRedirect } from "./shared";
 import { canWrite } from "../authz";
 import { inngest } from "@/inngest/client";
 import { revalidatePath } from "next/cache";
-
-function getGroqClient() {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    throw new Error("GROQ_API_KEY is not defined in environment variables");
-  }
-  return new Groq({ apiKey });
-}
+import { parseCvWithAI, scoreCandidateWithAI } from "@/lib/aiCv";
 
 export async function parseCVAction(text: string) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const { GoogleGenerativeAI } = require("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-  const prompt = `
-    Analizza il seguente testo estratto da un CV e restituisci un oggetto JSON con i seguenti campi:
-    - firstName: string
-    - lastName: string
-    - email: string
-    - phone: string
-    - city: string
-    - role: string
-    - seniority: string
-    - education: string
-    - skills: string
-    - sector: string
-    
-    Testo del CV:
-    ${text}
-    
-    Restituisci ESCLUSIVAMENTE il JSON puro.
-  `;
-
   try {
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(jsonString);
+    return await parseCvWithAI(text);
   } catch (error) {
     console.error("Errore AI CV Parsing:", error);
     return null;
@@ -158,47 +123,8 @@ export async function processAICandidateAnalysis(candidateId: string, jobId: str
       return { ok: false, error: "Nessun testo disponibile per l'analisi" };
     }
 
-    // 3. Prompt per Groq
-    const prompt = `
-      Sei un esperto HR Senior. Analizza il CV di un candidato rispetto ai requisiti di una posizione lavorativa.
-      
-      JOB TITLE: ${job.title}
-      JOB REQUIREMENTS: ${job.requirements}
-      JOB DESCRIPTION: ${job.description}
-      
-      CV TEXT:
-      ${text.substring(0, 10000)}
-      
-      REGOLE:
-      - Restituisci un oggetto JSON.
-      - matchingScore: un intero da 0 a 100.
-      - matchedKeywords: array di stringhe (massimo 10 competenze chiave trovate).
-      - missingKeywords: array di stringhe (massimo 5 competenze importanti mancanti).
-      - recommendation: una breve frase (massimo 15 parole).
-      
-      FORMATO JSON:
-      {
-        "matchingScore": 85,
-        "matchedKeywords": ["React", "TypeScript", "Node.js"],
-        "missingKeywords": ["AWS", "Docker"],
-        "recommendation": "Profilo solido con ottime basi tecniche, consigliato per colloquio tecnico."
-      }
-    `;
-
-    const groq = getGroqClient();
-    const response = await groq.chat.completions.create({
-      messages: [
-        { role: "system", content: "Sei un assistente HR che risponde esclusivamente in formato JSON." },
-        { role: "user", content: prompt }
-      ],
-      model: "openai/gpt-oss-120b",
-      response_format: { type: "json_object" }
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error("Risposta AI vuota");
-    
-    const result = JSON.parse(content);
+    // 3. Calcolo matching score (prompt condiviso in lib/aiCv.ts)
+    const result = await scoreCandidateWithAI(text, job);
 
     // 4. Aggiorna il record Candidate (score generale)
     await prisma.candidate.update({

@@ -3,6 +3,7 @@ import prisma from "@/utils/db";
 import { setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
 import { extractTextFromCV } from "@/lib/cvParser";
+import { isAiConfigured, parseCvWithAI, scoreCandidateWithAI } from "@/lib/aiCv";
 
 type CvProcessingPayload = {
   applicationId: string;
@@ -63,39 +64,10 @@ export const processCV = inngest.createFunction(
     });
 
     let parsedData: Record<string, any> | null = null;
-    if (process.env.GEMINI_API_KEY) {
+    if (isAiConfigured()) {
       try {
         parsedData = await step.run("ai-parse-cv", async () => {
-          const { GoogleGenerativeAI } = require("@google/generative-ai");
-          const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-          const prompt = `
-            Analizza il seguente testo estratto da un CV e restituisci un oggetto JSON con i seguenti campi:
-            - firstName: string
-            - lastName: string
-            - email: string
-            - phone: string
-            - city: string
-            - role: string
-            - seniority: string
-            - education: string
-            - skills: string
-            - sector: string
-
-            Testo del CV:
-            ${cvText}
-
-            Restituisci ESCLUSIVAMENTE il JSON puro.
-          `;
-
-          const result = await model.generateContent(prompt);
-          const responseText = result.response.text();
-          const jsonString = responseText
-            .replace(/```json/g, "")
-            .replace(/```/g, "")
-            .trim();
-          return JSON.parse(jsonString);
+          return await parseCvWithAI(cvText);
         });
       } catch (e) {
         console.warn("[cv-processing] AI CV parsing non riuscito:", e);
@@ -125,12 +97,9 @@ export const processCV = inngest.createFunction(
       });
     });
 
-    if (process.env.GROQ_API_KEY) {
+    if (isAiConfigured()) {
       try {
         await step.run("ai-match-score", async () => {
-          const { Groq } = require("groq-sdk");
-          const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
           const job = await prisma.job.findUnique({
             where: { id: jobId },
             select: { title: true, requirements: true, description: true },
@@ -140,45 +109,7 @@ export const processCV = inngest.createFunction(
             throw new Error(`Job ${jobId} non trovato per AI matching`);
           }
 
-          const prompt = `
-            Sei un esperto HR Senior. Analizza il CV di un candidato rispetto ai requisiti di una posizione lavorativa.
-
-            JOB TITLE: ${job.title}
-            JOB REQUIREMENTS: ${job.requirements}
-            JOB DESCRIPTION: ${job.description}
-
-            CV TEXT:
-            ${cvText.substring(0, 10000)}
-
-            REGOLE:
-            - Restituisci un oggetto JSON.
-            - matchingScore: un intero da 0 a 100.
-            - matchedKeywords: array di stringhe (massimo 10 competenze chiave trovate).
-            - missingKeywords: array di stringhe (massimo 5 competenze importanti mancanti).
-            - recommendation: una breve frase (massimo 15 parole).
-
-            FORMATO JSON:
-            {
-              "matchingScore": 85,
-              "matchedKeywords": ["React", "TypeScript", "Node.js"],
-              "missingKeywords": ["AWS", "Docker"],
-              "recommendation": "Profilo solido con ottime basi tecniche, consigliato per colloquio tecnico."
-            }
-          `;
-
-          const response = await groq.chat.completions.create({
-            messages: [
-              { role: "system", content: "Sei un assistente HR che risponde esclusivamente in formato JSON." },
-              { role: "user", content: prompt },
-            ],
-            model: "openai/gpt-oss-120b",
-            response_format: { type: "json_object" },
-          });
-
-          const content = response.choices[0]?.message?.content;
-          if (!content) throw new Error("Risposta AI vuota");
-
-          const result = JSON.parse(content);
+          const result = await scoreCandidateWithAI(cvText, job);
 
           await prisma.candidate.update({
             where: { id: candidateId },
@@ -252,39 +183,13 @@ export const processCandidateCV = inngest.createFunction(
       return { ok: false, reason: "no-resume-text", candidateId };
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return { ok: false, reason: "no-gemini-key", candidateId };
+    if (!isAiConfigured()) {
+      return { ok: false, reason: "no-groq-key", candidateId };
     }
 
     const parsedData = await step.run("ai-parse-candidate", async () => {
-      const { GoogleGenerativeAI } = require("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-      const prompt = `
-        Analizza il seguente testo estratto da un CV e restituisci un oggetto JSON con i seguenti campi (usa null se un dato non è presente, non inventare nulla):
-        - firstName: string
-        - lastName: string
-        - email: string
-        - phone: string
-        - city: string
-        - role: string
-        - seniority: string
-        - education: string
-        - skills: string
-        - sector: string
-
-        Testo del CV:
-        ${candidate.resumeText}
-
-        Restituisci ESCLUSIVAMENTE il JSON puro.
-      `;
-
       try {
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-        return JSON.parse(jsonString);
+        return await parseCvWithAI(candidate.resumeText!);
       } catch (e) {
         console.warn("[process-candidate-cv] AI parsing non riuscito:", e);
         return null;

@@ -46,7 +46,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
     setIsAnalyzing(true);
     try {
       const result = await calculateMatchingScoreAction(candidate.id, candidate.jobId);
-      if (result.ok) {
+      if (result.ok && result.data) {
         toast({
           title: "Analisi completata",
           description: `Score AI: ${result.data.matchingScore}%`,
