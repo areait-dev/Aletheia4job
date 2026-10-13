@@ -36,6 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "hourly",
       priority: 1,
     },
+    {
+      url: `${siteUrl}/diventa-docente`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     ...jobEntries,
   ];
 }
