@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { requireTenantContext } from './tenant-context';
+import { getTenantContext, requireTenantContext } from './tenant-context';
 
 /**
  * Model Prisma con campo organizationId (vedi prisma/schema.prisma).
@@ -25,6 +25,28 @@ const TENANT_SCOPED_MODELS = new Set([
   'Document',
   'CalendarEvent',
 ]);
+
+/**
+ * Rete di sicurezza: se nessun canale (AsyncLocalStorage / cache di richiesta) ha il
+ * tenant context - tipico nelle server action, dove enterWith dopo un await non si
+ * propaga al chiamante - lo risolviamo dalla sessione dell'utente autenticato.
+ * Resta fail-closed: senza sessione valida (webhook, job, fuori richiesta) si ricade
+ * su requireTenantContext, che lancia TenantContextMissingError.
+ */
+async function resolveTenantContext(model: string, operation: string) {
+  if (!getTenantContext()) {
+    try {
+      const { getAuthContext } = await import('./authz');
+      // Si usa il valore di ritorno, non lo store: l'enterWith interno a getAuthContext
+      // non e' visibile qui dopo l'await.
+      const auth = await getAuthContext();
+      if (auth) return { organizationId: auth.organizationId };
+    } catch {
+      // nessuna sessione/richiesta: gestito sotto
+    }
+  }
+  return requireTenantContext(model, operation);
+}
 
 function assertNoConflict(existingOrgId: unknown, organizationId: string, model: string, operation: string) {
   if (typeof existingOrgId === 'string' && existingOrgId !== organizationId) {
@@ -71,7 +93,7 @@ function withTenantScope(client: PrismaClient) {
             return query(args);
           }
 
-          const { organizationId } = requireTenantContext(model, operation);
+          const { organizationId } = await resolveTenantContext(model, operation);
           const a: any = args ?? {};
 
           switch (operation) {
