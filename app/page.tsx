@@ -105,6 +105,16 @@ export default async function CareersPage({
               </div>
             </div>
           </form>
+
+          <div className="flex justify-center">
+            <Link
+              href="/diventa-docente"
+              className="group inline-flex items-center gap-2 h-11 rounded-full border border-primary/30 bg-white/70 dark:bg-background/70 backdrop-blur-md px-6 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all duration-200"
+            >
+              Diventa docente
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </div>
       </div>
 
