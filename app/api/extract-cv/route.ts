@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           content: prompt,
         },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       temperature: 0.1,
       stream: false,
       response_format: { type: "json_object" }

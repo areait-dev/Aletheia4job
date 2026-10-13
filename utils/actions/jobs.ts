@@ -469,7 +469,7 @@ export async function generateJobDescriptionAction({
 
     const groqClient = getGroqClient();
     const response = await groqClient.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.6, // Leggermente più basso per dati strutturati più precisi
