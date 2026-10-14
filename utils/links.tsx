@@ -7,7 +7,8 @@ import {
   Globe,
   Briefcase,
   Calendar,
-  LayoutDashboard
+  LayoutDashboard,
+  FileText
 } from 'lucide-react';
 import {
   canAccessAdmin,
@@ -63,6 +64,12 @@ const links: NavLink[] = [
     href: '/',
     label: 'offerte di lavoro',
     icon: <Globe />,
+  },
+  {
+    href: '/contenuti',
+    label: 'contenuti',
+    icon: <FileText />,
+    permission: canAccessAdmin,
   },
   {
     href: '/admin',

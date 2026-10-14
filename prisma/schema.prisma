@@ -38,6 +38,7 @@ model Organization {
   reviews             Review[]
   reviewCycles        ReviewCycle[]
   publicFunnelEvents  PublicFunnelEvent[]
+  pageContents        PageContent[]
 }
 
 model Membership {
@@ -286,6 +287,24 @@ model Job {
 // (vedi utils/actions/funnelEvents.ts): NON è in TENANT_SCOPED_MODELS perché
 // questi eventi arrivano da richieste pubbliche non autenticate, senza un
 // tenant context di sessione da cui derivare l'organizationId.
+// Testi modificabili dal gestionale delle pagine pubbliche (es. /diventa-docente).
+// Come PublicFunnelEvent NON è in TENANT_SCOPED_MODELS: la pagina pubblica lo legge
+// senza sessione, quindi legge/scrive sempre via dbUnscoped con organizationId esplicito
+// (vedi utils/pageContentReader.ts e utils/actions/pageContent.ts).
+model PageContent {
+  id             String       @id @default(uuid())
+  organizationId String
+  key            String       // es. "diventa-docente"
+  content        Json
+  updatedBy      String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, key])
+}
+
 model PublicFunnelEvent {
   id             String       @id @default(uuid())
   organizationId String
