@@ -20,22 +20,29 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 };
 
+const AUDIENCE = [
+  ['Docenti e formatori', 'con esperienza nella didattica e nella formazione professionale'],
+  ['Professionisti di settore', 'con competenze tecniche e specialistiche maturate sul campo'],
+  ['Esperti tematici', 'con conoscenze aggiornate e capacità di trasferirle in aula'],
+  ['Specialisti', 'con competenze verticali utili a progetti e percorsi formativi specifici'],
+];
+
 const STEPS = [
   {
-    title: 'Invii il tuo profilo',
-    text: 'Compili il form con i tuoi dati, le esperienze professionali e le aree in cui puoi fare docenza.',
+    title: 'Invia il tuo profilo',
+    text: 'Compila il form con i tuoi dati, le esperienze professionali e gli ambiti in cui puoi svolgere attività di docenza.',
   },
   {
-    title: 'Entri nel registro',
-    text: 'Il profilo resta consultabile internamente, così possiamo trovare le competenze giuste quando parte un progetto.',
+    title: 'Entra nel database',
+    text: 'Il tuo profilo potrà essere consultato internamente per individuare competenze coerenti con i progetti e le esigenze formative.',
   },
   {
-    title: 'Ti contattiamo se c’è un progetto adatto',
-    text: 'Verifichiamo insieme interesse, disponibilità e requisiti richiesti. Se non è il momento giusto, resti in lista.',
+    title: 'Valuta le opportunità',
+    text: 'Quando individueremo un progetto compatibile con il tuo profilo, ti contatteremo per verificare interesse, disponibilità e requisiti richiesti.',
   },
   {
-    title: 'Definiamo la collaborazione',
-    text: 'Concordiamo modalità, contenuti e date. Ogni collaborazione è regolata da un incarico formale e trasparente.',
+    title: 'Collabori con noi',
+    text: 'Definisci insieme al team le modalità, i contenuti e le date. Ogni collaborazione è regolata da un incarico formale e trasparente.',
   },
 ];
 
@@ -56,16 +63,19 @@ export default function DiventaDocentePage() {
           <div className="pt-10 pb-16 sm:pt-20 sm:pb-24 space-y-12 sm:space-y-16">
             <div className="max-w-4xl space-y-6">
               <h1 className="font-[family-name:var(--font-display)] text-5xl sm:text-7xl font-bold leading-[1.02] tracking-tight text-white">
-                Cerchiamo chi sa insegnare il proprio mestiere.
+                Hai competenze da condividere? Entra nella rete dei docenti Alètheia.
               </h1>
-              <p className="max-w-xl text-lg leading-relaxed text-[#FFFFFF]/90">
-                Alètheia progetta corsi per persone, imprese e territori. Scegli le aree in cui puoi fare docenza:
-                ti contattiamo quando si apre un progetto adatto a te.
+              <p className="max-w-2xl text-lg leading-relaxed text-[#FFFFFF]/90">
+                Cerchiamo docenti, formatori e professionisti da coinvolgere nei nostri progetti di formazione.
+                Inserisci il tuo profilo: ti contatteremo quando si apre un&apos;opportunità in linea con la tua area
+                di competenza.
               </p>
             </div>
 
             <div className="space-y-6">
-              <h2 className="text-lg font-medium text-[#FFFFFF]/90">In quali aree puoi fare docenza?</h2>
+              <h2 className="text-lg font-medium text-[#FFFFFF]/90">
+                Aree di competenza <span className="font-normal text-[#FFFFFF]/75">(seleziona una o più aree)</span>
+              </h2>
               <TeacherAreaIndex />
             </div>
           </div>
@@ -75,27 +85,46 @@ export default function DiventaDocentePage() {
       {/* Il registro */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
         <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
-          Un registro sempre aperto, non un bando con scadenza
+          Le opportunità giuste iniziano dalle competenze
         </h2>
         <div className="lg:col-span-6 lg:col-start-7 space-y-5 text-lg leading-relaxed text-muted-foreground">
           <p>
             <span className="text-foreground font-medium">Alètheia</span>, parte della rete di imprese{' '}
-            <span className="text-foreground font-medium">Promotergroup S.p.A.</span>, si affida a professionisti
-            con competenze e specializzazioni diverse. La Long List è il registro a cui attingiamo ogni volta che
-            si apre un percorso formativo, un avviso pubblico regionale o una nuova attività didattica.
+            <span className="text-foreground font-medium">Promotergroup S.p.A.</span>, progetta e realizza percorsi
+            formativi per persone, imprese e territori. Per farlo, ci affidiamo a una rete di professionisti con
+            competenze, esperienze e specializzazioni diverse.
           </p>
           <p>
-            Ci interessano docenti e formatori con esperienza didattica, ma anche professionisti di settore, esperti
-            tematici e specialisti che sanno trasferire in aula quello che fanno ogni giorno. Puoi iscriverti in
-            qualsiasi momento.
+            La Long List Alètheia non è un bando con scadenza, è un registro permanente di professionisti qualificati
+            a cui attingiamo ogni volta che si apre un percorso formativo, un avviso pubblico regionale o una nuova
+            attività didattica.
           </p>
         </div>
       </section>
 
-      {/* Cosa succede dopo */}
+      {/* A chi ci rivolgiamo */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
         <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
-          Cosa succede dopo la candidatura
+          A chi ci rivolgiamo
+        </h2>
+        <div className="lg:col-span-6 lg:col-start-7 space-y-5">
+          <p className="text-lg leading-relaxed text-muted-foreground">
+            Cerchiamo professionisti con esperienza e competenze da mettere a disposizione della formazione:
+          </p>
+          <ul className="space-y-3 text-lg leading-relaxed text-muted-foreground list-disc pl-5 marker:text-primary">
+            {AUDIENCE.map(([role, text]) => (
+              <li key={role}>
+                <span className="text-foreground font-semibold">{role}</span> {text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Come funziona */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
+        <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+          Come funziona
         </h2>
         <ol className="lg:col-span-6 lg:col-start-7 space-y-8 border-l-2 border-primary/30 pl-6 sm:pl-8">
           {STEPS.map(({ title, text }, i) => (
@@ -114,17 +143,15 @@ export default function DiventaDocentePage() {
       </section>
 
       {/* Form */}
-      <section
-        id="candidatura"
-        className="scroll-mt-6 bg-secondary/60 dark:bg-muted/30"
-      >
+      <section id="candidatura" className="scroll-mt-6 bg-secondary/60 dark:bg-muted/30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24 space-y-10">
-          <div className="space-y-3">
+          <div className="space-y-3 max-w-2xl">
             <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
-              Raccontaci il tuo percorso
+              Entra nella nostra long list
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              Ti servono i tuoi recapiti, una breve descrizione dell&apos;esperienza e il CV aggiornato.
+              Condividi il tuo percorso professionale e aiutaci a conoscerti. I dati che inserisci ci permettono di
+              valutare le tue competenze in modo preciso e di contattarti per le opportunità più adatte a te.
             </p>
           </div>
           <div className="rounded-lg bg-card border border-border p-6 sm:p-8">

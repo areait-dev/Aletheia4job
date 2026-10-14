@@ -57,15 +57,13 @@ export default function TeacherAreaIndex() {
           href="#candidatura"
           className="inline-flex items-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#007882] hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E9D879] focus-visible:ring-offset-2 focus-visible:ring-offset-[#007882]"
         >
-          {selected.length > 0 ? 'Compila il profilo' : 'Vai al form'}
+          Invia la tua candidatura
         </a>
-        <span className="text-sm text-[#FFFFFF]/85">
-          {selected.length === 0
-            ? 'Tocca le aree in cui puoi fare docenza.'
-            : selected.length === 1
-              ? '1 area scelta, la ritrovi nel form.'
-              : `${selected.length} aree scelte, le ritrovi nel form.`}
-        </span>
+        {selected.length > 0 && (
+          <span className="text-sm text-[#FFFFFF]/85">
+            {selected.length === 1 ? '1 area selezionata' : `${selected.length} aree selezionate`}
+          </span>
+        )}
       </div>
     </div>
   );
