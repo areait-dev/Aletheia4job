@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Loader2, Upload, CheckCircle2 } from 'lucide-react';
@@ -8,6 +8,8 @@ import { applyTeacherLongListAction } from '@/utils/actions/teachers';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadCV } from '@/utils/supabase';
 import {
+  AREAS_CHANGED_EVENT,
+  AREAS_SET_EVENT,
   TEACHER_AREAS,
   TEACHER_DELIVERY_MODES,
   TEACHER_PROFILES,
@@ -25,8 +27,8 @@ const ACCEPTED_EXT = ['pdf', 'doc', 'docx'];
 
 const optionClass = (checked: boolean) =>
   cn(
-    'flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm cursor-pointer transition-colors',
-    checked ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/30',
+    'flex items-start gap-2.5 rounded-md border px-3.5 py-3 text-sm cursor-pointer transition-colors',
+    checked ? 'border-primary bg-primary/5' : 'border-border hover:border-foreground/40',
   );
 
 export default function TeacherLongListForm() {
@@ -59,6 +61,22 @@ export default function TeacherLongListForm() {
   const areas = form.watch('areas') ?? [];
   const deliveryModes = form.watch('deliveryModes') ?? [];
   const cvUrl = form.watch('cvUrl');
+
+  // Sincronizza le aree con l'indice nell'hero (TeacherAreaIndex).
+  useEffect(() => {
+    const onSet = (e: Event) => {
+      const next = (e as CustomEvent<TeacherLongListInput['areas']>).detail ?? [];
+      form.setValue('areas', next, { shouldValidate: form.formState.isSubmitted });
+    };
+    window.addEventListener(AREAS_SET_EVENT, onSet);
+    return () => window.removeEventListener(AREAS_SET_EVENT, onSet);
+  }, [form]);
+
+  const areasKey = areas.join('|');
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(AREAS_CHANGED_EVENT, { detail: areas }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areasKey]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,12 +138,10 @@ export default function TeacherLongListForm() {
 
   if (isSuccess) {
     return (
-      <div className="glass rounded-3xl p-8 sm:p-10 text-center space-y-4">
-        <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle2 className="w-10 h-10" />
-        </div>
-        <h3 className="text-xl font-bold">Candidatura inviata, grazie!</h3>
-        <p className="text-muted-foreground text-sm max-w-md mx-auto">
+      <div className="space-y-4">
+        <CheckCircle2 className="w-8 h-8 text-primary" />
+        <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold">Candidatura inviata, grazie.</h3>
+        <p className="text-muted-foreground max-w-md">
           Il tuo profilo è entrato nella Long List dei formatori Alètheia. Ti contatteremo quando si aprirà
           un&apos;opportunità in linea con le tue competenze.
         </p>
@@ -141,18 +157,10 @@ export default function TeacherLongListForm() {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         noValidate
-        className="glass rounded-3xl p-6 sm:p-8 space-y-8"
+        className="space-y-10"
       >
-        <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Entra nella nostra long list</h2>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Condividi il tuo percorso professionale e aiutaci a conoscerti. I dati che inserisci ci permettono di
-            valutare le tue competenze in modo preciso e di contattarti per le opportunità più adatte a te.
-          </p>
-        </div>
-
         {submitError && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600">
+          <div className="rounded-md border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600">
             {submitError}
           </div>
         )}
@@ -365,8 +373,8 @@ export default function TeacherLongListForm() {
                   />
                   <div
                     className={cn(
-                      'border-2 border-dashed rounded-2xl p-6 text-center transition-colors',
-                      cvUrl ? 'border-green-500/30 bg-green-500/5' : 'border-border hover:border-primary/30',
+                      'border border-dashed rounded-md p-6 text-center transition-colors',
+                      cvUrl ? 'border-primary bg-primary/5' : 'border-foreground/30 hover:border-primary',
                     )}
                   >
                     {uploading ? (
@@ -376,8 +384,8 @@ export default function TeacherLongListForm() {
                       </div>
                     ) : cvUrl ? (
                       <div className="flex flex-col items-center gap-1">
-                        <CheckCircle2 className="w-6 h-6 text-green-500" />
-                        <span className="text-sm font-medium text-green-600 break-all">{fileName ?? 'CV caricato'}</span>
+                        <CheckCircle2 className="w-6 h-6 text-primary" />
+                        <span className="text-sm font-medium text-primary break-all">{fileName ?? 'CV caricato'}</span>
                         <span className="text-xs text-muted-foreground">Clicca per cambiare file</span>
                       </div>
                     ) : (
@@ -453,7 +461,7 @@ export default function TeacherLongListForm() {
         <Button
           type="submit"
           disabled={isSubmitting || uploading}
-          className="w-full py-4 rounded-2xl h-auto text-base flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-md h-auto text-base flex items-center justify-center gap-2"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
           {isSubmitting ? 'Invio in corso...' : 'Invia candidatura'}

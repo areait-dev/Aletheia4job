@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { GraduationCap, Briefcase, Lightbulb, Target, Send, Database, Search, HeartHandshake } from 'lucide-react';
+import { Bricolage_Grotesque } from 'next/font/google';
 import Logo from '@/components/Logo';
-import Reveal from '@/components/Reveal';
 import ThemeToggle from '@/components/ThemeToggle';
+import TeacherAreaIndex from '@/components/TeacherAreaIndex';
 import TeacherLongListForm from '@/components/TeacherLongListForm';
+
+const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 
 const TITLE = 'Diventa Docente Alètheia | Entra nella Long List dei Formatori';
 const DESCRIPTION =
@@ -18,175 +20,128 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 };
 
-const AUDIENCE = [
-  {
-    icon: GraduationCap,
-    title: 'Docenti e formatori',
-    text: 'con esperienza nella didattica e nella formazione professionale.',
-  },
-  {
-    icon: Briefcase,
-    title: 'Professionisti di settore',
-    text: 'con competenze tecniche e specialistiche maturate sul campo.',
-  },
-  {
-    icon: Lightbulb,
-    title: 'Esperti tematici',
-    text: 'con conoscenze aggiornate e capacità di trasferirle in aula.',
-  },
-  {
-    icon: Target,
-    title: 'Specialisti',
-    text: 'con competenze verticali utili a progetti e percorsi formativi specifici.',
-  },
-];
-
 const STEPS = [
   {
-    icon: Send,
-    title: 'Invia il tuo profilo',
-    text: 'Compila il form con i tuoi dati, le esperienze professionali e gli ambiti in cui puoi svolgere attività di docenza.',
+    title: 'Invii il tuo profilo',
+    text: 'Compili il form con i tuoi dati, le esperienze professionali e le aree in cui puoi fare docenza.',
   },
   {
-    icon: Database,
-    title: 'Entra nel database',
-    text: 'Il tuo profilo potrà essere consultato internamente per individuare competenze coerenti con i progetti e le esigenze formative.',
+    title: 'Entri nel registro',
+    text: 'Il profilo resta consultabile internamente, così possiamo trovare le competenze giuste quando parte un progetto.',
   },
   {
-    icon: Search,
-    title: 'Valuta le opportunità',
-    text: 'Quando individueremo un progetto compatibile con il tuo profilo, ti contatteremo per verificare interesse, disponibilità e requisiti richiesti.',
+    title: 'Ti contattiamo se c’è un progetto adatto',
+    text: 'Verifichiamo insieme interesse, disponibilità e requisiti richiesti. Se non è il momento giusto, resti in lista.',
   },
   {
-    icon: HeartHandshake,
-    title: 'Collabori con noi',
-    text: 'Definisci insieme al team le modalità, i contenuti e le date. Ogni collaborazione è regolata da un incarico formale e trasparente.',
+    title: 'Definiamo la collaborazione',
+    text: 'Concordiamo modalità, contenuti e date. Ogni collaborazione è regolata da un incarico formale e trasparente.',
   },
 ];
 
 export default function DiventaDocentePage() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <Link href="/" className="shrink-0" aria-label="Alètheia — home">
-            <Logo size={28} showText={false} />
+    <div className={`${display.variable} min-h-screen bg-background`}>
+      {/* Hero: la lavagna */}
+      <header className="bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center">
+          <Link href="/" aria-label="Alètheia — home">
+            <Logo size={40} showText={false} />
           </Link>
-          <div className="flex items-center gap-2 shrink-0">
-            <ThemeToggle />
-            <a
-              href="#candidatura"
-              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20"
-            >
-              Invia la tua candidatura
-            </a>
-          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/15 via-muted/40 to-background border-b border-border/50">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute -top-10 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-primary/10 blur-2xl" />
-        </div>
-        <div className="relative max-w-3xl mx-auto px-4 py-16 sm:py-24 text-center space-y-6">
-          <span className="inline-block text-xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-            Long List Formatori · Candidature sempre aperte
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Hai competenze da condividere? Entra nella rete dei docenti Alètheia.
-          </h1>
-          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Cerchiamo docenti, formatori e professionisti da coinvolgere nei nostri progetti di formazione.
-            Inserisci il tuo profilo: ti contatteremo quando si apre un&apos;opportunità in linea con la tua area di
-            competenza.
-          </p>
-          <a
-            href="#candidatura"
-            className="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-          >
-            Invia la tua candidatura
-          </a>
+      <section className="bg-[#007882] text-[#FFFFFF]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="pt-10 pb-16 sm:pt-20 sm:pb-24 space-y-12 sm:space-y-16">
+            <div className="max-w-4xl space-y-6">
+              <h1 className="font-[family-name:var(--font-display)] text-5xl sm:text-7xl font-bold leading-[1.02] tracking-tight text-white">
+                Cerchiamo chi sa insegnare il proprio mestiere.
+              </h1>
+              <p className="max-w-xl text-lg leading-relaxed text-[#FFFFFF]/90">
+                Alètheia progetta corsi per persone, imprese e territori. Scegli le aree in cui puoi fare docenza:
+                ti contattiamo quando si apre un progetto adatto a te.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <h2 className="text-lg font-medium text-[#FFFFFF]/90">In quali aree puoi fare docenza?</h2>
+              <TeacherAreaIndex />
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-4 py-14 sm:py-20 space-y-16 sm:space-y-24">
-        {/* Intro */}
-        <Reveal as="section" className="grid md:grid-cols-5 gap-8 items-start">
-          <h2 className="md:col-span-2 text-2xl sm:text-3xl font-bold tracking-tight">
-            Le opportunità giuste iniziano dalle competenze
-          </h2>
-          <div className="md:col-span-3 space-y-4 text-muted-foreground leading-relaxed">
-            <p>
-              <span className="font-semibold text-foreground">Alètheia</span>, parte della rete di imprese{' '}
-              <span className="font-semibold text-foreground">Promotergroup S.p.A.</span>, progetta e realizza
-              percorsi formativi per persone, imprese e territori. Per farlo, ci affidiamo a una rete di
-              professionisti con competenze, esperienze e specializzazioni diverse.
-            </p>
-            <p className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-foreground">
-              La Long List Alètheia non è un bando con scadenza: è un registro permanente di professionisti
-              qualificati a cui attingiamo ogni volta che si apre un percorso formativo, un avviso pubblico
-              regionale o una nuova attività didattica.
+      {/* Il registro */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
+        <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+          Un registro sempre aperto, non un bando con scadenza
+        </h2>
+        <div className="lg:col-span-6 lg:col-start-7 space-y-5 text-lg leading-relaxed text-muted-foreground">
+          <p>
+            <span className="text-foreground font-medium">Alètheia</span>, parte della rete di imprese{' '}
+            <span className="text-foreground font-medium">Promotergroup S.p.A.</span>, si affida a professionisti
+            con competenze e specializzazioni diverse. La Long List è il registro a cui attingiamo ogni volta che
+            si apre un percorso formativo, un avviso pubblico regionale o una nuova attività didattica.
+          </p>
+          <p>
+            Ci interessano docenti e formatori con esperienza didattica, ma anche professionisti di settore, esperti
+            tematici e specialisti che sanno trasferire in aula quello che fanno ogni giorno. Puoi iscriverti in
+            qualsiasi momento.
+          </p>
+        </div>
+      </section>
+
+      {/* Cosa succede dopo */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
+        <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+          Cosa succede dopo la candidatura
+        </h2>
+        <ol className="lg:col-span-6 lg:col-start-7 space-y-8 border-l-2 border-primary/30 pl-6 sm:pl-8">
+          {STEPS.map(({ title, text }, i) => (
+            <li key={title} className="relative">
+              <span
+                aria-hidden="true"
+                className="absolute left-[calc(-1.5rem-13px)] sm:left-[calc(-2rem-13px)] top-0.5 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center tabular-nums"
+              >
+                {i + 1}
+              </span>
+              <h3 className="font-semibold text-lg">{title}</h3>
+              <p className="mt-1 text-muted-foreground leading-relaxed">{text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Form */}
+      <section
+        id="candidatura"
+        className="scroll-mt-6 bg-secondary/60 dark:bg-muted/30"
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24 space-y-10">
+          <div className="space-y-3">
+            <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+              Raccontaci il tuo percorso
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Ti servono i tuoi recapiti, una breve descrizione dell&apos;esperienza e il CV aggiornato.
             </p>
           </div>
-        </Reveal>
-
-        {/* A chi ci rivolgiamo */}
-        <section className="space-y-8">
-          <Reveal className="space-y-2 max-w-2xl">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">A chi ci rivolgiamo</h2>
-            <p className="text-muted-foreground">
-              Cerchiamo professionisti con esperienza e competenze da mettere a disposizione della formazione.
-            </p>
-          </Reveal>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {AUDIENCE.map(({ icon: Icon, title, text }, i) => (
-              <Reveal key={title} delay={i * 80} className="glass rounded-2xl p-5 sm:p-6 flex gap-4">
-                <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">{title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="rounded-lg bg-card border border-border p-6 sm:p-8">
+            <TeacherLongListForm />
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Come funziona */}
-        <section className="space-y-8">
-          <Reveal>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Come funziona</h2>
-          </Reveal>
-          <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {STEPS.map(({ icon: Icon, title, text }, i) => (
-              <Reveal as="li" key={title} delay={i * 80} className="glass rounded-2xl p-5 sm:p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold text-primary/30 tabular-nums">{i + 1}</span>
-                  <Icon className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="font-semibold">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
-              </Reveal>
-            ))}
-          </ol>
-        </section>
-
-        {/* Form */}
-        <section id="candidatura" className="scroll-mt-24 max-w-3xl mx-auto">
-          <TeacherLongListForm />
-        </section>
-      </div>
-
-      <footer className="bg-white/40 dark:bg-background/40 backdrop-blur-sm border-t border-white/20 dark:border-white/10">
-        <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+      <footer>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Alètheia S.r.l. — Promotergroup S.p.A.</p>
-          <Link href="/privacy-policy" className="hover:text-primary transition-colors">
-            Privacy Policy
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy-policy" className="hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </footer>
     </div>
