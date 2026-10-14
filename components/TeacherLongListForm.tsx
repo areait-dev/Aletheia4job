@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Loader2, Upload, CheckCircle2 } from 'lucide-react';
@@ -8,8 +8,6 @@ import { applyTeacherLongListAction } from '@/utils/actions/teachers';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadCV } from '@/utils/supabase';
 import {
-  AREAS_CHANGED_EVENT,
-  AREAS_SET_EVENT,
   TEACHER_AREAS,
   TEACHER_DELIVERY_MODES,
   TEACHER_PROFILES,
@@ -61,22 +59,6 @@ export default function TeacherLongListForm() {
   const areas = form.watch('areas') ?? [];
   const deliveryModes = form.watch('deliveryModes') ?? [];
   const cvUrl = form.watch('cvUrl');
-
-  // Sincronizza le aree con l'indice nell'hero (TeacherAreaIndex).
-  useEffect(() => {
-    const onSet = (e: Event) => {
-      const next = (e as CustomEvent<TeacherLongListInput['areas']>).detail ?? [];
-      form.setValue('areas', next, { shouldValidate: form.formState.isSubmitted });
-    };
-    window.addEventListener(AREAS_SET_EVENT, onSet);
-    return () => window.removeEventListener(AREAS_SET_EVENT, onSet);
-  }, [form]);
-
-  const areasKey = areas.join('|');
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent(AREAS_CHANGED_EVENT, { detail: areas }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areasKey]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -140,7 +122,7 @@ export default function TeacherLongListForm() {
     return (
       <div className="space-y-4">
         <CheckCircle2 className="w-8 h-8 text-primary" />
-        <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold">Candidatura inviata, grazie.</h3>
+        <h3 className="font-[family-name:var(--font-title)] text-2xl">Candidatura inviata, grazie.</h3>
         <p className="text-muted-foreground max-w-md">
           Il tuo profilo è entrato nella Long List dei formatori Alètheia. Ti contatteremo quando si aprirà
           un&apos;opportunità in linea con le tue competenze.

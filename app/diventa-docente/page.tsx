@@ -1,12 +1,13 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Bricolage_Grotesque } from 'next/font/google';
+import { Nunito, Viga } from 'next/font/google';
 import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
-import TeacherAreaIndex from '@/components/TeacherAreaIndex';
 import TeacherLongListForm from '@/components/TeacherLongListForm';
 
-const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+const display = Nunito({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+const title = Viga({ subsets: ['latin'], weight: '400', variable: '--font-title', display: 'swap' });
 
 const TITLE = 'Diventa Docente Alètheia | Entra nella Long List dei Formatori';
 const DESCRIPTION =
@@ -48,7 +49,7 @@ const STEPS = [
 
 export default function DiventaDocentePage() {
   return (
-    <div className={`${display.variable} min-h-screen bg-background`}>
+    <div className={`${display.variable} ${title.variable} font-[family-name:var(--font-display)] min-h-screen bg-background`}>
       {/* Hero: la lavagna */}
       <header className="bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center">
@@ -58,11 +59,11 @@ export default function DiventaDocentePage() {
         </div>
       </header>
 
-      <section className="bg-[#007882] text-[#FFFFFF]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="pt-10 pb-16 sm:pt-20 sm:pb-24 space-y-12 sm:space-y-16">
-            <div className="max-w-4xl space-y-6">
-              <h1 className="font-[family-name:var(--font-display)] text-5xl sm:text-7xl font-bold leading-[1.02] tracking-tight text-white">
+      <section className="bg-[#007882] text-[#FFFFFF] overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 lg:gap-12">
+          <div className="lg:col-span-6 lg:self-center pt-10 pb-12 sm:pt-16 lg:py-16 space-y-10 sm:space-y-12">
+            <div className="space-y-6">
+              <h1 className="font-[family-name:var(--font-title)] text-5xl sm:text-6xl leading-[1.04] tracking-normal text-white">
                 Hai competenze da condividere? Entra nella rete dei docenti Alètheia.
               </h1>
               <p className="max-w-2xl text-lg leading-relaxed text-[#FFFFFF]/90">
@@ -72,19 +73,31 @@ export default function DiventaDocentePage() {
               </p>
             </div>
 
-            <div className="space-y-6">
-              <h2 className="text-lg font-medium text-[#FFFFFF]/90">
-                Aree di competenza <span className="font-normal text-[#FFFFFF]/75">(seleziona una o più aree)</span>
-              </h2>
-              <TeacherAreaIndex />
-            </div>
+            <a
+              href="#candidatura"
+              className="inline-flex items-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#007882] hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E9D879] focus-visible:ring-offset-2 focus-visible:ring-offset-[#007882]"
+            >
+              Invia la tua candidatura
+            </a>
+          </div>
+
+          <div className="lg:col-span-6 self-end">
+            <Image
+              src="/longlist-banner.png"
+              alt=""
+              width={1267}
+              height={1054}
+              priority
+              sizes="(min-width: 1024px) 640px, 90vw"
+              className="w-full max-w-md mx-auto lg:mx-0 lg:max-w-none lg:w-[114%] h-auto"
+            />
           </div>
         </div>
       </section>
 
       {/* Il registro */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
-        <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+        <h2 className="lg:col-span-5 font-[family-name:var(--font-title)] text-3xl sm:text-4xl leading-tight tracking-normal">
           Le opportunità giuste iniziano dalle competenze
         </h2>
         <div className="lg:col-span-6 lg:col-start-7 space-y-5 text-lg leading-relaxed text-muted-foreground">
@@ -104,7 +117,7 @@ export default function DiventaDocentePage() {
 
       {/* A chi ci rivolgiamo */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
-        <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+        <h2 className="lg:col-span-5 font-[family-name:var(--font-title)] text-3xl sm:text-4xl leading-tight tracking-normal">
           A chi ci rivolgiamo
         </h2>
         <div className="lg:col-span-6 lg:col-start-7 space-y-5">
@@ -123,7 +136,7 @@ export default function DiventaDocentePage() {
 
       {/* Come funziona */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 grid lg:grid-cols-12 gap-8 lg:gap-16">
-        <h2 className="lg:col-span-5 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+        <h2 className="lg:col-span-5 font-[family-name:var(--font-title)] text-3xl sm:text-4xl leading-tight tracking-normal">
           Come funziona
         </h2>
         <ol className="lg:col-span-6 lg:col-start-7 space-y-8 border-l-2 border-primary/30 pl-6 sm:pl-8">
@@ -146,7 +159,7 @@ export default function DiventaDocentePage() {
       <section id="candidatura" className="scroll-mt-6 bg-secondary/60 dark:bg-muted/30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24 space-y-10">
           <div className="space-y-3 max-w-2xl">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+            <h2 className="font-[family-name:var(--font-title)] text-3xl sm:text-4xl leading-tight tracking-normal">
               Entra nella nostra long list
             </h2>
             <p className="text-muted-foreground leading-relaxed">

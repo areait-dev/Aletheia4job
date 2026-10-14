@@ -85,8 +85,3 @@ export const teacherLongListSchema = z
 
 export type TeacherLongListInput = z.input<typeof teacherLongListSchema>;
 export type TeacherLongListValues = z.output<typeof teacherLongListSchema>;
-
-// Eventi window per tenere sincronizzati l'indice delle aree nell'hero
-// (TeacherAreaIndex) e il campo "Aree di competenza" del form.
-export const AREAS_SET_EVENT = "teacher-areas:set";
-export const AREAS_CHANGED_EVENT = "teacher-areas:changed";
