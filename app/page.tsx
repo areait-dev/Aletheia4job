@@ -147,7 +147,7 @@ export default async function CareersPage({
             {filtered.map((job, i) => (
               <Reveal key={job.id} delay={(i % 6) * 60} immediate={i < 3} className="h-full">
               <div
-                className="group h-full flex flex-col bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                className="group relative h-full flex flex-col bg-white/70 dark:bg-background/70 backdrop-blur-md rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 shadow-sm hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                 {job.imageUrl && (
                   <div className="relative w-full aspect-[16/9] bg-muted/40 shrink-0">
                     <Image
@@ -212,7 +212,8 @@ export default async function CareersPage({
                 <div className="mt-auto pt-2 border-t border-border/40">
                   <Link
                     href={`/offerte-di-lavoro/${slugById.get(job.id) ?? job.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:gap-3 transition-all"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary group-hover:gap-3 transition-all after:absolute after:inset-0 after:content-['']"
+                    aria-label={`Scopri di più: ${job.title}`}
                   >
                     Scopri di più <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
