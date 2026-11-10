@@ -6,30 +6,32 @@ import CandidateCard from "./JobCard";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+export const TEACHER_SOURCE = "Long List Docenti";
+const LONG_LIST_TITLE = "Long List";
+
 interface JobFoldersProps {
   candidates: CandidateType[];
 }
 
 function JobFolders({ candidates }: JobFoldersProps) {
   // Raggruppamento per Job Title
-  const groupedByJob: Record<string, CandidateType[]> = {};
+  // Stesso valore di TEACHER_SOURCE in utils/teacherLongList.ts, duplicato per
+  // non portare zod nel bundle client. La cartella "Long List" va sempre in
+  // cima (le chiavi oggetto non numeriche mantengono l'ordine di inserimento).
+  const groupedByJob: Record<string, CandidateType[]> = { [LONG_LIST_TITLE]: [] };
   candidates.forEach(c => {
+    if (c.source === TEACHER_SOURCE) {
+      groupedByJob[LONG_LIST_TITLE].push(c);
+      return;
+    }
     const jobTitle = c.applications?.[0]?.job?.title || "Posizione Sconosciuta";
     if (!groupedByJob[jobTitle]) groupedByJob[jobTitle] = [];
     groupedByJob[jobTitle].push(c);
   });
 
-  if (candidates.length === 0) {
-    return (
-      <div className="text-center py-12 bg-white/50 rounded-3xl border border-dashed">
-        <p className="text-muted-foreground italic">Nessun candidato automatico trovato.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      {Object.entries(groupedByJob).map(([jobTitle, items]) => (
+      {Object.entries(groupedByJob).filter(([title, items]) => title === LONG_LIST_TITLE || items.length > 0).map(([jobTitle, items]) => (
         <FolderGroup key={jobTitle} title={jobTitle} candidates={items} variant="primary" />
       ))}
     </div>
@@ -65,11 +67,15 @@ function FolderGroup({ title, candidates, variant }: { title: string, candidates
       </button>
 
       {isOpen && (
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch animate-in fade-in slide-in-from-top-2 duration-300">
-          {candidates.map(candidate => (
-            <CandidateCard key={candidate.id} candidate={candidate} />
-          ))}
-        </div>
+        candidates.length === 0 ? (
+          <p className="p-4 text-sm text-muted-foreground italic">Nessuna candidatura ricevuta.</p>
+        ) : (
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch animate-in fade-in slide-in-from-top-2 duration-300">
+            {candidates.map(candidate => (
+              <CandidateCard key={candidate.id} candidate={candidate} />
+            ))}
+          </div>
+        )
       )}
     </div>
   );

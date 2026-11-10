@@ -13,6 +13,7 @@ import { ARCHIVE_PAGE_SIZE } from "@/utils/types";
 import JobFolders from "./JobFolders";
 import SectorFolders from "./SectorFolders";
 import { Sparkles, Inbox, Loader2, SearchX } from "lucide-react";
+import { TEACHER_SOURCE } from "./JobFolders";
 
 export default function ArchivioManager() {
   const searchParams = useSearchParams();
@@ -60,8 +61,11 @@ export default function ArchivioManager() {
   }
 
   // Separazione logica
-  const automaticCandidates = candidates.filter(c => c.applications && c.applications.length > 0);
-  const manualCandidates = candidates.filter(c => !c.applications || c.applications.length === 0);
+  // La Long List (form /diventa-docente) rientra tra le Posizioni Aperte,
+  // in una cartella dedicata in cima (vedi JobFolders).
+  const isLongList = (c) => c.source === TEACHER_SOURCE;
+  const automaticCandidates = candidates.filter(c => isLongList(c) || (c.applications && c.applications.length > 0));
+  const manualCandidates = candidates.filter(c => !isLongList(c) && (!c.applications || c.applications.length === 0));
 
   const totalInOrg = data?.count ?? candidates.length;
   const hasMore = candidates.length < totalInOrg;
