@@ -57,6 +57,53 @@ export async function getMatchingJobsForCandidateAction(
   }
 }
 
+export type CandidateMatch = MatchResult & {
+  candidateId: string;
+  name: string;
+  role: string;
+  city: string;
+  email: string;
+};
+
+/** Candidati dell'archivio ordinati per compatibilita con l'offerta. */
+export async function getMatchingCandidatesForJobAction(
+  jobId: string,
+  limit = 10
+): Promise<CandidateMatch[]> {
+  const { organizationId } = await authenticateAndRedirect();
+  try {
+    const job = await prisma.job.findFirst({
+      where: { id: jobId, organizationId },
+      include: { applications: { select: { candidateId: true } } },
+    });
+    if (!job) return [];
+
+    const applied = new Set(job.applications.map((a) => a.candidateId));
+    const candidates = await prisma.candidate.findMany({
+      where: { organizationId, status: { not: "Non idoneo" } },
+      orderBy: { updatedAt: "desc" },
+      take: 500,
+    });
+
+    return candidates
+      .filter((c) => !applied.has(c.id))
+      .map((c) => ({
+        candidateId: c.id,
+        name: `${c.firstName} ${c.lastName}`,
+        role: c.role,
+        city: c.city,
+        email: c.email,
+        ...scoreCandidateForJob(c, job),
+      }))
+      .filter((m) => m.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  } catch (error) {
+    logger.error("Errore matching candidati per offerta", error, { jobId });
+    return [];
+  }
+}
+
 /** Associa un candidato dell'archivio a un'offerta creando la candidatura. */
 export async function assignCandidateToJobAction(
   candidateId: string,
