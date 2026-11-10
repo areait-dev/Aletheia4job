@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:integration": "vitest run -c vitest.integration.config.ts",
     "cleanup:test-orgs": "tsx scripts/cleanup-test-orgs.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
