@@ -63,11 +63,11 @@ export default async function JobDetailPage({ params }: { params: { id: string }
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column: Applications */}
         <div className="lg:col-span-2 space-y-6">
+          <JobMatchingCandidates jobId={job.id} />
           <PositionApplicationsList
             jobId={job.id}
             initialApplications={applications}
           />
-          {job.status === "Aperto" && <JobMatchingCandidates jobId={job.id} />}
         </div>
 
         {/* Right Column: Job Info & Stats */}
