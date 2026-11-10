@@ -1,6 +1,5 @@
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import BackgroundDecorations from '@/components/BackgroundDecorations';
 import { getAuthContext, type AuthContext } from '@/utils/authz';
 import { redirect } from 'next/navigation';
 
@@ -22,8 +21,7 @@ async function layout({ children }: PropsWithChildren) {
   if (!auth) redirect('/login');
 
   return (
-    <main className='grid lg:grid-cols-5 relative'>
-      <BackgroundDecorations />
+    <main className='grid lg:grid-cols-5 relative min-h-screen bg-[#f0f0f1] dark:bg-background'>
       <div className='hidden lg:block lg:col-span-1 lg:h-screen lg:sticky lg:top-0 relative z-10'>
         <Sidebar role={auth.role} />
       </div>

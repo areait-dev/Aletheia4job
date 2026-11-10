@@ -16,7 +16,7 @@ import {
   Clock, 
   Files, 
   TrendingUp,
-  ArrowRight,
+
   UserPlus,
   PlusCircle
 } from "lucide-react";
@@ -71,6 +71,44 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Riepilogo rapido (stile "A colpo d'occhio" di WordPress) */}
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-border/60 font-bold text-sm uppercase tracking-widest text-muted-foreground">
+          Riepilogo rapido
+        </div>
+        <div className="p-5 grid sm:grid-cols-2 gap-x-8 gap-y-6">
+          <ul className="space-y-2 text-sm">
+            <li>
+              <Link href="/jobs" className="hover:text-primary">
+                <strong className="text-primary">{stats.totalCandidates}</strong> candidati in archivio
+              </Link>
+            </li>
+            <li>
+              <Link href="/positions" className="hover:text-primary">
+                <strong className="text-primary">{openPositions}</strong> posizioni aperte su {jobs.length}
+              </Link>
+            </li>
+            <li>
+              <Link href="/documents" className="hover:text-primary">
+                <strong className="text-primary">{pendingSignatures}</strong> documenti in attesa di firma
+              </Link>
+            </li>
+          </ul>
+          <ul className="space-y-2 text-sm">
+            {stats.statusStats.length === 0 ? (
+              <li className="text-muted-foreground">Nessun candidato ancora.</li>
+            ) : (
+              stats.statusStats.map((st) => (
+                <li key={st.status} className="flex justify-between gap-4 border-b border-border/40 pb-1">
+                  <span className="capitalize">{st.status}</span>
+                  <strong>{st.count}</strong>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      </div>
+
       {/* Primary Stats Grid — 4 card su una riga con larghezze identiche */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         {[
@@ -98,9 +136,6 @@ export default async function DashboardPage() {
             <h2 className="text-2xl font-bold flex items-center gap-3">
               <Calendar className="w-6 h-6 text-primary" /> Prossimi Colloqui
             </h2>
-            <Link href="/calendar" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
-              Vedi Calendario <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
           
           <div className="space-y-3">

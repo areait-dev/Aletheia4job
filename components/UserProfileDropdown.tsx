@@ -38,7 +38,7 @@ export default function UserProfileDropdown() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-2xl p-0 border-2 border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all duration-200">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-2xl p-0 border border-transparent hover:border-white/20 hover:bg-white/10 transition-all duration-200">
           <div className="h-10 w-10 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
             <UserIcon className="w-5 h-5 text-primary" />
           </div>

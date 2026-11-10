@@ -6,20 +6,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AlignLeft } from 'lucide-react';
 import { Button } from './ui/button';
-import links from '@/utils/links';
+import { getVisibleLinks } from '@/utils/links';
 import Link from 'next/link';
 import { MembershipRole } from '@prisma/client';
 
 function DropdownLinks({ role }: { role: MembershipRole }) {
-  const filteredLinks = links.filter((link) => {
-    if (!link.permission) return true;
-    return link.permission(role);
-  });
+  const filteredLinks = getVisibleLinks(role);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className='lg:hidden'>
-        <Button variant='outline' size='icon' className='max-sm:h-10 max-sm:w-10'>
+        <Button variant='outline' size='icon' className='max-sm:h-10 max-sm:w-10 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white'>
           <AlignLeft className='max-sm:h-5 max-sm:w-5' />
 
           <span className='sr-only'>Toggle links</span>
