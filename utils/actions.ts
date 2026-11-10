@@ -2,6 +2,7 @@
 export * from "./actions/shared";
 export * from "./actions/candidates";
 export * from "./actions/jobs";
+export * from "./actions/matching";
 export * from "./actions/members";
 export * from "./actions/organizations";
 export * from "./actions/attendance";

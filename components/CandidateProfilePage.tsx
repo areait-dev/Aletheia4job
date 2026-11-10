@@ -10,6 +10,7 @@ import {
   Sparkles, Tag, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { cn, getScoreColor, getScoreLabel } from '@/lib/utils';
@@ -17,6 +18,7 @@ import {
   getCandidateNotesAction, createCandidateNoteAction, deleteCandidateNoteAction,
   getCandidateInterviewsAction, createInterviewAction, updateInterviewOutcomeAction, deleteInterviewAction,
   updateCandidateAction, retryCvParsingAction,
+  getMatchingJobsForCandidateAction, assignCandidateToJobAction,
 } from '@/utils/actions';
 import { useToast } from './ui/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -56,7 +58,8 @@ const interviewTypeIcon: Record<string, React.ReactNode> = {
 export default function CandidateProfilePage({ candidate }: { candidate: CandidateType }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'notes' | 'interviews' | 'edit'>('overview');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'matching' | 'notes' | 'interviews' | 'edit'>('overview');
   const [isPending, startTransition] = useTransition();
 
   // Note state
@@ -85,7 +88,26 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
     queryFn: () => getCandidateInterviewsAction(candidate.id),
   });
 
+  const { data: jobMatches = [], isLoading: matchesLoading } = useQuery({
+    queryKey: ['candidate-job-matches', candidate.id],
+    queryFn: () => getMatchingJobsForCandidateAction(candidate.id),
+    enabled: activeTab === 'matching',
+  });
+
   // Mutations
+  const assignToJob = useMutation({
+    mutationFn: (jobId: string) => assignCandidateToJobAction(candidate.id, jobId),
+    onSuccess: (res) => {
+      if (res.ok) {
+        toast({ description: "Candidato associato all'offerta." });
+        queryClient.invalidateQueries({ queryKey: ['candidate-job-matches', candidate.id] });
+        router.refresh();
+      } else {
+        toast({ variant: 'destructive', description: res.error ?? 'Errore.' });
+      }
+    },
+  });
+
   const addNote = useMutation({
     mutationFn: () => createCandidateNoteAction({ candidateId: candidate.id, type: noteType, content: noteContent }),
     onSuccess: () => {
@@ -142,6 +164,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
   const tabs = [
     { id: 'overview',     label: 'Profilo',    icon: <User className="w-4 h-4" /> },
     { id: 'applications', label: `Candidature (${candidate.applications?.length || 0})`, icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'matching',     label: 'Offerte compatibili', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'notes',        label: `Note (${notes.length})`, icon: <MessageSquare className="w-4 h-4" /> },
     { id: 'interviews',   label: `Colloqui (${interviews.length})`, icon: <Calendar className="w-4 h-4" /> },
     { id: 'edit',         label: 'Modifica',   icon: <Pencil className="w-4 h-4" /> },
@@ -367,6 +390,63 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── MATCHING TAB ─────────────────────────────────── */}
+      {activeTab === 'matching' && (
+        <div className="glass rounded-3xl p-6 space-y-4">
+          <h2 className="font-semibold text-primary flex items-center gap-2">
+            <Sparkles className="w-4 h-4" /> Offerte attive più compatibili
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Punteggio calcolato su CV, competenze, settore, località e ruolo. Le offerte a cui il candidato è già associato non compaiono.
+          </p>
+          {matchesLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+              <Loader2 className="w-4 h-4 animate-spin" /> Calcolo in corso…
+            </div>
+          ) : jobMatches.length === 0 ? (
+            <div className="text-center py-10 text-sm text-muted-foreground">
+              Nessuna offerta attiva compatibile al momento.
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {jobMatches.map((m) => (
+                <div key={m.jobId} className="p-4 rounded-2xl border border-border/50 bg-background/30 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/positions/${m.jobId}`} className="font-bold hover:text-primary">{m.title}</Link>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {m.company} • {m.location} • {m.sector}
+                      </div>
+                    </div>
+                    <span className={cn('text-sm font-black px-2.5 py-1 rounded-lg border shrink-0', getScoreColor(m.score))}>
+                      {m.score}%
+                    </span>
+                  </div>
+                  {m.matchedKeywords.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {m.matchedKeywords.slice(0, 8).map((k) => (
+                        <span key={k} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-semibold">{k}</span>
+                      ))}
+                      {m.missingKeywords.slice(0, 4).map((k) => (
+                        <span key={k} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground line-through">{k}</span>
+                      ))}
+                    </div>
+                  )}
+                  <Button
+                    size="sm"
+                    className="rounded-xl gap-2"
+                    disabled={assignToJob.isPending}
+                    onClick={() => assignToJob.mutate(m.jobId)}
+                  >
+                    <Plus className="w-4 h-4" /> Associa a questa offerta
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
