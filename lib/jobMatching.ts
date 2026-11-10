@@ -27,10 +27,10 @@ export type MatchJob = {
 
 export type MatchResult = {
   score: number; // 0-100
-  keywordScore: number; // 0-55
-  sectorScore: number; // 0-20
-  locationScore: number; // 0-15
-  titleScore: number; // 0-10
+  keywordScore: number; // 0-60
+  sectorScore: number; // 0-15
+  locationScore: number; // 0-10
+  titleScore: number; // 0-15
   matchedKeywords: string[];
   missingKeywords: string[];
 };
@@ -43,7 +43,9 @@ const STOPWORDS = new Set(
     "the and for with from that this are was were you your our will have has can into more most over such " +
     "esperienza requisiti richiesta richiesto richiesti conoscenza capacita buona ottima ottimo buone " +
     "gradita gradito preferibile necessaria necessario lavoro azienda posizione ricerchiamo cerchiamo candidato " +
-    "candidati risorsa risorse attivita settore ruolo anni anno"
+    "candidati risorsa risorse attivita settore ruolo anni anno " +
+    "diploma laurea titolo studio mansione mansioni principali gestionali preferenziale precisione " +
+    "comunicative competenze capacita autonomia team lingue lingua requisiti richiesti buon buona ottima"
   ).split(/\s+/)
 );
 
@@ -64,9 +66,43 @@ export function tokenize(text: string | null | undefined): string[] {
     .filter((t) => t.length >= 3 && !STOPWORDS.has(t) && !/^\d+$/.test(t));
 }
 
-function includesEither(a: string, b: string): boolean {
-  if (!a || !b) return false;
-  return a === b || a.includes(b) || b.includes(a);
+/**
+ * Radice approssimata di una parola: toglie le vocali finali e tronca a 6
+ * caratteri, cosi "docente/docenti/docenza" e "insegnante/insegnamento"
+ * collassano sulla stessa radice.
+ */
+export function stem(token: string): string {
+  if (token.length <= 4) return token;
+  const noVowel = token.replace(/[aeiou]+$/, "");
+  return (noVowel.length >= 4 ? noVowel : token).slice(0, 6);
+}
+
+/** Mappa radice -> prima parola originale (per mostrare parole leggibili). */
+function stemMap(tokens: string[]): Map<string, string> {
+  const m = new Map<string, string>();
+  for (const t of tokens) {
+    const st = stem(t);
+    if (!m.has(st)) m.set(st, t);
+  }
+  return m;
+}
+
+const GENERIC_SECTOR = new Set(["definire", "altro", "generale", "varie"]);
+
+function sectorStems(text: string | null | undefined): Set<string> {
+  return new Set(
+    tokenize(text)
+      .filter((t) => !GENERIC_SECTOR.has(t))
+      .map(stem)
+  );
+}
+
+function isRemote(job: MatchJob): "full" | "hybrid" | null {
+  const t = normalize(`${job.remoteType ?? ""} ${job.mode ?? ""} ${job.location ?? ""}`);
+  if (/(non|no)\s+remot|on ?site|in sede|in presenza/.test(t)) return null;
+  if (/ibrid|hybrid/.test(t)) return "hybrid";
+  if (/remot|smart ?working|da casa/.test(t)) return "full";
+  return null;
 }
 
 export function scoreCandidateForJob(candidate: MatchCandidate, job: MatchJob): MatchResult {
@@ -79,36 +115,45 @@ export function scoreCandidateForJob(candidate: MatchCandidate, job: MatchJob): 
   ]
     .filter(Boolean)
     .join(" ");
-  const candidateTokens = new Set(tokenize(candidateText));
+  const candidateStems = new Set(tokenize(candidateText).map(stem));
 
-  // Parole chiave dell'offerta: titolo, requisiti e mansioni.
-  const jobKeywordText = [job.title, job.requirements, job.responsibilities].filter(Boolean).join(" ");
-  const jobKeywords = Array.from(new Set(tokenize(jobKeywordText))).slice(0, 40);
+  // Parole chiave dell'offerta (per radice): titolo, requisiti e mansioni.
+  const jobTokens = Array.from(
+    new Set(tokenize([job.title, job.requirements, job.responsibilities].filter(Boolean).join(" ")))
+  );
+  const jobStems = stemMap(jobTokens);
+  const stemList = Array.from(jobStems.keys()).slice(0, 40);
 
-  const matched = jobKeywords.filter((k) => candidateTokens.has(k));
-  const missing = jobKeywords.filter((k) => !candidateTokens.has(k));
-  const keywordScore = jobKeywords.length ? Math.round((matched.length / jobKeywords.length) * 55) : 0;
+  const matchedStems = stemList.filter((k) => candidateStems.has(k));
+  const missingStems = stemList.filter((k) => !candidateStems.has(k));
+  const rawKeywordScore = stemList.length ? (matchedStems.length / stemList.length) * 60 : 0;
 
-  // Settore
-  const cSector = normalize(candidate.sector ?? "");
-  const jSectors = [job.sector, job.category].map((s) => normalize(s ?? "")).filter(Boolean);
-  const sectorScore = jSectors.some((s) => includesEither(cSector, s)) ? 20 : 0;
+  // Settore: sovrapposizione di radici ("Istruzione e Formazione" ~ "Formazione/Docenza").
+  const cSector = sectorStems(candidate.sector);
+  const jSector = new Set([...sectorStems(job.sector), ...sectorStems(job.category)]);
+  const sectorScore = Array.from(cSector).some((s) => jSector.has(s)) ? 15 : 0;
 
-  // Localita
+  // Localita: la citta dell'offerta e spesso vuota, quindi si cerca la citta/provincia
+  // del candidato anche nella sede e nel titolo dell'annuncio.
+  const jobPlace = normalize(`${job.city ?? ""} ${job.location ?? ""} ${job.title}`);
   const cCity = normalize(candidate.city ?? "");
-  const jCity = normalize(job.city ?? job.location ?? "");
-  const remote = /remot/i.test(`${job.remoteType ?? ""} ${job.mode ?? ""}`);
+  const cProv = normalize(candidate.province ?? "");
   let locationScore = 0;
-  if (remote) locationScore = 15;
-  else if (cCity && jCity && includesEither(cCity, jCity)) locationScore = 15;
-  else if (candidate.province && job.province && normalize(candidate.province) === normalize(job.province))
-    locationScore = 8;
+  const remote = isRemote(job);
+  if (remote === "full") locationScore = 10;
+  else if (cCity.length >= 3 && jobPlace.includes(cCity)) locationScore = 10;
+  else if (remote === "hybrid") locationScore = 6;
+  else if (cProv.length >= 2 && new RegExp(`\\b${cProv}\\b`).test(jobPlace)) locationScore = 6;
 
-  // Ruolo del candidato vs titolo dell'offerta
-  const titleTokens = Array.from(new Set(tokenize(job.title)));
-  const roleTokens = new Set(tokenize(candidate.role));
-  const titleHits = titleTokens.filter((t) => roleTokens.has(t)).length;
-  const titleScore = titleTokens.length ? Math.round((titleHits / titleTokens.length) * 10) : 0;
+  // Ruolo del candidato vs titolo dell'offerta (per radice).
+  const titleStems = Array.from(new Set(tokenize(job.title).map(stem)));
+  const roleStems = new Set(tokenize(candidate.role).map(stem));
+  const titleHits = titleStems.filter((t) => roleStems.has(t)).length;
+  const titleScore = titleStems.length ? Math.round((titleHits / titleStems.length) * 15) : 0;
+
+  // Senza alcun riscontro su settore o ruolo, le sole parole in comune (spesso
+  // generiche, in CV molto lunghi) pesano meno.
+  const keywordScore = Math.round(sectorScore === 0 && titleScore === 0 ? rawKeywordScore * 0.6 : rawKeywordScore);
 
   const score = Math.min(100, keywordScore + sectorScore + locationScore + titleScore);
 
@@ -118,7 +163,7 @@ export function scoreCandidateForJob(candidate: MatchCandidate, job: MatchJob): 
     sectorScore,
     locationScore,
     titleScore,
-    matchedKeywords: matched.slice(0, 10),
-    missingKeywords: missing.slice(0, 8),
+    matchedKeywords: matchedStems.slice(0, 10).map((k) => jobStems.get(k)!),
+    missingKeywords: missingStems.slice(0, 8).map((k) => jobStems.get(k)!),
   };
 }
