@@ -7,6 +7,12 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const TEACHER_SOURCE = "Long List Docenti";
+
+// Un candidato già in archivio che si iscrive alla Long List mantiene la
+// fonte originale, ma riceve in `notes` il blocco "[Long List Docenti — ...]".
+export function isLongListCandidate(c: { source?: string | null; notes?: string | null }) {
+  return c.source === TEACHER_SOURCE || !!c.notes?.includes(`[${TEACHER_SOURCE}`);
+}
 const LONG_LIST_TITLE = "Long List";
 
 interface JobFoldersProps {
@@ -20,7 +26,7 @@ function JobFolders({ candidates }: JobFoldersProps) {
   // cima (le chiavi oggetto non numeriche mantengono l'ordine di inserimento).
   const groupedByJob: Record<string, CandidateType[]> = { [LONG_LIST_TITLE]: [] };
   candidates.forEach(c => {
-    if (c.source === TEACHER_SOURCE) {
+    if (isLongListCandidate(c)) {
       groupedByJob[LONG_LIST_TITLE].push(c);
       return;
     }
