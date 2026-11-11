@@ -36,7 +36,7 @@ async function OnboardingPage() {
       title:      String(formData.get("title") ?? ""),
       dueDate:    String(formData.get("dueDate") ?? ""),
     });
-    revalidatePath("/onboarding");
+    revalidatePath("/inserimento");
   }
 
   async function updateStatus(formData: FormData) {
@@ -45,7 +45,7 @@ async function OnboardingPage() {
     const status = String(formData.get("status") ?? "") as OnboardingTaskStatus;
     if (!taskId || !statuses.includes(status)) return;
     await updateOnboardingTaskStatusAction(taskId, status);
-    revalidatePath("/onboarding");
+    revalidatePath("/inserimento");
   }
 
   return (

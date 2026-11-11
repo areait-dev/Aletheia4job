@@ -99,7 +99,7 @@ function EditCandidateForm({ candidateId }: { candidateId: string }) {
       queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
       queryClient.invalidateQueries({ queryKey: ['sectors'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
-      router.push('/jobs'); 
+      router.push('/archivio'); 
     },
   });
 

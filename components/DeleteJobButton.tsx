@@ -22,7 +22,7 @@ export default function DeleteJobButton({ jobId, jobTitle }: { jobId: string, jo
       const result = await deleteJobAction(jobId);
       if (result.success) {
         toast({ description: "Posizione eliminata con successo." });
-        router.push("/positions");
+        router.push("/posizioni");
       } else {
         toast({
           description: result.reason === "forbidden"

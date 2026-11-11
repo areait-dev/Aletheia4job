@@ -30,7 +30,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <Link 
-            href="/positions" 
+            href="/posizioni" 
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-2"
           >
             <ArrowLeft className="w-4 h-4" /> Torna alle posizioni
@@ -51,7 +51,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             <ExternalLink className="w-4 h-4" /> Vedi Career Page
           </Link>
           <Link
-            href={`/positions/${job.id}/edit`}
+            href={`/posizioni/${job.id}/modifica`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
           >
             Modifica
@@ -95,7 +95,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             <div className="text-xs text-muted-foreground line-clamp-6 leading-relaxed">
               {job.requirements}
             </div>
-            <Link href={`/positions/${job.id}/edit`} className="text-xs font-bold text-primary hover:underline block">
+            <Link href={`/posizioni/${job.id}/modifica`} className="text-xs font-bold text-primary hover:underline block">
               Modifica requisiti →
             </Link>
           </div>

@@ -90,6 +90,10 @@ export function LoginForm() {
             </div>
           </div>
 
+          <div className="text-right -mt-1">
+            <a href="/reimposta-password" className="text-xs font-bold text-primary hover:underline">Password dimenticata?</a>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

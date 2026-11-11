@@ -25,7 +25,7 @@ async function InviteAcceptPage({
 }) {
   const { userId, email } = await resolveUser();
 
-  const loginHref = `/login?redirect_url=${encodeURIComponent(`/invite/${params.token}`)}`;
+  const loginHref = `/login?redirect_url=${encodeURIComponent(`/invito/${params.token}`)}`;
 
   async function acceptInvite() {
     "use server";
@@ -33,7 +33,7 @@ async function InviteAcceptPage({
     if (result.ok) {
       redirect("/dashboard");
     }
-    redirect(`/invite/${params.token}?error=${encodeURIComponent(result.error ?? "Errore sconosciuto")}`);
+    redirect(`/invito/${params.token}?error=${encodeURIComponent(result.error ?? "Errore sconosciuto")}`);
   }
 
   return (

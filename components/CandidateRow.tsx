@@ -15,7 +15,7 @@ export default function CandidateRow({ candidate }: { candidate: CandidateType }
 
   return (
     <Link
-      href={`/jobs/${candidate.id}`}
+      href={`/archivio/${candidate.id}`}
       className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white border border-slate-100 hover:border-primary/30 hover:shadow-sm transition-all group"
     >
       <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">

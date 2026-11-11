@@ -130,7 +130,7 @@ function CandidateCard({ candidate }: { candidate: CandidateType }) {
 
   return (
     <Link
-      href={`/jobs/${candidate.id}`}
+      href={`/archivio/${candidate.id}`}
       className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
     >
       {/* Header: avatar + name/role (left), badges (right) */}

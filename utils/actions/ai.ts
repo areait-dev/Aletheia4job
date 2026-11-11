@@ -60,8 +60,8 @@ export async function retryCvParsingAction(applicationId: string) {
       },
     });
 
-    revalidatePath(`/positions/${application.job.id}`);
-    revalidatePath(`/jobs/${application.candidateId}`);
+    revalidatePath(`/posizioni/${application.job.id}`);
+    revalidatePath(`/archivio/${application.candidateId}`);
 
     return { ok: true };
   } catch (error) {

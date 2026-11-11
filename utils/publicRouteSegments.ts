@@ -4,8 +4,8 @@
 // hanno già la propria UI equivalente (vedi Navbar.tsx) o non sono nel
 // perimetro del sito pubblico.
 export const DASHBOARD_ROUTE_SEGMENTS = [
-  'dashboard', 'jobs', 'positions', 'add-candidate', 'admin', 'attendance',
-  'calendar', 'documents', 'employees', 'onboarding', 'performance', 'pipeline', 'stats',
+  'dashboard', 'archivio', 'posizioni', 'nuovo-candidato', 'amministrazione', 'presenze',
+  'calendario', 'documenti', 'dipendenti', 'inserimento', 'valutazioni', 'selezione', 'statistiche',
 ];
 
 export function isDashboardRoute(pathname: string): boolean {

@@ -147,7 +147,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
 
       <div className="mt-4 pt-4 border-t flex gap-2">
         <Link
-          href={`/jobs/${candidate.id}`}
+          href={`/archivio/${candidate.id}`}
           className="flex-1 px-3 py-1.5 text-xs font-medium text-center text-white bg-primary rounded hover:bg-primary/90 transition-colors"
         >
           Vedi Dettaglio

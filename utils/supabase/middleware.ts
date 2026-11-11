@@ -62,7 +62,7 @@ export async function updateSession(request: NextRequest) {
   // Protect routes conditionally based on authentication
   const isAuthRoute    = request.nextUrl.pathname.startsWith('/login') ||
                          request.nextUrl.pathname.startsWith('/aziende/registrati')
-  const isInviteRoute  = request.nextUrl.pathname.startsWith('/invite/')
+  const isInviteRoute  = request.nextUrl.pathname.startsWith('/invito/')
   const isCareersRoute = request.nextUrl.pathname.startsWith('/offerte-di-lavoro') ||
                          request.nextUrl.pathname.startsWith('/registrazione') ||
                          request.nextUrl.pathname.startsWith('/diventa-docente') ||
@@ -70,13 +70,17 @@ export async function updateSession(request: NextRequest) {
                          request.nextUrl.pathname.startsWith('/cookie-policy') ||
                          request.nextUrl.pathname.startsWith('/aziende/termini') ||
                          request.nextUrl.pathname.startsWith('/aziende/privacy-azienda')
+  // Richiesta del link di recupero: pubblica. La pagina /reimposta-password/nuova
+  // richiede invece la sessione di recupero creata da /auth/callback.
+  const isResetRequestRoute = request.nextUrl.pathname === '/reimposta-password'
+  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
   const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
                          request.nextUrl.pathname === '/sitemap.xml'
   const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||
                          request.nextUrl.pathname.startsWith('/api/upload-cv') ||
                          request.nextUrl.pathname.startsWith('/api/public/')
 
-  if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isSeoRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
+  if (!user && !isAuthRoute && !isInviteRoute && !isCareersRoute && !isResetRequestRoute && !isAuthCallback && !isSeoRoute && !isApiRoute && request.nextUrl.pathname !== '/') {
     // If not authenticated and not on an auth route, redirect to login
     const url = request.nextUrl.clone()
     url.pathname = '/login'

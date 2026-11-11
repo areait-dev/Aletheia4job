@@ -233,7 +233,7 @@ const SortableCandidateCard = React.memo(function SortableCandidateCard({ candid
       <div className='glass p-3 rounded-2xl border-white/10 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 w-[220px] shrink-0'>
         <div className='flex justify-between items-start mb-2.5'>
           <Link 
-            href={`/jobs/${candidate.id}`}
+            href={`/archivio/${candidate.id}`}
             className='font-bold text-[13px] hover:text-primary transition-colors line-clamp-1 flex-1 pr-2 leading-tight'
           >
             {candidate.firstName} {candidate.lastName}

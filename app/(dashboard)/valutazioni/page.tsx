@@ -44,7 +44,7 @@ async function PerformancePage() {
       startsAt: String(formData.get("startsAt") ?? ""),
       endsAt:   String(formData.get("endsAt") ?? ""),
     });
-    revalidatePath("/performance");
+    revalidatePath("/valutazioni");
   }
 
   async function saveReview(formData: FormData) {
@@ -55,7 +55,7 @@ async function PerformancePage() {
       score:         Number(formData.get("score") ?? 0),
       summary:       String(formData.get("summary") ?? ""),
     });
-    revalidatePath("/performance");
+    revalidatePath("/valutazioni");
   }
 
   return (

@@ -134,6 +134,9 @@ model Candidate {
 
   @@unique([organizationId, email])
   @@index([organizationId, userId])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, status])
+  @@index([organizationId, sector])
   // Aggiungiamo un indice per ordinare rapidamente per score
   @@index([matchingScore(sort: Desc)]) 
 }
@@ -277,6 +280,7 @@ model Job {
   publicFunnelEvents  PublicFunnelEvent[]
 
   @@index([organizationId, userId])
+  @@index([organizationId, status, isActive])
 }
 
 // Eventi minimali del funnel di candidatura pubblico (visualizzazione annuncio,

@@ -262,7 +262,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['charts'] });
 
-      router.push('/positions');
+      router.push('/posizioni');
     },
   });
 

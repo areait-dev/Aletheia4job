@@ -90,7 +90,7 @@ function CreateCandidateForm() {
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
       queryClient.invalidateQueries({ queryKey: ['sectors'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
-      router.push('/jobs'); // Redirect to candidate list
+      router.push('/archivio'); // Redirect to candidate list
     },
   });
 

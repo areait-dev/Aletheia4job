@@ -42,7 +42,7 @@ async function AdminPage({
     const role = String(formData.get("role") ?? "") as MembershipRole;
     if (!membershipId || !roles.includes(role)) return;
     await updateMemberRoleAction(membershipId, role);
-    revalidatePath("/admin");
+    revalidatePath("/amministrazione");
   }
 
   async function createInvite(formData: FormData) {
@@ -51,7 +51,7 @@ async function AdminPage({
     const role = String(formData.get("role") ?? "") as MembershipRole;
     if (!email || !roles.includes(role)) return;
     await createMemberInviteAction(email, role);
-    revalidatePath("/admin");
+    revalidatePath("/amministrazione");
   }
 
   async function revokeInvite(formData: FormData) {
@@ -59,7 +59,7 @@ async function AdminPage({
     const inviteId = String(formData.get("inviteId") ?? "");
     if (!inviteId) return;
     await revokeMemberInviteAction(inviteId);
-    revalidatePath("/admin");
+    revalidatePath("/amministrazione");
   }
 
   async function resendInvite(formData: FormData) {
@@ -67,13 +67,13 @@ async function AdminPage({
     const inviteId = String(formData.get("inviteId") ?? "");
     if (!inviteId) return;
     await resendMemberInviteAction(inviteId);
-    revalidatePath("/admin");
+    revalidatePath("/amministrazione");
   }
 
   return (
     <section className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold">Tenant Admin</h1>
+        <h1 className="text-2xl font-bold">Amministrazione</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Organization: <span className="font-semibold">{context.organizationName}</span> - Role:{" "}
           <span className="font-semibold">{context.role}</span>
@@ -215,7 +215,7 @@ async function AdminPage({
             </p>
           </div>
           <div className="p-3 bg-background rounded-lg border">
-            <p className="text-xs font-bold uppercase tracking-wider mb-1">XML Job Feed (Indeed, Jooble, LinkedIn)</p>
+            <p className="text-xs font-bold uppercase tracking-wider mb-1">Feed XML offerte (Indeed, Jooble, LinkedIn)</p>
             <div className="flex items-center gap-3">
               <code className="text-xs flex-1 truncate">/api/jobs/feed?token=***</code>
               <span className="text-xs text-muted-foreground">

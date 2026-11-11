@@ -62,7 +62,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex gap-2 shrink-0">
           <Link
-            href="/add-candidate"
+            href="/nuovo-candidato"
             className="group h-10 px-5 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97]"
           >
             <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -79,17 +79,17 @@ export default async function DashboardPage() {
         <div className="p-5 grid sm:grid-cols-2 gap-x-8 gap-y-6">
           <ul className="space-y-2 text-sm">
             <li>
-              <Link href="/jobs" className="hover:text-primary">
+              <Link href="/archivio" className="hover:text-primary">
                 <strong className="text-primary">{stats.totalCandidates}</strong> candidati in archivio
               </Link>
             </li>
             <li>
-              <Link href="/positions" className="hover:text-primary">
+              <Link href="/posizioni" className="hover:text-primary">
                 <strong className="text-primary">{openPositions}</strong> posizioni aperte su {jobs.length}
               </Link>
             </li>
             <li>
-              <Link href="/documents" className="hover:text-primary">
+              <Link href="/documenti" className="hover:text-primary">
                 <strong className="text-primary">{pendingSignatures}</strong> documenti in attesa di firma
               </Link>
             </li>
@@ -112,10 +112,10 @@ export default async function DashboardPage() {
       {/* Primary Stats Grid — 4 card su una riga con larghezze identiche */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         {[
-          { label: "Candidati Totali", value: stats.totalCandidates, icon: <Users />, color: "text-blue-600", bg: "bg-blue-500/10", href: "/jobs" },
-          { label: "Posizioni Aperte", value: openPositions, icon: <Briefcase />, color: "text-indigo-600", bg: "bg-indigo-500/10", href: "/positions" },
-          { label: "Team Attivo", value: activeEmployees, icon: <Users />, color: "text-green-600", bg: "bg-green-500/10", href: "/employees" },
-          { label: "Documenti Firma", value: pendingSignatures, icon: <Files />, color: "text-amber-600", bg: "bg-amber-500/10", href: "/documents" },
+          { label: "Candidati Totali", value: stats.totalCandidates, icon: <Users />, color: "text-blue-600", bg: "bg-blue-500/10", href: "/archivio" },
+          { label: "Posizioni Aperte", value: openPositions, icon: <Briefcase />, color: "text-indigo-600", bg: "bg-indigo-500/10", href: "/posizioni" },
+          { label: "Team Attivo", value: activeEmployees, icon: <Users />, color: "text-green-600", bg: "bg-green-500/10", href: "/dipendenti" },
+          { label: "Documenti Firma", value: pendingSignatures, icon: <Files />, color: "text-amber-600", bg: "bg-amber-500/10", href: "/documenti" },
         ].map((s, idx) => (
           <Link key={idx} href={s.href} className="glass-card group rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 flex flex-col gap-4 sm:gap-6 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
             <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform", s.bg, s.color)}>
@@ -178,7 +178,7 @@ export default async function DashboardPage() {
           
           <div className="space-y-4">
             {pendingAbsences > 0 && (
-              <Link href="/attendance" className="glass-card rounded-[2rem] p-6 flex items-center gap-4 border-amber-300/30 hover:bg-amber-50/30 dark:hover:bg-amber-500/10 transition-all duration-200">
+              <Link href="/presenze" className="glass-card rounded-[2rem] p-6 flex items-center gap-4 border-amber-300/30 hover:bg-amber-50/30 dark:hover:bg-amber-500/10 transition-all duration-200">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/15 backdrop-blur-sm text-amber-600 flex items-center justify-center shrink-0 ring-1 ring-amber-500/20">
                   <Clock className="w-6 h-6" />
                 </div>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
             )}
 
             {pendingReviews > 0 && (
-              <Link href="/performance" className="glass-card rounded-[2rem] p-6 flex items-center gap-4 border-green-300/30 hover:bg-green-50/30 dark:hover:bg-green-500/10 transition-all duration-200">
+              <Link href="/valutazioni" className="glass-card rounded-[2rem] p-6 flex items-center gap-4 border-green-300/30 hover:bg-green-50/30 dark:hover:bg-green-500/10 transition-all duration-200">
                 <div className="w-12 h-12 rounded-2xl bg-green-500/15 backdrop-blur-sm text-green-600 flex items-center justify-center shrink-0 ring-1 ring-green-500/20">
                   <Star className="w-6 h-6" />
                 </div>
@@ -204,7 +204,7 @@ export default async function DashboardPage() {
             <div className="glass-card rounded-[2rem] p-8 text-center space-y-4 bg-primary/10 border-primary/30">
                <PlusCircle className="w-10 h-10 text-primary mx-auto opacity-60" />
                <p className="text-sm font-medium text-foreground/80">Vuoi migliorare la tua ricerca? Attiva il multiposting su LinkedIn.</p>
-               <Link href="/admin" className="block text-xs font-black uppercase tracking-widest text-primary hover:underline">Configura Ora →</Link>
+               <Link href="/amministrazione" className="block text-xs font-black uppercase tracking-widest text-primary hover:underline">Configura Ora →</Link>
             </div>
           </div>
         </div>

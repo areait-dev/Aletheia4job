@@ -16,7 +16,7 @@ export default async function PositionsPage() {
           <p className="text-muted-foreground text-sm">Gestisci i job pubblicati sulla tua career page.</p>
         </div>
         <Link 
-          href="/positions/new" 
+          href="/posizioni/nuova" 
           className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-5 py-3 sm:px-4 sm:py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" /> Nuova Posizione
@@ -33,7 +33,7 @@ export default async function PositionsPage() {
             <p className="text-sm text-muted-foreground">Inizia creando la tua prima offerta di lavoro.</p>
           </div>
           <Link 
-            href="/positions/new" 
+            href="/posizioni/nuova" 
             className="text-primary text-sm font-semibold hover:underline"
           >
             Crea ora →
@@ -44,7 +44,7 @@ export default async function PositionsPage() {
           {jobs.map((job: any) => (
             <Link 
               key={job.id} 
-              href={`/positions/${job.id}`}
+              href={`/posizioni/${job.id}`}
               className="group glass rounded-2xl p-5 hover:border-primary/30 transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden"
             >
               <div className="flex items-center gap-4 flex-1 min-w-0">

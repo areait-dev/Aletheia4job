@@ -59,7 +59,7 @@ export default function JobMatchingCandidates({ jobId }: { jobId: string }) {
             <div key={m.candidateId} className="p-4 rounded-2xl border border-border/50 bg-background/30 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <Link href={`/jobs/${m.candidateId}`} className="font-bold hover:text-primary">
+                  <Link href={`/archivio/${m.candidateId}`} className="font-bold hover:text-primary">
                     {m.name}
                   </Link>
                   <div className="text-xs text-muted-foreground mt-0.5">

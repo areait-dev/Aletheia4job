@@ -174,7 +174,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Back + Header */}
       <div className="flex items-center gap-3">
-        <Link href="/jobs" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors">
+        <Link href="/archivio" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="w-4 h-4" /> Archivio
         </Link>
         <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
@@ -379,7 +379,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
                         {app.status}
                       </span>
                       <Link 
-                        href={`/positions/${app.jobId}`}
+                        href={`/posizioni/${app.jobId}`}
                         className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all"
                       >
                         <ChevronRight className="w-5 h-5" />
@@ -416,7 +416,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
                 <div key={m.jobId} className="p-4 rounded-2xl border border-border/50 bg-background/30 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <Link href={`/positions/${m.jobId}`} className="font-bold hover:text-primary">{m.title}</Link>
+                      <Link href={`/posizioni/${m.jobId}`} className="font-bold hover:text-primary">{m.title}</Link>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {m.company} • {m.location} • {m.sector}
                       </div>
@@ -630,7 +630,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
             <Button onClick={saveEdit} disabled={isPending} className="rounded-xl gap-2">
               {isPending ? 'Salvataggio…' : 'Salva Modifiche'}
             </Button>
-            <Link href={`/jobs/${candidate.id}/edit`}>
+            <Link href={`/archivio/${candidate.id}/modifica`}>
               <Button variant="outline" className="rounded-xl gap-2">
                 <Pencil className="w-4 h-4" /> Modifica Completa
               </Button>

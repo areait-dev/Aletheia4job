@@ -64,7 +64,7 @@ export default function PositionApplicationsList({
                 </div>
                 <div className="min-w-0">
                   <Link
-                    href={`/jobs/${app.candidateId}`}
+                    href={`/archivio/${app.candidateId}`}
                     className="font-bold hover:text-primary transition-colors block truncate"
                   >
                     {app.candidate.firstName} {app.candidate.lastName}
@@ -130,7 +130,7 @@ export default function PositionApplicationsList({
                   currentStatus={app.status}
                 />
                 <Link
-                  href={`/jobs/${app.candidateId}`}
+                  href={`/archivio/${app.candidateId}`}
                   className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
