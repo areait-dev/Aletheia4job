@@ -14,6 +14,7 @@ import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
 import { logFunnelEvent } from "./funnelEvents";
 import { validateCvForOrganization } from "../cvStorage";
+import { removeCvFileAfterCandidateDelete } from "../cvFileCleanup";
 
 // Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
 // il proprietario destinatari sono fissati via env, perché la piattaforma è
@@ -381,20 +382,32 @@ export async function getChartsDataAction() {
 export async function deleteCandidateAction(candidateId: string): Promise<boolean> {
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return false;
+  const removed: { cvUrl: string | null } = { cvUrl: null };
   try {
     await prisma.$transaction(async (tx) => {
+      const existing = await tx.candidate.findFirst({
+        where: { id: candidateId, organizationId },
+        select: { cvUrl: true },
+      });
       const result = await tx.candidate.deleteMany({
         where: { id: candidateId, organizationId },
       });
       if (result.count > 0) {
+        removed.cvUrl = existing?.cvUrl ?? null;
         await createAuditLogEntry({ userId, organizationId, action: AuditAction.DELETE, entity: "candidate", entityId: candidateId }, tx);
       }
     });
-    return true;
   } catch (error) {
     logger.error("Errore eliminazione candidato", error, { candidateId });
     return false;
   }
+
+  // Solo dopo il commit: il file del CV si elimina quando il candidato non esiste più nel database.
+  // Se l'eliminazione del file fallisce viene registrata e ritentata; per l'utente il candidato resta eliminato.
+  if (removed.cvUrl) {
+    await removeCvFileAfterCandidateDelete(removed.cvUrl, { candidateId, organizationId, userId });
+  }
+  return true;
 }
 
 // NOTES

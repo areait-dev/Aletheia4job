@@ -126,3 +126,45 @@ export async function downloadCv(cvUrl: string): Promise<Buffer> {
   }
   return Buffer.from(await data.arrayBuffer());
 }
+
+// ─── Eliminazione dei file ───────────────────────────────────────────────────────────────
+
+const DELETABLE_BUCKETS = new Set([CV_BUCKET, "candidates"]);
+
+export type CvDeleteResult = { ok: true; skipped?: string } | { ok: false; error: string };
+
+/**
+ * Elimina il file di un CV dallo Storage (idempotente: se il file non esiste non è un errore).
+ * Non tocca mai URL esterni né bucket diversi da quelli dei CV.
+ */
+export async function deleteCvFile(cvUrl: string | null | undefined): Promise<CvDeleteResult> {
+  const ref = resolveCvRef(cvUrl);
+  if (!ref) return { ok: true, skipped: "nessun file" };
+  if (ref.kind === "external") return { ok: true, skipped: "URL esterno" };
+  if (!DELETABLE_BUCKETS.has(ref.bucket)) return { ok: true, skipped: `bucket ${ref.bucket} non gestito` };
+
+  try {
+    const supabase = createServiceClient();
+    const { error } = await supabase.storage.from(ref.bucket).remove([ref.path]);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "errore sconosciuto" };
+  }
+}
+
+/** Come deleteCvFile, con qualche tentativo ravvicinato (attesa crescente). */
+export async function deleteCvFileWithRetry(
+  cvUrl: string | null | undefined,
+  options: { attempts?: number; baseDelayMs?: number } = {},
+): Promise<CvDeleteResult & { attempts: number }> {
+  const attempts = Math.max(1, options.attempts ?? 3);
+  const base = options.baseDelayMs ?? 300;
+  let last: CvDeleteResult = { ok: false, error: "non eseguito" };
+  for (let i = 1; i <= attempts; i++) {
+    last = await deleteCvFile(cvUrl);
+    if (last.ok) return { ...last, attempts: i };
+    if (i < attempts && base > 0) await new Promise((r) => setTimeout(r, base * i));
+  }
+  return { ...last, attempts };
+}

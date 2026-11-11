@@ -6,6 +6,11 @@ import { CV_BUCKET } from '@/utils/cvStorage';
 import { detectImageType, EXT_FOR_TYPE } from '@/utils/imageSignature';
 
 const LOGO_BUCKET = 'logos';
+const CV_CONTENT_TYPE_BY_EXT: Record<string, string> = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
 const CONTENT_TYPE_FOR_IMAGE = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' } as const;
 
 export const dynamic = 'force-dynamic';
@@ -82,7 +87,8 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    let contentType: string | undefined = file.type || undefined;
+    // Il bucket `cvs` accetta solo PDF/DOC/DOCX: il tipo si deduce dall'estensione (alcuni browser inviano un tipo vuoto o generico).
+    let contentType: string | undefined = bucketName === CV_BUCKET ? CV_CONTENT_TYPE_BY_EXT[ext] : file.type || undefined;
 
     // Bucket pubblico `logos`: solo immagini vere, solo da utenti loggati, mai CV o altri dati personali.
     if (bucketName === LOGO_BUCKET) {
