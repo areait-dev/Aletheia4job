@@ -47,7 +47,7 @@ Alternativa da PowerShell (stesso risultato; non l'ho eseguita io): `New-Schedul
 
 ## Richieste di cancellazione dei dati (GDPR)
 **I file cancellati da Supabase restano nella copia locale**, perché lo script non cancella mai nulla; restano anche le versioni vecchie in `_versioni`.
-Quando un candidato chiede la cancellazione dei suoi dati, oltre che da Supabase (candidato e file in Storage) il CV va **eliminato a mano anche dalla copia locale**:
+Da novembre 2026 eliminare un candidato nell'app elimina anche il suo CV dallo Storage di Supabase. Resta da fare a mano la copia locale. Quando un candidato chiede la cancellazione dei suoi dati, oltre che da Supabase (candidato e file in Storage) il CV va **eliminato a mano anche dalla copia locale**:
 1. Cancella prima il candidato e il file nell'app/su Supabase (se elimini solo in locale, il backup lo riscarica al giro successivo).
 2. Trova il percorso del file: è il valore di `Candidate.cvUrl` prima della cancellazione (`<organizationId>/<file>.pdf`).
 3. Elimina `backup-db\storage\cvs\<organizationId>\<file>.pdf` e le copie con lo stesso nome sotto `backup-db\storage\_versioni\*\cvs\...` (cerca il nome del file dentro `_versioni`).

@@ -69,7 +69,8 @@ inngest.createFunction({ id: "retention-sweep", concurrency: 1 }, { cron: "0 3 *
 - **Prerequisiti:** Resend configurato con mittente verificato; testo dell'avviso approvato; candidati esistenti marcati con la politica.
 
 ### 2.4 Correzioni indipendenti, da fare subito (piccole)
-- `deleteCandidateAction`: eliminare anche il file in Storage (oggi resta). Stessa cosa per l'eliminazione massiva, se esiste.
+- ✅ **Fatto il 12/11/2026:** `deleteCandidateAction` elimina anche il file in Storage dopo il commit, con tentativi, registrazione del fallimento e nuovo tentativo via Inngest; funzione giornaliera di pulizia dei caricamenti abbandonati (in simulazione); limiti del bucket `cvs`. Vedi `docs/sicurezza-2026-11.md`, sezioni 9 e 10.
+- (Vecchio punto) `deleteCandidateAction`: eliminare anche il file in Storage (oggi resta). Stessa cosa per l'eliminazione massiva, se esiste.
 - Link all'informativa nel form di candidatura a un annuncio.
 - File orfani: non cancellare in automatico; produrre un report mensile (file in `cvs` non referenziati da nessun `cvUrl` da più di 30 giorni) da rivedere a mano.
 - (Facoltativo) Impostare sul bucket `cvs` il limite di 5 MB e i tipi MIME consentiti, come già in `candidates`.
