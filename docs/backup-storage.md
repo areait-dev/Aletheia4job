@@ -36,12 +36,11 @@ I file sono comunque cifrati sul nostro lato prima dell'invio, quindi il fornito
    ```
    **Salva password e salt (le stringhe originali, non solo quelle offuscate) in un password manager fuori da GitHub, subito, prima di usarli.**
    GitHub non mostra più un segreto dopo averlo salvato: se perdi la copia nel password manager, i backup non si possono più decifrare.
-6. **Environment `backup`** (Settings → Environments → New environment → `backup`). Tutti i segreti qui sotto vanno **dentro l'Environment** (Environment secrets), **non** tra i segreti generici del repository:
-   - **Required reviewers**: aggiungi te stesso (e un secondo amministratore, se c'è) come revisore obbligatorio.
-   - **Deployment branches**: "Selected branches" → solo `main`.
-   - Un job riceve i segreti solo se dichiara `environment: backup` (il workflow lo fa) e solo dopo l'approvazione, quando è richiesta.
-   **Attenzione, conflitto con l'esecuzione automatica:** con un revisore obbligatorio, ogni esecuzione, **anche quella pianificata notturna, resta in attesa finché qualcuno la approva**. Il backup non è più automatico: se nessuno approva, non parte e non arriva nessuna email (il job non è fallito, è in attesa).
-   Scelte possibili: (a) tenere il revisore e usare il workflow solo a mano, approvando ogni esecuzione; (b) per il backup notturno non presidiato togliere il revisore e tenere la restrizione al solo ramo `main`, che con la protezione del ramo e i permessi di scrittura limitati è la protezione che resta. Consiglio (b) per l'esecuzione pianificata e la regola revisore per il resto. Decidi tu: per ora il file è impostato sull'Environment e, se aggiungi il revisore, vale (a).
+6. **Environment `backup`** (Settings → Environments → New environment → `backup`). Tutti i segreti qui sotto vanno **dentro l'Environment** (Environment secrets), **non** tra i segreti generici del repository.
+   - **Deployment branches and tags**: "Selected branches and tags" → solo `main`. Un job lanciato da qualunque altro ramo non riceve i segreti.
+   - **Nessun revisore obbligatorio** (scelta consapevole): con un revisore ogni esecuzione, anche quella notturna, resterebbe in attesa di approvazione e il backup non sarebbe più automatico.
+     La protezione si basa invece sul ramo `main` (vedi "Protezione del repository" sotto).
+   - Un job riceve i segreti solo se dichiara `environment: backup` (il workflow lo fa).
    Segreti:
    | Nome | Valore |
    |---|---|
@@ -61,7 +60,11 @@ Il workflow copia `cvs` e `candidates`. Il bucket pubblico `logos` non è inclus
   i suoi unici trigger sono l'avvio manuale (`workflow_dispatch`) e la pianificazione, che usano il codice del ramo predefinito. Non va mai aggiunto `pull_request_target`.
   Verifica in Settings → Actions → General → "Fork pull request workflows from outside collaborators": scegli "Require approval for all outside collaborators".
   Questa è la garanzia documentata di GitHub; non l'ho potuta provare da qui con una pull request di un fork.
-- **Environment `backup`:** solo il job che lo dichiara legge i segreti, solo dal ramo `main`; chi può scrivere su `main` può modificare il workflow, quindi tieni limitati i permessi di scrittura e attiva la protezione del ramo `main`.
+- **Environment `backup`:** solo il job che lo dichiara legge i segreti, e solo se gira dal ramo `main`.
+- **Protezione del repository (necessaria, perché non c'è un revisore):** chi può scrivere su `main` può modificare il workflow e leggere i segreti dell'Environment. Quindi:
+  - Settings → Branches → regola per `main`: **blocca i force push** e **blocca la cancellazione del ramo**; se lavori in più persone attiva anche "Require a pull request before merging".
+  - Settings → Collaborators and teams: **permesso di scrittura al minimo** (solo chi serve davvero; gli altri in sola lettura o "Triage"). Controlla anche chi è amministratore: gli amministratori possono modificare l'Environment e i segreti.
+  - Facoltativo: file `CODEOWNERS` con `/.github/workflows/ @<tuo-utente>` e "Require review from Code Owners" nella regola di `main`, così le modifiche ai workflow richiedono la tua approvazione.
 - **Chiavi S3 di Supabase:** accesso completo allo Storage, non limitabile; ruotale se sospetti una fuga (Project Settings → Storage → S3 Connection).
 - **Password e salt di cifratura:** copia anche in un password manager fuori da GitHub (passo 5). Non servono altrove.
 
