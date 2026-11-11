@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/utils/supabase/service';
+import { dbUnscoped } from '@/utils/db';
+import { getAuthContext } from '@/utils/authz';
+import { CV_BUCKET } from '@/utils/cvStorage';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +13,20 @@ const ALLOWED_EXT_BY_BUCKET: Record<(typeof ALLOWED_BUCKETS)[number], Set<string
   cvs: new Set(['pdf', 'doc', 'docx']),
   logos: new Set(['png', 'jpg', 'jpeg', 'svg', 'webp']),
 };
+
+// L'organizzazione del file è sempre derivata lato server (mai dal client):
+//  1) dall'annuncio (jobId) nei form pubblici di candidatura,
+//  2) dalla sessione dell'utente loggato (upload dal gestionale),
+//  3) dalle env dedicate ai form pubblici senza annuncio (spontanea / long list).
+async function resolveUploadOrganizationId(jobId: string | null): Promise<string | null> {
+  if (jobId) {
+    const job = await dbUnscoped.job.findUnique({ where: { id: jobId }, select: { organizationId: true } });
+    return job?.organizationId ?? null;
+  }
+  const auth = await getAuthContext().catch(() => null);
+  if (auth) return auth.organizationId;
+  return process.env.TEACHER_LONGLIST_ORG_ID || process.env.PUBLIC_SPONTANEOUS_ORG_ID || null;
+}
 
 function isBucketNotFound(message: string) {
   return /bucket not found/i.test(message);
@@ -23,7 +40,9 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
-    const bucketName = String(formData.get('bucket') ?? 'candidates');
+    const requestedBucket = String(formData.get('bucket') ?? CV_BUCKET);
+    // I CV vanno sempre nel bucket privato `cvs`: `candidates` non è più usato.
+    const bucketName = requestedBucket === 'logos' ? 'logos' : CV_BUCKET;
     const jobId = formData.get('jobId') as string | null;
     console.log('Tentativo upload bucket:', bucketName, 'jobId:', jobId);
 
@@ -31,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File mancante' }, { status: 400 });
     }
 
-    if (!ALLOWED_BUCKETS.includes(bucketName as (typeof ALLOWED_BUCKETS)[number])) {
+    if (!ALLOWED_BUCKETS.includes(requestedBucket as (typeof ALLOWED_BUCKETS)[number])) {
       return NextResponse.json({ error: 'Bucket non consentito' }, { status: 400 });
     }
 
@@ -47,11 +66,16 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient();
     const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${ext}`;
-    const filePath = bucketName === 'candidates'
-      ? `cvs/${fileName}`
-      : jobId
-        ? `${jobId}/${fileName}`
-        : fileName;
+    let filePath = fileName;
+    if (bucketName === CV_BUCKET) {
+      const organizationId = await resolveUploadOrganizationId(jobId);
+      if (!organizationId) {
+        return NextResponse.json({ error: 'Upload non disponibile: organizzazione non determinabile' }, { status: 400 });
+      }
+      // Il prefisso organizzazione è ciò che permette al server di verificare, quando
+      // il percorso viene collegato a un candidato, che il file appartenga alla stessa organizzazione.
+      filePath = `${organizationId}/${fileName}`;
+    }
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -89,14 +113,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Upload fallito: nessun percorso restituito' }, { status: 500 });
     }
 
-    const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(data.path);
+    // CV: si restituisce il solo percorso (da salvare in Candidate.cvUrl), mai un URL pubblico.
+    // Logo (bucket pubblico): resta l'URL pubblico, usato direttamente nell'annuncio.
+    if (bucketName === CV_BUCKET) {
+      console.log('[upload-cv] OK:', { bucket: bucketName, path: data.path });
+      return NextResponse.json({ url: data.path, path: data.path });
+    }
 
+    const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(data.path);
     if (!publicUrl) {
       return NextResponse.json({ error: 'URL pubblico non disponibile' }, { status: 500 });
     }
-
-    console.log('[upload-cv] OK:', { bucket: bucketName, path: data.path, publicUrl });
-
     return NextResponse.json({ url: publicUrl, path: data.path });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Errore sconosciuto';

@@ -429,7 +429,8 @@ async function main() {
         throw new Error(`Upload Storage fallito: ${uploadError.message}`);
       }
 
-      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
+      // Si salva il percorso nel bucket (privato), non l'URL pubblico.
+      const publicUrl = storagePath;
 
       // --- Create Candidate (nessuna Application, nessun Job) ---
       const candidate = await prisma.candidate.create({

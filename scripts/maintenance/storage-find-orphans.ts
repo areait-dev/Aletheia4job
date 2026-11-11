@@ -59,7 +59,8 @@ async function listAllFiles(supabase: ReturnType<typeof getServiceClient>, bucke
 function extractPathFromPublicUrl(url: string, bucket: string): string | null {
   const marker = `/storage/v1/object/public/${bucket}/`;
   const idx = url.indexOf(marker);
-  if (idx === -1) return null;
+  // Dopo la migrazione a bucket privato cvUrl è già il percorso nel bucket.
+  if (idx === -1) return /^https?:\/\//i.test(url) ? null : url;
   return decodeURIComponent(url.slice(idx + marker.length));
 }
 

@@ -17,6 +17,7 @@ import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
 import { unstable_cache } from "next/cache";
 import { logFunnelEvent } from "./funnelEvents";
+import { validateCvForOrganization } from "../cvStorage";
 
 // Libreria OpenAI (compatibile con Groq)
 import OpenAI from 'openai';
@@ -276,6 +277,17 @@ export async function applyToJobAction(values: {
 
     setTenantContext({ organizationId, source: "system" });
 
+    // Il CV deve essere un file caricato per l'organizzazione dell'annuncio.
+    const existingForCv = values.cvUrl
+      ? await prisma.candidate.findFirst({
+          where: { email: { equals: emailLower, mode: 'insensitive' }, organizationId },
+          select: { cvUrl: true },
+        })
+      : null;
+    const cvCheck = validateCvForOrganization(values.cvUrl, organizationId, { existingCvUrl: existingForCv?.cvUrl });
+    if (!cvCheck.ok) return { ok: false, error: cvCheck.error };
+    const cvValue = cvCheck.value;
+
     // Operazioni DB atomiche in transazione
     const result = await prisma.$transaction(async (tx) => {
       // Find or create candidate
@@ -292,7 +304,7 @@ export async function applyToJobAction(values: {
             phone: values.phone || candidate.phone,
             city: values.city,
             role: job.title,
-            ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
+            ...(cvValue ? { cvUrl: cvValue } : {}),
           },
         });
       } else {
@@ -310,7 +322,7 @@ export async function applyToJobAction(values: {
             source: values.source || "Career Page",
             organizationId,
             userId: jobCreatorId,
-            cvUrl: values.cvUrl,
+            cvUrl: cvValue,
           },
         });
       }
@@ -331,7 +343,7 @@ export async function applyToJobAction(values: {
           jobId: values.jobId,
           organizationId,
           status: "Nuovo",
-          parsingStatus: values.cvUrl ? "PENDING" : undefined,
+          parsingStatus: cvValue ? "PENDING" : undefined,
           appliedLocation: values.appliedLocation || undefined,
         }
       });
@@ -340,7 +352,7 @@ export async function applyToJobAction(values: {
     });
 
     // CV parsing asincrono via Inngest
-    if (values.cvUrl) {
+    if (cvValue) {
       try {
         await inngest.send({
           name: "cv/process.requested",
@@ -349,7 +361,7 @@ export async function applyToJobAction(values: {
             candidateId: result.candidateId,
             jobId: values.jobId,
             organizationId: job.organizationId,
-            cvUrl: values.cvUrl,
+            cvUrl: cvValue,
           },
         });
       } catch (e) {

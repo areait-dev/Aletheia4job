@@ -2,6 +2,7 @@ import { inngest } from "@/inngest/client";
 import prisma from "@/utils/db";
 import { setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
+import { downloadCv } from "@/utils/cvStorage";
 import { extractTextFromCV } from "@/lib/cvParser";
 import { isAiConfigured, parseCvWithAI, scoreCandidateWithAI } from "@/lib/aiCv";
 
@@ -51,11 +52,8 @@ export const processCV = inngest.createFunction(
 
         buffer = Buffer.from(await fileData.arrayBuffer());
       } else if (cvUrl) {
-        const response = await fetch(cvUrl);
-        if (!response.ok) {
-          throw new Error(`Download CV da URL fallito: ${response.status} ${response.statusText}`);
-        }
-        buffer = Buffer.from(await response.arrayBuffer());
+        // Percorso nel bucket (chiave di servizio) o URL esterno: vedi utils/cvStorage.ts
+        buffer = await downloadCv(cvUrl);
       } else {
         throw new Error("Nessun file CV disponibile (mancano filePath e cvUrl)");
       }

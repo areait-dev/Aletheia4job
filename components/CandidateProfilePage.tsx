@@ -202,7 +202,7 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
         </div>
         <div className="flex gap-2 shrink-0">
           {candidate.cvUrl && (
-            <a href={candidate.cvUrl} target="_blank" rel="noreferrer">
+            <a href={`/api/candidates/${candidate.id}/cv`} target="_blank" rel="noreferrer">
               <Button variant="outline" size="sm" className="gap-2 rounded-xl">
                 <FileText className="w-4 h-4" /> CV
               </Button>

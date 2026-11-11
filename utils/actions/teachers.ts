@@ -4,6 +4,7 @@ import prisma from "@/utils/db";
 import { setTenantContext } from "../tenant-context";
 import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
+import { validateCvForOrganization } from "../cvStorage";
 import {
   TEACHER_SOURCE,
   teacherLongListSchema,
@@ -51,14 +52,21 @@ export async function applyTeacherLongListAction(input: TeacherLongListInput) {
   const notesBlock = buildNotesBlock(values, submittedAt);
   const areasLabel = formatAreas(values);
   let alreadyInDatabase = false;
+  let candidateId = "";
 
   try {
     const existing = await prisma.candidate.findFirst({
       where: { email: { equals: emailLower, mode: "insensitive" }, organizationId },
     });
 
+    // Il CV deve essere un file caricato per questa organizzazione (prefisso organizationId).
+    const cvCheck = validateCvForOrganization(values.cvUrl, organizationId, { existingCvUrl: existing?.cvUrl });
+    if (!cvCheck.ok) return { ok: false as const, error: cvCheck.error };
+    const cvValue = cvCheck.value;
+
     if (existing) {
       alreadyInDatabase = true;
+      candidateId = existing.id;
       // Candidato già presente (es. si era candidato a un annuncio): non
       // sovrascriviamo ruolo/settore/fonte, aggiungiamo il blocco Long List
       // alle note e aggiorniamo contatti e CV.
@@ -69,12 +77,12 @@ export async function applyTeacherLongListAction(input: TeacherLongListInput) {
           lastName: lastName || existing.lastName,
           phone: values.phone,
           city: values.city,
-          cvUrl: values.cvUrl,
+          ...(cvValue ? { cvUrl: cvValue } : {}),
           notes: existing.notes ? `${existing.notes}\n\n${notesBlock}` : notesBlock,
         },
       });
     } else {
-      await prisma.candidate.create({
+      const created = await prisma.candidate.create({
         data: {
           firstName,
           lastName,
@@ -90,9 +98,10 @@ export async function applyTeacherLongListAction(input: TeacherLongListInput) {
           notes: notesBlock,
           organizationId,
           userId,
-          cvUrl: values.cvUrl,
+          cvUrl: cvValue,
         },
       });
+      candidateId = created.id;
     }
   } catch (error) {
     logger.error("Errore salvataggio Long List Docenti", error);
@@ -101,7 +110,7 @@ export async function applyTeacherLongListAction(input: TeacherLongListInput) {
 
   // La notifica email non deve mai far fallire la candidatura: il profilo è
   // già salvato nel database.
-  await sendNotificationEmail(values, submittedAt, alreadyInDatabase);
+  await sendNotificationEmail(values, submittedAt, alreadyInDatabase, candidateId);
 
   return { ok: true as const };
 }
@@ -138,6 +147,13 @@ function buildNotesBlock(values: TeacherLongListValues, submittedAt: Date) {
   ].join("\n");
 }
 
+// Le email non contengono link diretti al file del CV (il bucket è privato):
+// puntano alla scheda del candidato nell'app, dove "Apri CV" genera un link firmato.
+function candidateUrl(candidateId: string) {
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://aletheia4job.it").replace(/\/+$/, "");
+  return `${base}/archivio/${candidateId}`;
+}
+
 function escapeHtml(text: string) {
   return text
     .replace(/&/g, "&amp;")
@@ -153,6 +169,7 @@ async function sendNotificationEmail(
   values: TeacherLongListValues,
   submittedAt: Date,
   alreadyInDatabase: boolean,
+  candidateId: string,
 ) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.TEACHER_LONGLIST_NOTIFY_EMAIL;
@@ -188,7 +205,11 @@ async function sendNotificationEmail(
           )
           .join("")}
       </table>
-      <p style="margin-top:16px"><a href="${escapeHtml(values.cvUrl)}">Scarica il curriculum</a></p>
+      ${
+        candidateId
+          ? `<p style="margin-top:16px"><a href="${escapeHtml(candidateUrl(candidateId))}">Apri la scheda del candidato (accesso richiesto)</a></p>`
+          : ""
+      }
     </div>`;
 
   try {

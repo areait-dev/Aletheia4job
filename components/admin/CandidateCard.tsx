@@ -108,7 +108,7 @@ export default function CandidateCard({ candidate }: CandidateCardProps) {
 
             {candidate.cvUrl ? (
               <a
-                href={candidate.cvUrl}
+                href={`/api/candidates/${candidate.id}/cv`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-sm text-primary hover:underline font-medium"

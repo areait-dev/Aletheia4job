@@ -132,3 +132,36 @@ describe("applySpontaneousApplicationAction", () => {
     expect(prismaMock.candidate.create).toHaveBeenCalledTimes(10);
   });
 });
+
+describe("applySpontaneousApplicationAction: CV di un'altra organizzazione", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    ipCounter += 1;
+    mockGetClientIp.mockReturnValue(`198.51.100.${ipCounter}`);
+    process.env.PUBLIC_SPONTANEOUS_ORG_ID = ORG_ID;
+    process.env.PUBLIC_SPONTANEOUS_USER_ID = USER_ID;
+  });
+
+  afterEach(() => {
+    delete process.env.PUBLIC_SPONTANEOUS_ORG_ID;
+    delete process.env.PUBLIC_SPONTANEOUS_USER_ID;
+  });
+
+  it("rifiuta un cvUrl con il prefisso di un'altra organizzazione e non scrive nulla", async () => {
+    prismaMock.candidate.findFirst.mockResolvedValue(null);
+    const result = await applySpontaneousApplicationAction({ ...validPayload, cvUrl: "org-di-altri/file.pdf" });
+    expect(result.ok).toBe(false);
+    expect(prismaMock.candidate.create).not.toHaveBeenCalled();
+    expect(prismaMock.candidate.update).not.toHaveBeenCalled();
+  });
+
+  it("accetta un cvUrl con il prefisso della propria organizzazione", async () => {
+    prismaMock.candidate.findFirst.mockResolvedValue(null);
+    prismaMock.candidate.create.mockResolvedValue({ id: "c1" });
+    const result = await applySpontaneousApplicationAction({ ...validPayload, cvUrl: `${ORG_ID}/file.pdf` });
+    expect(result.ok).toBe(true);
+    expect(prismaMock.candidate.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ cvUrl: `${ORG_ID}/file.pdf` }) }),
+    );
+  });
+});

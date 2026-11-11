@@ -59,7 +59,8 @@ async function listAllFiles(supabase: ReturnType<typeof getServiceClient>): Prom
 function extractPathFromPublicUrl(url: string): string | null {
   const marker = `/storage/v1/object/public/${BUCKET}/`;
   const idx = url.indexOf(marker);
-  if (idx === -1) return null;
+  // Dopo la migrazione a bucket privato cvUrl è già il percorso nel bucket.
+  if (idx === -1) return /^https?:\/\//i.test(url) ? null : url;
   return decodeURIComponent(url.slice(idx + marker.length));
 }
 
@@ -309,7 +310,8 @@ async function main() {
       });
     }
     const targetOrgId = job?.organizationId ?? organizationId!;
-    const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    // Si salva il percorso nel bucket (privato), non l'URL pubblico.
+    const publicUrl = path;
 
     const existing = await prisma.candidate.findFirst({ where: { organizationId: targetOrgId, email } });
 

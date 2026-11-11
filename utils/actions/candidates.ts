@@ -13,6 +13,7 @@ import { setTenantContext } from "../tenant-context";
 import { logger } from "../logger";
 import { checkRateLimit, getClientIp } from "../rate-limiter";
 import { logFunnelEvent } from "./funnelEvents";
+import { validateCvForOrganization } from "../cvStorage";
 
 // Candidatura spontanea pubblica (nessun annuncio associato). L'organizzazione e
 // il proprietario destinatari sono fissati via env, perché la piattaforma è
@@ -45,6 +46,10 @@ export async function applySpontaneousApplicationAction(values: {
       where: { email: { equals: emailLower, mode: "insensitive" }, organizationId },
     });
 
+    // Il CV deve essere un file caricato per questa organizzazione (prefisso organizationId).
+    const cvCheck = validateCvForOrganization(values.cvUrl, organizationId, { existingCvUrl: existing?.cvUrl });
+    if (!cvCheck.ok) return { ok: false, error: cvCheck.error };
+
     if (existing) {
       await prisma.candidate.update({
         where: { id: existing.id },
@@ -54,7 +59,7 @@ export async function applySpontaneousApplicationAction(values: {
           phone: values.phone || existing.phone,
           city: values.city,
           sector: values.sector,
-          ...(values.cvUrl ? { cvUrl: values.cvUrl } : {}),
+          ...(cvCheck.value ? { cvUrl: cvCheck.value } : {}),
         },
       });
       // Solo dopo che la scrittura è andata a buon fine: logFunnelEvent
@@ -77,7 +82,7 @@ export async function applySpontaneousApplicationAction(values: {
         source: values.source || "Candidatura Spontanea",
         organizationId,
         userId,
-        cvUrl: values.cvUrl,
+        cvUrl: cvCheck.value,
       },
     });
 
@@ -200,11 +205,17 @@ export async function getSingleCandidateAction(id: string): Promise<CandidateTyp
 export async function createCandidateAction(values: CreateAndEditCandidateType): Promise<CandidateType | null> {
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
+  const cvCheck = validateCvForOrganization(values.cvUrl, organizationId);
+  if (!cvCheck.ok) {
+    logger.warn("createCandidateAction: cvUrl rifiutato", { organizationId, error: cvCheck.error });
+    return null;
+  }
   try {
     const candidate = await prisma.$transaction(async (tx) => {
       const created = await tx.candidate.create({
         data: {
           ...values,
+          cvUrl: cvCheck.value,
           userId,
           organizationId,
         },
@@ -297,11 +308,24 @@ export async function updateCandidateStatusAction(candidateId: string, status: s
 export async function updateCandidateAction(candidateId: string, values: Partial<CreateAndEditCandidateType>): Promise<CandidateType | null> {
   const { userId, organizationId, role } = await authenticateAndRedirect();
   if (!canWrite(role)) return null;
+
+  // Se cambia il CV, il nuovo percorso deve appartenere all'organizzazione dell'utente
+  // (o coincidere con quello già salvato per questo candidato).
+  let data = values;
+  if (values.cvUrl !== undefined) {
+    const current = await prisma.candidate.findFirst({ where: { id: candidateId, organizationId }, select: { cvUrl: true } });
+    const cvCheck = validateCvForOrganization(values.cvUrl, organizationId, { existingCvUrl: current?.cvUrl });
+    if (!cvCheck.ok) {
+      logger.warn("updateCandidateAction: cvUrl rifiutato", { candidateId, organizationId, error: cvCheck.error });
+      return null;
+    }
+    data = { ...values, cvUrl: cvCheck.value ?? null } as typeof values;
+  }
   try {
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.candidate.updateMany({
         where: { id: candidateId, organizationId },
-        data: values,
+        data,
       });
       if (result.count === 0) return null;
       const current = await tx.candidate.findFirst({ where: { id: candidateId, organizationId } });

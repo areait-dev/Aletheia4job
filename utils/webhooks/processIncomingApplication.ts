@@ -1,6 +1,7 @@
 import prisma, { dbUnscoped } from "@/utils/db";
 import { setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
+import { validateCvForOrganization } from "@/utils/cvStorage";
 import { inngest } from "@/inngest/client";
 
 function mimeTypeFromFilename(filename: string): string {
@@ -54,15 +55,20 @@ export async function processIncomingApplication(
 
   setTenantContext({ organizationId: job.organizationId, userId: job.userId, source: "webhook" });
 
-  let cvUrl: string | null = input.cvUrl ?? null;
+  // Il webhook è autenticato: sono ammessi anche CV ospitati altrove (URL esterno),
+  // ma un percorso nel nostro storage deve appartenere all'organizzazione dell'annuncio.
+  const incomingCv = validateCvForOrganization(input.cvUrl, job.organizationId, { allowExternal: true });
+  if (!incomingCv.ok) throw new Error(`cvUrl non valido: ${incomingCv.error}`);
+  let cvUrl: string | null = incomingCv.value ?? null;
   let filePath: string | null = null;
   let mimeType: string | null = null;
 
   if (!cvUrl && input.cvBase64) {
     const cvBuffer = Buffer.from(input.cvBase64, "base64");
     const supabase = createServiceClient();
-    const safeFilename = input.cvFilename ?? `cv_${Date.now()}.pdf`;
-    filePath = `cvs/${Date.now()}_${safeFilename}`;
+    const safeFilename = (input.cvFilename ?? `cv_${Date.now()}.pdf`).replace(/[^A-Za-z0-9._-]/g, "_");
+    // Prefisso organizzazione: permette al server di verificare l'appartenenza del file.
+    filePath = `${job.organizationId}/${Date.now()}_${safeFilename}`;
     mimeType = mimeTypeFromFilename(safeFilename);
 
     const { error: uploadError } = await supabase.storage
@@ -76,11 +82,8 @@ export async function processIncomingApplication(
       throw new Error(`CV upload failed: ${uploadError.message}`);
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("cvs")
-      .getPublicUrl(filePath);
-
-    cvUrl = publicUrl;
+    // Si salva il percorso nel bucket, non un URL pubblico.
+    cvUrl = filePath;
   }
 
   const emailLower = input.candidateEmail.toLowerCase().trim();

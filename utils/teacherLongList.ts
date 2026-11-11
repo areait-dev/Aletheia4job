@@ -60,7 +60,7 @@ export const teacherLongListSchema = z
       .trim()
       .min(30, "Descrivi brevemente il tuo percorso (almeno 30 caratteri)")
       .max(3000, "Massimo 3000 caratteri"),
-    cvUrl: z.string().url("Carica il tuo curriculum vitae"),
+    cvUrl: z.string().min(1, "Carica il tuo curriculum vitae"),
     privacyAccepted: z.literal(true, {
       errorMap: () => ({ message: "Il consenso al trattamento dei dati è obbligatorio" }),
     }),
