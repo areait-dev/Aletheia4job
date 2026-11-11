@@ -1,7 +1,7 @@
 'use client';
 
 import { CandidateType } from "@/utils/types";
-import FolderGroup from "./FolderGroup";
+import FolderGrid from "./FolderGrid";
 
 export const TEACHER_SOURCE = "Long List Docenti";
 
@@ -31,16 +31,11 @@ function JobFolders({ candidates }: { candidates: CandidateType[] }) {
     return <p className="text-center py-8 text-sm text-muted-foreground italic">Nessuna candidatura.</p>;
   }
 
-  return (
-    <div className="space-y-3">
-      {longList.length > 0 && (
-        <FolderGroup title="Long List" candidates={longList} subtitle="iscritti" variant="primary" />
-      )}
-      {jobs.map(([title, items]) => (
-        <FolderGroup key={title} title={title} candidates={items} subtitle="candidature" variant="primary" />
-      ))}
-    </div>
-  );
+  const folders = [
+    ...(longList.length > 0 ? [{ title: "Long List", candidates: longList, primary: true }] : []),
+    ...jobs.map(([title, candidates]) => ({ title, candidates, primary: true })),
+  ];
+  return <FolderGrid folders={folders} subtitle="candidature" />;
 }
 
 export default JobFolders;
