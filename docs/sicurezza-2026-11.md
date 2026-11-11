@@ -91,7 +91,7 @@ Nessun annuncio è collegato a LinkedIn, Indeed, Jooble o al provider di candida
   feed e piattaforme nella sezione Integrazioni di amministrazione (resta Cronofy).
 - Schema e dati del database invariati (`Job.postTo*`, campi `broadbean*`); le candidature già arrivate restano visibili.
 - **Riattivare:** impostare `MULTIPOSTING_ENABLED=true` su Vercel e rifare il deploy; servono poi `AGGREGATOR_FEED_TOKEN`, `MULTIPOSTING_WEBHOOK_SECRET` e (LinkedIn) le variabili `LINKEDIN_*`.
-- Da fare lato proprietario: disdire eventuali abbonamenti/approvazioni presso le piattaforme (LinkedIn ATS, account recruiter Indeed/Jooble, provider che invia al webhook) e rimuovere le relative variabili da Vercel.
+- Da fare lato proprietario: disdire eventuali abbonamenti/approvazioni presso le piattaforme (LinkedIn ATS, account recruiter Indeed/Jooble, provider che invia al webhook). Su Vercel non esistono variabili `MULTIPOSTING_*`, `AGGREGATOR_FEED_TOKEN` o `LINKEDIN_*` (verificato dal proprietario): nulla da rimuovere.
 
 ## 7. RLS automatica sulle nuove tabelle (applicata)
 
@@ -115,3 +115,5 @@ Resta comunque buona prassi non fare affidamento solo sul trigger: nessuna polic
 - **Candidati di prova:** un candidato creato per una prova manuale (1 riga `Candidate`, il suo CV nel bucket `cvs` e 1 riga di `AuditLog` di creazione) è stato eliminato su richiesta; non avevano candidature, note, colloqui né altri dati collegati.
   I candidati sono ora 309, tutti con `cvUrl` valido.
 - **Capacità:** verificare piano e limiti di Supabase, Vercel e Inngest prima dell'invio di massa agli utenti.
+- **Migrazioni nella build:** `scripts/vercel-build.mjs` applica `prisma migrate deploy` (via `DIRECT_URL`) solo con `VERCEL_ENV=production`. Verificato sul deploy `41d536d`: "18 migrations found", "No pending migrations to apply", build ok.
+- **Preview e produzione condividono ancora i dati:** in Preview sono impostate `DATABASE_URL`, `DIRECT_URL`, `GROQ_API_KEY`, `NEXT_PUBLIC_SUPABASE_*`, `CRONOFY_*`, `INNGEST_SIGNING_KEY`, `PUBLIC_SPONTANEOUS_*`, `NEXT_PUBLIC_SITE_URL` (valori di produzione). Mitigazioni attuali: Vercel Authentication (Standard Protection) attiva sulle Preview; `SUPABASE_SERVICE_ROLE_KEY` solo in Production. Da separare con il progetto `aletheia-staging` (eu-west-2).
