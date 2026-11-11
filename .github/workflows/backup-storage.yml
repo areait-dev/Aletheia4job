@@ -1,0 +1,90 @@
+# Backup cifrato dei file di Supabase Storage su Cloudflare R2 (UE).
+# I segreti vanno nell'Environment "backup" (vedi docs/backup-storage.md).
+# NON ATTIVO: parte solo a mano (workflow_dispatch) e solo se la variabile di repository BACKUP_ENABLED = 'true'.
+# Per attivare la pianificazione: vedi docs/backup-storage.md (decommentare "schedule").
+name: Backup Storage
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Prova senza copiare nulla (true/false)"
+        default: "true"
+  # schedule:
+  #   - cron: "30 3 * * *"   # ogni giorno alle 03:30 UTC
+
+concurrency:
+  group: backup-storage
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: vars.BACKUP_ENABLED == 'true'
+    # I segreti stanno nell'Environment "backup" (non tra i segreti generici del repository): solo questo job li riceve.
+    environment: backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BUCKETS: "cvs candidates"
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+      # Origine: S3 compatibile di Supabase Storage
+      RCLONE_CONFIG_SUPA_TYPE: s3
+      RCLONE_CONFIG_SUPA_PROVIDER: Other
+      RCLONE_CONFIG_SUPA_ENDPOINT: ${{ secrets.SUPABASE_S3_ENDPOINT }}
+      RCLONE_CONFIG_SUPA_REGION: ${{ secrets.SUPABASE_S3_REGION }}
+      RCLONE_CONFIG_SUPA_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_SUPA_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+      # Destinazione: Cloudflare R2 (giurisdizione UE)
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+      # Cifratura lato client: nomi dei file cifrati, nomi delle cartelle in chiaro
+      # (serve perché la regola di scadenza di R2 agisce sul prefisso archive/).
+      RCLONE_CONFIG_BK_TYPE: crypt
+      RCLONE_CONFIG_BK_REMOTE: r2:${{ secrets.R2_BUCKET }}
+      RCLONE_CONFIG_BK_PASSWORD: ${{ secrets.RCLONE_CRYPT_PASSWORD_OBSCURED }}
+      RCLONE_CONFIG_BK_PASSWORD2: ${{ secrets.RCLONE_CRYPT_SALT_OBSCURED }}
+      RCLONE_CONFIG_BK_FILENAME_ENCRYPTION: standard
+      RCLONE_CONFIG_BK_DIRECTORY_NAME_ENCRYPTION: "false"
+    steps:
+      - name: Installa rclone
+        run: |
+          curl -fsSL https://downloads.rclone.org/v1.68.2/rclone-v1.68.2-linux-amd64.zip -o rclone.zip
+          unzip -q rclone.zip && sudo install rclone-*-linux-amd64/rclone /usr/local/bin/rclone
+          rclone version | head -1
+
+      - name: Sincronizza (i file cancellati o sostituiti finiscono in archive/<data>/)
+        run: |
+          set -euo pipefail
+          DAY=$(date -u +%F)
+          FLAGS="--fast-list --transfers 8 --checkers 16 --retries 3 --low-level-retries 10 --stats-one-line -v"
+          [ "$DRY_RUN" = "true" ] && FLAGS="$FLAGS --dry-run"
+          for B in $BUCKETS; do
+            echo "== bucket $B =="
+            # Se l'origine risulta vuota o illeggibile, fermati: non svuotare la copia.
+            N=$(rclone lsf "supa:$B" --files-only -R | wc -l)
+            echo "file in origine: $N"
+            if [ "$N" -eq 0 ]; then echo "Origine vuota: interrotto."; exit 1; fi
+            # sync: la copia "current" rispecchia l'origine; ciò che sparisce o cambia va in archive/ (max 90 giorni).
+            # --max-delete: se più di 200 file sparirebbero in una volta, fermati (cancellazione di massa sospetta).
+            rclone sync "supa:$B" "bk:current/$B" --backup-dir "bk:archive/$DAY/$B" --max-delete 200 $FLAGS
+            if [ "$DRY_RUN" != "true" ]; then
+              # verifica: ogni file di origine deve esistere nella copia cifrata, con lo stesso contenuto
+              rclone cryptcheck "supa:$B" "bk:current/$B" --one-way --fast-list
+            fi
+          done
+
+      - name: Email se il job fallisce
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.BACKUP_ALERT_RESEND_API_KEY }}
+          ALERT_TO: ${{ secrets.BACKUP_ALERT_TO }}
+          ALERT_FROM: ${{ secrets.BACKUP_ALERT_FROM }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -fsS https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" \
+            -d "{\"from\":\"$ALERT_FROM\",\"to\":[\"$ALERT_TO\"],\"subject\":\"[Aletheia4Job] Backup dei file FALLITO\",\"text\":\"Il backup notturno dello Storage non è riuscito. Dettagli: $RUN_URL\"}"
