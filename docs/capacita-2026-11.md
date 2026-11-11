@@ -117,7 +117,7 @@ Proposta semplice: un job giornaliero (GitHub Actions con `cron`) che copia il b
 - chiavi come segreti del repository, mai nel codice; avviso via email se il job fallisce;
 - servono: un contratto/DPA con il fornitore scelto (dati personali) e una prova di ripristino trimestrale.
 Alternativa più semplice ma dipendente dal PC acceso: pianificare lo script locale con l'Utilità di pianificazione di Windows.
-Decisione: GitHub Actions + Cloudflare R2 (UE) con `rclone crypt`, archivio dei file cancellati per 90 giorni (GDPR), email in caso di errore.
+Decisione (aggiornata): copia locale incrementale su Windows (backup-cv.bat, ogni giorno alle 13:00) che non cancella mai nulla dalla copia; il piano GitHub Actions + Cloudflare R2 è sospeso (workflow spento).
 Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storage.yml` e `docs/backup-storage.md`. Da fare: creare l'account del fornitore e i segreti, provare con `dry_run`, poi attivare la pianificazione.
 
 ## 6. Decisioni e aperti
@@ -132,4 +132,4 @@ Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storag
 | Punti fragili del paragrafo 2 | non corretti; da decidere (concorrenza Inngest, limite upload a 4 MB, errori AI non più ingoiati, `connection_limit`) |
 | Limiti e prezzi Vercel, Inngest, Groq, PITR | da verificare nei pannelli |
 | PITR | da decidere |
-| Backup automatico dei file | workflow e istruzioni pronti, non attivi; mancano account R2, segreti e attivazione |
+| Backup automatico dei file | copia locale incrementale (`backup-cv.bat`) da pianificare alle 13:00 con l'Utilità di pianificazione; piano R2 sospeso (workflow spento) |

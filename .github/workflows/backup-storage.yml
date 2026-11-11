@@ -19,7 +19,8 @@ concurrency:
 
 jobs:
   backup:
-    if: vars.BACKUP_ENABLED == 'true'
+    # SPENTO: la condizione sotto è sempre falsa. Per riattivarlo vedi docs/backup-storage.md (sezione R2).
+    if: ${{ false }}
     # I segreti stanno nell'Environment "backup" (non tra i segreti generici del repository): solo questo job li riceve.
     environment: backup
     runs-on: ubuntu-latest

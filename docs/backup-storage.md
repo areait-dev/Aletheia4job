@@ -1,10 +1,70 @@
-# Backup cifrato dei file (Supabase Storage → Cloudflare R2, UE)
-
-Stato: **preparato, non attivo.** Il workflow `.github/workflows/backup-storage.yml` parte solo a mano e solo se la variabile
-di repository `BACKUP_ENABLED` vale `true`; la pianificazione giornaliera è commentata. Nulla viene copiato finché non lo attivi tu.
+# Backup dei file (Supabase Storage)
 
 Il PITR di Supabase non copre i file: i backup del database salvano i metadati degli oggetti, non il loro contenuto.
-Un CV cancellato dal bucket non si recupera dal database.
+Un CV cancellato dal bucket non si recupera dal database. I file vanno quindi salvati a parte.
+
+**Piano attuale: copia locale incrementale su Windows**, pianificata ogni giorno alle 13:00. Il piano con Cloudflare R2 (cifrato, nel cloud) è **sospeso**: vedi in fondo.
+Il workflow GitHub `.github/workflows/backup-storage.yml` resta nel repository ma è **spento** (`if: ${{ false }}`) e non ha alcun trigger automatico.
+
+## Come funziona la copia locale
+- Script: `scripts/maintenance/storage-download-buckets.ts` (sola lettura su Supabase). Avvio con doppio clic su `backup-cv.bat` (nella cartella del progetto) o dall'Utilità di pianificazione.
+- Destinazione: `C:\Users\<tuo-utente>\Desktop\Progetti next\backup-db\storage\<bucket>\...` (bucket `cvs` e `candidates`, stessa struttura di cartelle dei bucket, fuori dal repository).
+- **Incrementale:** scarica solo i file nuovi o cambiati. Un file già presente con la stessa dimensione non viene riscaricato.
+- **Non cancella mai nulla dalla copia locale.** Se un file cambia su Supabase, la versione vecchia viene spostata in `storage\_versioni\<data-ora>\...` prima di scrivere quella nuova.
+- Ogni file è scaricato in un file temporaneo `.part`, controllato per dimensione e solo dopo rinominato: un download interrotto non lascia file corrotti.
+- **Log:** `C:\Users\<tuo-utente>\Desktop\Progetti next\backup-db\log\backup-storage.log` (data/ora, file scaricati, versioni conservate, errori, riepilogo finale). Codice di uscita 0 = ok, 1 = errori, 2 = un altro backup è già in corso.
+- File di servizio nella cartella `storage`: `.backup-manifest.json` (stato dei file già copiati) e `.backup.lock` (impedisce due esecuzioni insieme; un blocco più vecchio di 6 ore viene ignorato). Non vanno cancellati né modificati; se il manifest sparisse, il prossimo giro ricostruisce lo stato confrontando le dimensioni.
+- Servono nella cartella del progetto le variabili `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` (file `.env` o `.env.local`, già presenti).
+
+### Prima esecuzione (11/11/2026)
+525 file in origine (523 in `cvs`, 2 in `candidates`), tutti già presenti nella copia fatta a mano in mattinata: scaricati 0, errori 0, 525 registrati nel manifest.
+Il caso "scarico file nuovi o cambiati" l'ho provato separatamente su una cartella temporanea (poi eliminata): cartella vuota → 2 file scaricati; file modificato in locale → nuova copia e versione precedente conservata in `_versioni`; rilancio → niente da fare.
+Non ho potuto provare con un file davvero cancellato su Supabase: nel codice non esiste nessuna istruzione che cancelli file della copia locale (solo il file di blocco e i `.part`).
+
+## Pianificazione con l'Utilità di pianificazione di Windows (ogni giorno alle 13:00)
+1. Premi **Win + R**, scrivi `taskschd.msc`, Invio.
+2. A destra: **Crea attività…** (non "Crea attività di base": servono le impostazioni avanzate).
+3. Scheda **Generale**: Nome `Backup CV Aletheia`. Scegli **Esegui solo se l'utente è connesso** (così non serve salvare la password; sul PC deve esserci l'utente collegato).
+4. Scheda **Attivazione** → **Nuova…**: *Avvia l'attività*: **In pianificazione**; **Giornaliera**; *Inizia* con la data di oggi e ora **13:00:00**; *Ricorrenza ogni* **1** giorni; spunta *Attivata* → OK.
+5. Scheda **Azioni** → **Nuova…**: Azione **Avvia programma**.
+   - *Programma/script*: `"C:\Users\<tuo-utente>\Desktop\Progetti next\Job-Application-Tracker--NextJS-FullStack-main - Copia\backup-cv.bat"`
+   - *Aggiungi argomenti*: `auto` (evita la pausa finale, che aspetterebbe un tasto)
+   - *Inizia in*: `C:\Users\<tuo-utente>\Desktop\Progetti next\Job-Application-Tracker--NextJS-FullStack-main - Copia` (senza virgolette)
+6. Scheda **Condizioni**: se il PC è un portatile, **togli** la spunta a "Avvia l'attività solo se il computer è alimentato dalla rete elettrica". Puoi lasciare attiva "Avvia solo se è disponibile la connessione di rete".
+7. Scheda **Impostazioni**:
+   - **spunta "Esegui l'attività non appena possibile dopo un avvio pianificato non eseguito"**: è l'impostazione che fa partire il backup appena possibile se alle 13:00 il PC era spento;
+   - "Se l'attività è già in esecuzione": **Non avviare una nuova istanza**;
+   - spunta "Arresta l'attività se è in esecuzione da più di" **2 ore**.
+8. **OK**. Per provare: clic destro sull'attività → **Esegui**; poi controlla nella colonna *Ultimo risultato* il valore `0x0` e l'ultima riga del log.
+
+Alternativa da PowerShell (stesso risultato; non l'ho eseguita io): `New-ScheduledTaskAction`, `New-ScheduledTaskTrigger -Daily -At 13:00` e `New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew`.
+
+## Limiti da conoscere
+- **Funziona solo con il PC acceso e l'utente connesso.** Se il PC resta spento per giorni non c'è una copia aggiornata: controlla ogni tanto la data nel log.
+- **Una sola copia, sullo stesso PC.** Non protegge da guasto del disco, furto, ransomware o incendio. Consiglio una seconda copia periodica della cartella `backup-db` su un disco esterno (scollegato dopo la copia).
+- **Dati personali non cifrati sul disco:** attiva BitLocker (o una cifratura equivalente) sul disco del PC e proteggi il PC con password.
+- **Nessuna scadenza automatica.** Con la copia locale non vale più il limite di 90 giorni previsto dal piano R2.
+
+## Richieste di cancellazione dei dati (GDPR)
+**I file cancellati da Supabase restano nella copia locale**, perché lo script non cancella mai nulla; restano anche le versioni vecchie in `_versioni`.
+Quando un candidato chiede la cancellazione dei suoi dati, oltre che da Supabase (candidato e file in Storage) il CV va **eliminato a mano anche dalla copia locale**:
+1. Cancella prima il candidato e il file nell'app/su Supabase (se elimini solo in locale, il backup lo riscarica al giro successivo).
+2. Trova il percorso del file: è il valore di `Candidate.cvUrl` prima della cancellazione (`<organizationId>/<file>.pdf`).
+3. Elimina `backup-db\storage\cvs\<organizationId>\<file>.pdf` e le copie con lo stesso nome sotto `backup-db\storage\_versioni\*\cvs\...` (cerca il nome del file dentro `_versioni`).
+4. Se hai fatto altre copie (disco esterno), elimina il file anche lì.
+5. Annota la cancellazione nel registro delle richieste.
+
+## Ripristino
+- **Un singolo file:** carica `backup-db\storage\cvs\<organizationId>\<file>.pdf` nel bucket `cvs` allo stesso percorso (pannello Supabase → Storage → `cvs` → cartella dell'organizzazione → Upload). Il percorso coincide con `Candidate.cvUrl`, quindi il candidato rivede il CV.
+- **L'intero bucket:** ricrea il bucket **privato** (Storage → New bucket, "Public bucket" disattivato, stessi limiti di prima) e carica le cartelle. Per molti file serve uno script che legga la cartella locale e carichi con la chiave di servizio: non è ancora scritto, lo preparo se serve.
+- **Prova:** ogni trimestre apri a caso un PDF dalla copia locale per verificare che sia leggibile.
+
+---
+
+# Piano sospeso: copia cifrata su Cloudflare R2
+
+Stato: **sospeso e non attivo.** Il workflow esiste ma è spento (`if: ${{ false }}`). Per riattivarlo: ripristina la condizione `vars.BACKUP_ENABLED == 'true'` nel file, crea l'account R2, l'Environment e i segreti come sotto.
+Il testo seguente resta come riferimento; le regole di scadenza a 90 giorni valgono solo per quel piano.
 
 ## Perché Cloudflare R2 (e non Backblaze B2)
 Entrambi vanno bene tecnicamente e hanno un DPA. Scelgo R2 per tre motivi, in ordine di peso:
