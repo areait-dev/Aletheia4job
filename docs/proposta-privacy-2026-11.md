@@ -3,7 +3,7 @@
 **Stato: PROPOSTA DA REVISIONARE. Nulla è stato implementato né applicato.** Pensata per essere letta da chi rivede il progetto (anche un consulente privacy).
 I testi giuridici sono bozze: vanno validati da chi cura la privacy dell'azienda.
 
-**Periodo di conservazione: 24 mesi** (deciso dal proprietario il 12/11/2026; più breve dei 36 mesi scritti oggi nell'informativa, quindi lecito, ma l'informativa va aggiornata). Il valore resta un parametro (`Organization.retentionMonths`): per cambiarlo bastano il default e una riga dell'informativa.
+**Periodo di conservazione: 24 mesi** (deciso dal proprietario il 11/11/2026; più breve dei 36 mesi scritti oggi nell'informativa, quindi lecito, ma l'informativa va aggiornata). Il valore resta un parametro (`Organization.retentionMonths`): per cambiarlo bastano il default e una riga dell'informativa.
 
 ## 1. Fatti rilevati (verificati nel codice e nei dati)
 
@@ -29,7 +29,7 @@ I testi giuridici sono bozze: vanno validati da chi cura la privacy dell'azienda
 - Nuove colonne su `Candidate` (bozza in `prisma/pending/20261112000000_privacy_retention_consent/migration.sql`): `consentPrivacyAt`, `consentPrivacyVersion`, `consentSpecialAt`, `consentMarketingAt`, `consentSource` (`career_page` | `spontanea` | `long_list` | `gestionale`).
 - Le azioni che creano/aggiornano un candidato da form pubblici (`applyToJobAction`, candidatura spontanea, Long List) impostano questi campi quando la casella è spuntata.
 - **Dati particolari (art. 9):** una seconda casella **facoltativa e separata**: "Acconsento al trattamento dei dati particolari eventualmente contenuti nel mio CV (es. appartenenza a categorie protette, L. 68/99)". Si salva in `consentSpecialAt`. Accanto un invito a non inserire dati sulla salute se non necessari. Senza spunta nulla blocca l'invio.
-- **Candidati esistenti:** i consensi non si inventano (restano NULL = "non registrato prima del 12/11/2026"). Per i 309 attuali valgono l'informativa e i consensi dati ai tempi, che non sono documentati: da dichiarare nel registro dei trattamenti.
+- **Candidati esistenti:** i consensi non si inventano (restano NULL = "non registrato prima del 11/11/2026"). Per i 309 attuali valgono l'informativa e i consensi dati ai tempi, che non sono documentati: da dichiarare nel registro dei trattamenti.
 - Il form di candidatura a un annuncio: il testo "Informativa sulla privacy" diventa un **link** a `/privacy-policy`.
 
 ### 2.2 Ultima attività (`lastActivityAt`)
@@ -69,7 +69,7 @@ inngest.createFunction({ id: "retention-sweep", concurrency: 1 }, { cron: "0 3 *
 - **Prerequisiti:** Resend configurato con mittente verificato; testo dell'avviso approvato; candidati esistenti marcati con la politica.
 
 ### 2.4 Correzioni indipendenti, da fare subito (piccole)
-- ✅ **Fatto il 12/11/2026:** `deleteCandidateAction` elimina anche il file in Storage dopo il commit, con tentativi, registrazione del fallimento e nuovo tentativo via Inngest; funzione giornaliera di pulizia dei caricamenti abbandonati (in simulazione); limiti del bucket `cvs`. Vedi `docs/sicurezza-2026-11.md`, sezioni 9 e 10.
+- ✅ **Fatto il 11/11/2026:** `deleteCandidateAction` elimina anche il file in Storage dopo il commit, con tentativi, registrazione del fallimento e nuovo tentativo via Inngest; funzione giornaliera di pulizia dei caricamenti abbandonati (in simulazione); limiti del bucket `cvs`. Vedi `docs/sicurezza-2026-11.md`, sezioni 9 e 10.
 - (Vecchio punto) `deleteCandidateAction`: eliminare anche il file in Storage (oggi resta). Stessa cosa per l'eliminazione massiva, se esiste.
 - Link all'informativa nel form di candidatura a un annuncio.
 - File orfani: non cancellare in automatico; produrre un report mensile (file in `cvs` non referenziati da nessun `cvUrl` da più di 30 giorni) da rivedere a mano.

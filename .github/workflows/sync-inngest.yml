@@ -1,0 +1,32 @@
+# Sincronizza le funzioni Inngest dopo ogni deploy di PRODUZIONE riuscito.
+# Inngest non è collegato a Vercel: senza questo passaggio le funzioni nuove o modificate
+# (inngest/functions/*) non vengono registrate. La PUT è idempotente e non richiede segreti.
+# La PUT va fatta a deploy online (non nello script di build: il nuovo deploy non è ancora raggiungibile).
+name: Sync Inngest
+
+on: deployment_status
+
+concurrency:
+  group: sync-inngest
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Registra le funzioni su Inngest (PUT /api/inngest)
+        run: |
+          URL="https://aletheia4job.it/api/inngest"
+          for i in 1 2 3 4 5; do
+            out=$(curl -s -m 60 -X PUT "$URL" || true)
+            echo "Tentativo $i: $out"
+            if echo "$out" | grep -q "Successfully registered"; then
+              echo "Sync Inngest riuscito."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Sync Inngest NON riuscito dopo 5 tentativi."
+          exit 1
