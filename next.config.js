@@ -19,6 +19,11 @@ const nextConfig = {
             admin: 'amministrazione', invite: 'invito',
         };
         return [
+            // Elenco offerte non esiste come pagina: solo le singole offerte (/offerte-di-lavoro/<slug>).
+            { source: '/offerte-di-lavoro', destination: '/', permanent: true },
+            // Nome usato solo per breve tempo: il cruscotto resta /dashboard.
+            { source: '/cruscotto', destination: '/dashboard', permanent: true },
+            { source: '/cruscotto/:path*', destination: '/dashboard/:path*', permanent: true },
             { source: '/positions/new', destination: '/posizioni/nuova', permanent: true },
             { source: '/positions/:id/edit', destination: '/posizioni/:id/modifica', permanent: true },
             { source: '/jobs/:id/edit', destination: '/archivio/:id/modifica', permanent: true },
