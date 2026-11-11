@@ -132,4 +132,7 @@ Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storag
 | Punti fragili del paragrafo 2 | non corretti; da decidere (concorrenza Inngest, limite upload a 4 MB, errori AI non più ingoiati, `connection_limit`) |
 | Limiti e prezzi Vercel, Inngest, Groq, PITR | da verificare nei pannelli |
 | PITR | da decidere |
-| Backup automatico dei file | copia locale incrementale (`backup-cv.bat`) da pianificare alle 13:00 con l'Utilità di pianificazione; piano R2 sospeso (workflow spento) |
+| Backup automatico dei file | copia locale incrementale (`backup-cv.bat`): attività "Backup CV Aletheia" creata e provata (ogni giorno alle 13:00, recupera se il PC era spento); piano R2 sospeso (workflow spento) |
+| Funzioni Inngest | 4 registrate; sync automatico dopo ogni deploy di produzione (`.github/workflows/sync-inngest.yml`), verificato |
+| Eliminazione CV e file abbandonati | eliminando un candidato si elimina il CV; `cv-orphan-cleanup` in simulazione fino a circa il 18/11/2026, poi si decide il passaggio a `delete`; orfani storici eliminati (163 file) |
+| Limiti bucket `cvs` | 10 MB, solo PDF/DOC/DOCX (applicati); l'app limita a 5 MB per il body di Vercel |
