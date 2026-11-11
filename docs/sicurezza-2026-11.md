@@ -103,8 +103,12 @@ Resta comunque buona prassi non fare affidamento solo sul trigger: nessuna polic
 
 ## 8. Ancora aperto
 
-- **File non collegati nei bucket:** 212 (210 in `cvs`, 2 in `candidates`; 43,8 MB), verificati dopo l'ultimo upload di prova.
-  Elenco con data e dimensione: `backup-db\cv-non-collegati.csv` (rigenerabile con `scripts/maintenance/storage-list-unlinked-files.ts`). Nulla è stato cancellato.
+- **File che nessun candidato referenzia (212 nel primo elenco, poi riclassificati)** — analisi in sola lettura (`scripts/maintenance/storage-analyze-unlinked.ts`, esito in `backup-db\cv-non-collegati-analisi.csv`); nulla è stato cancellato:
+  - 71 sono copie identiche (stesso contenuto) di 35 CV già collegati: doppi invii.
+  - 129 non sono CV ma **immagini JPG di annunci** (`job-images/`): 43 erano in uso come `Job.imageUrl` (vedi sezione 9: erano rotte dopo aver reso privato `cvs`, ora sistemate), 86 non sono più usate.
+  - 2 PDF da 220 byte non leggibili (file di prova).
+  - 10 CV leggibili non duplicati: 1 con email corrispondente a un candidato, 2 corrispondenti solo per nome e cognome (debole), 6 con contatti ma senza candidato nel database, 1 senza contatti.
+  Origine dei CV senza candidato: il form pubblico carica il file **appena lo si seleziona**, prima dell'invio, quindi un form abbandonato lascia il file; inoltre l'eliminazione di un candidato **non cancella il file in Storage**. Nel codice di salvataggio della candidatura non è emerso nessun bug (la candidatura è in transazione e l'evento funnel parte solo a salvataggio riuscito).
 - **PITR (Point-in-Time Recovery):** non attivo/non verificato; i backup giornalieri non permettono di tornare a un istante preciso. Valutare l'add-on.
 - **`app/offerte-di-lavoro/[slug]/page.tsx`:** modificato in locale, volutamente escluso da tutti i commit; da rivedere e committare (o scartare) a parte.
 - **Email Long List:** da confermare se il destinatario (`TEACHER_LONGLIST_NOTIFY_EMAIL`, solo su Vercel) ha un account. Se è esterno, serve un link firmato da 7 giorni generato all'invio.
@@ -117,3 +121,15 @@ Resta comunque buona prassi non fare affidamento solo sul trigger: nessuna polic
 - **Capacità:** vedi `docs/capacita-2026-11.md` (costi, limiti, prova di carico, backup). Restano da verificare piani e limiti di Vercel, Inngest e Groq prima dell'invio di massa agli utenti.
 - **Migrazioni nella build:** `scripts/vercel-build.mjs` applica `prisma migrate deploy` (via `DIRECT_URL`) solo con `VERCEL_ENV=production`. Verificato sul deploy `41d536d`: "18 migrations found", "No pending migrations to apply", build ok.
 - **Preview e produzione condividono ancora i dati:** in Preview sono impostate `DATABASE_URL`, `DIRECT_URL`, `GROQ_API_KEY`, `NEXT_PUBLIC_SUPABASE_*`, `CRONOFY_*`, `INNGEST_SIGNING_KEY`, `PUBLIC_SPONTANEOUS_*`, `NEXT_PUBLIC_SITE_URL` (valori di produzione). Mitigazioni attuali: Vercel Authentication (Standard Protection) attiva sulle Preview; `SUPABASE_SERVICE_ROLE_KEY` solo in Production. Da separare con il progetto `aletheia-staging` (eu-west-2).
+
+## 9. Immagini degli annunci rotte dopo la privatizzazione di `cvs` (sistemate)
+
+- **Problema:** 43 annunci avevano `Job.imageUrl` = URL pubblico di `cvs/job-images/…`. Con `cvs` privato tutte rispondevano 400 (immagini rotte su home e pagina dell'offerta). Non era stato considerato perché i file non erano collegati ai `cvUrl` dei candidati.
+- **Correzione (11/11/2026):** creato il bucket pubblico `logos` (solo PNG/JPG/WEBP/SVG, max 5 MB), copiati i 43 file (originali ancora in `cvs`), aggiornato `Job.imageUrl` su 43 annunci. Verifica HEAD sui 43 nuovi URL: 200 `image/jpeg` per tutti.
+  Script: `scripts/maintenance/migrate-job-images-to-public.ts` (prova di default, `--apply`; scrive un CSV con i vecchi valori in `backup-db\log`).
+- **Il bucket `logos` non esisteva:** l'upload del logo azienda da `PositionForm` falliva ("Bucket 'logos' non trovato"). Ora esiste.
+- **Upload nel bucket pubblico:** `/api/upload-cv` con `bucket=logos` richiede la sessione, controlla la firma reale del file (PNG/JPEG/WEBP/SVG senza script, coerente con l'estensione) e salva sotto `<organizationId>/`. Un PDF/DOCX rinominato non passa; il bucket stesso rifiuta tipi non immagine. Il codice dell'app non carica immagini per `Job.imageUrl` (settato esternamente): vanno messe in `logos/job-images/`, mai in `cvs`.
+- **Controllo periodico:** `npx tsx scripts/maintenance/storage-audit-logos.ts` (sola lettura) verifica che `logos` contenga solo immagini. Oggi: 43 oggetti, tutti JPEG.
+- **Test:** `tests/cv/upload-logos.test.ts`.
+- **Suggerimento (non applicato):** `cvs` non ha limite di dimensione né tipi MIME consentiti a livello di bucket (`candidates` sì); si possono impostare da Storage → bucket → Edit.
+

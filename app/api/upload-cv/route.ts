@@ -3,6 +3,10 @@ import { createServiceClient } from '@/utils/supabase/service';
 import { dbUnscoped } from '@/utils/db';
 import { getAuthContext } from '@/utils/authz';
 import { CV_BUCKET } from '@/utils/cvStorage';
+import { detectImageType, EXT_FOR_TYPE } from '@/utils/imageSignature';
+
+const LOGO_BUCKET = 'logos';
+const CONTENT_TYPE_FOR_IMAGE = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp', svg: 'image/svg+xml' } as const;
 
 export const dynamic = 'force-dynamic';
 
@@ -78,11 +82,26 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    let contentType: string | undefined = file.type || undefined;
+
+    // Bucket pubblico `logos`: solo immagini vere, solo da utenti loggati, mai CV o altri dati personali.
+    if (bucketName === LOGO_BUCKET) {
+      const auth = await getAuthContext().catch(() => null);
+      if (!auth) {
+        return NextResponse.json({ error: 'Accesso richiesto per caricare immagini' }, { status: 401 });
+      }
+      const imageType = detectImageType(buffer);
+      if (!imageType || !EXT_FOR_TYPE[imageType].includes(ext)) {
+        return NextResponse.json({ error: "Il file non è un'immagine valida (PNG, JPG, WEBP o SVG senza script)" }, { status: 400 });
+      }
+      contentType = CONTENT_TYPE_FOR_IMAGE[imageType];
+      filePath = `${auth.organizationId}/${fileName}`;
+    }
 
     const { data, error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(filePath, buffer, {
-        contentType: file.type || undefined,
+        contentType,
         upsert: false,
       });
 
