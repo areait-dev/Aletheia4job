@@ -4,9 +4,11 @@ import { getAllJobsAction } from "@/utils/actions";
 import Link from "next/link";
 import { Plus, Briefcase, MapPin, Users, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isMultipostingEnabled } from "@/utils/featureFlags";
 
 export default async function PositionsPage() {
   const jobs = await getAllJobsAction();
+  const multipostingOn = isMultipostingEnabled();
 
   return (
     <div className="space-y-6">
@@ -70,17 +72,17 @@ export default async function PositionsPage() {
                       <span className="text-[10px] font-bold">C</span>
                     </div>
                   )}
-                  {job.postToLinkedIn && (
+                  {multipostingOn && job.postToLinkedIn && (
                     <div title="Postato su LinkedIn" className="w-5 h-5 rounded-md bg-blue-500/15 flex items-center justify-center text-blue-400 border border-blue-500/30">
                       <span className="text-[10px] font-bold">L</span>
                     </div>
                   )}
-                  {job.postToIndeed && (
+                  {multipostingOn && job.postToIndeed && (
                     <div title="Postato su Indeed" className="w-5 h-5 rounded-md bg-blue-500/15 flex items-center justify-center text-blue-400 border border-blue-500/30">
                       <span className="text-[10px] font-bold">i</span>
                     </div>
                   )}
-                  {job.postToJooble && (
+                  {multipostingOn && job.postToJooble && (
                     <div title="Postato su Jooble" className="w-5 h-5 rounded-md bg-orange-500/15 flex items-center justify-center text-orange-400 border border-orange-500/30">
                       <span className="text-[10px] font-bold">J</span>
                     </div>

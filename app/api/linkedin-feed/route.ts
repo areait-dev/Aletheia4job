@@ -1,5 +1,6 @@
 // app/api/linkedin-feed/route.ts
 import { NextResponse } from 'next/server';
+import { isMultipostingEnabled } from '@/utils/featureFlags';
 import { getLinkedInJobsForOrg } from '@/utils/get-linkedin-jobs';
 import {
   mapJobToLinkedInDto,
@@ -20,6 +21,9 @@ const REQUIRED_ENV_VARS = [
 ] as const;
 
 export async function GET() {
+  if (!isMultipostingEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
   if (missing.length > 0) {
     return NextResponse.json(

@@ -1,4 +1,5 @@
 import PositionForm from '@/components/PositionForm';
+import { isMultipostingEnabled } from '@/utils/featureFlags';
 import { getSingleJobAction } from '@/utils/actions';
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import { notFound } from 'next/navigation';
@@ -14,7 +15,7 @@ async function EditPositionPage({ params }: { params: { id: string } }) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <PositionForm jobId={params.id} />
+      <PositionForm jobId={params.id} multipostingEnabled={isMultipostingEnabled()} />
     </HydrationBoundary>
   );
 }

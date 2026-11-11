@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isMultipostingEnabled } from "@/utils/featureFlags";
 import {
   processIncomingApplication,
   type IncomingApplicationInput,
@@ -43,6 +44,9 @@ function isAuthorized(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isMultipostingEnabled()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

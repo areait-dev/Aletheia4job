@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import PositionForm from '@/components/PositionForm';
+import { isMultipostingEnabled } from '@/utils/featureFlags';
 import {
   dehydrate,
   HydrationBoundary,
@@ -11,7 +12,7 @@ function CreateNewPositionPage() {
   const queryClient = new QueryClient();
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <PositionForm />
+      <PositionForm multipostingEnabled={isMultipostingEnabled()} />
     </HydrationBoundary>
   );
 }

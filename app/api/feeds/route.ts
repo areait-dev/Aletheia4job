@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isMultipostingEnabled } from '@/utils/featureFlags';
 import { dbUnscoped } from '@/utils/db';
 import { buildAggregatorXmlFeed } from '@/utils/aggregator';
 import { JobStatus, JobMode } from '@/utils/types';
@@ -9,6 +10,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  if (!isMultipostingEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
   const url = new URL(request.url);
   const token = url.searchParams.get('token');
   const provider = (url.searchParams.get('provider') ?? 'indeed').toLowerCase();

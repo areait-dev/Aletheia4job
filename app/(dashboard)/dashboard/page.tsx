@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { isMultipostingEnabled } from "@/utils/featureFlags";
 
 export const revalidate = 30;
 
@@ -201,11 +202,13 @@ export default async function DashboardPage() {
               </Link>
             )}
 
-            <div className="glass-card rounded-[2rem] p-8 text-center space-y-4 bg-primary/10 border-primary/30">
-               <PlusCircle className="w-10 h-10 text-primary mx-auto opacity-60" />
-               <p className="text-sm font-medium text-foreground/80">Vuoi migliorare la tua ricerca? Attiva il multiposting su LinkedIn.</p>
-               <Link href="/amministrazione" className="block text-xs font-black uppercase tracking-widest text-primary hover:underline">Configura Ora →</Link>
-            </div>
+            {isMultipostingEnabled() && (
+              <div className="glass-card rounded-[2rem] p-8 text-center space-y-4 bg-primary/10 border-primary/30">
+                 <PlusCircle className="w-10 h-10 text-primary mx-auto opacity-60" />
+                 <p className="text-sm font-medium text-foreground/80">Vuoi migliorare la tua ricerca? Attiva il multiposting su LinkedIn.</p>
+                 <Link href="/amministrazione" className="block text-xs font-black uppercase tracking-widest text-primary hover:underline">Configura Ora →</Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

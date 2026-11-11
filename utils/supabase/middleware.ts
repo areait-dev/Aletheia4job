@@ -1,7 +1,19 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isMultipostingEnabled, isMultipostingPath } from '@/utils/featureFlags'
 
 export async function updateSession(request: NextRequest) {
+  // Multiposting: a flag spento questi endpoint non esistono (404, senza passare dal login).
+  // A flag acceso il webhook ha un'autenticazione propria (secret) e salta la sessione.
+  if (isMultipostingPath(request.nextUrl.pathname)) {
+    if (!isMultipostingEnabled()) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    if (request.nextUrl.pathname === '/api/webhooks/multiposting') {
+      return NextResponse.next()
+    }
+  }
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
@@ -76,7 +88,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
   const isSeoRoute     = request.nextUrl.pathname === '/robots.txt' ||
                          request.nextUrl.pathname === '/sitemap.xml'
-  const isApiRoute     = request.nextUrl.pathname.startsWith('/api/feeds') ||
+  const isApiRoute     = (isMultipostingEnabled() && request.nextUrl.pathname.startsWith('/api/feeds')) ||
                          request.nextUrl.pathname.startsWith('/api/upload-cv') ||
                          request.nextUrl.pathname.startsWith('/api/public/')
 

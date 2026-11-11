@@ -14,6 +14,7 @@ import {
   updateMemberRoleAction,
 } from "@/utils/actions";
 import { canAccessAdmin, protectPageByRole } from "@/utils/authz";
+import { isMultipostingEnabled } from "@/utils/featureFlags";
 
 const roles = Object.values(MembershipRole);
 const auditActions = Object.values(AuditAction);
@@ -188,16 +189,18 @@ async function AdminPage({
 
       <div className="rounded-xl border p-4 bg-primary/5 border-primary/20">
         <h2 className="font-semibold mb-2 flex items-center gap-2 text-primary">
-          <Globe className="w-4 h-4" /> Integrations & Multiposting
+          <Globe className="w-4 h-4" /> {isMultipostingEnabled() ? 'Integrazioni e multiposting' : 'Integrazioni'}
         </h2>
         {searchParams?.cronofy ? (
           <p className="text-sm mb-4">
             Cronofy: <span className="font-semibold">{searchParams.cronofy}</span>
           </p>
         ) : null}
-        <p className="text-sm text-muted-foreground mb-4">
-          Utilizza i seguenti link per collegare le tue offerte di lavoro agli aggregatori esterni.
-        </p>
+        {isMultipostingEnabled() && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Utilizza i seguenti link per collegare le tue offerte di lavoro agli aggregatori esterni.
+          </p>
+        )}
         <div className="space-y-4">
           <div className="p-3 bg-background rounded-lg border">
             <p className="text-xs font-bold uppercase tracking-wider mb-1">Calendari (Cronofy)</p>
@@ -214,6 +217,7 @@ async function AdminPage({
               Dopo la connessione, la sincronizzazione bidirezionale avviene via webhook su /api/webhooks/cronofy.
             </p>
           </div>
+          {isMultipostingEnabled() && (<>
           <div className="p-3 bg-background rounded-lg border">
             <p className="text-xs font-bold uppercase tracking-wider mb-1">Feed XML offerte (Indeed, Jooble, LinkedIn)</p>
             <div className="flex items-center gap-3">
@@ -235,6 +239,7 @@ async function AdminPage({
               </div>
             ))}
           </div>
+          </>)}
         </div>
       </div>
 

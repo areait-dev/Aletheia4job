@@ -44,7 +44,7 @@ import { useEffect } from 'react';
 import { Sparkles, Loader2, Upload, CheckCircle2, Plus, X } from 'lucide-react'; // 🔥 NUOVO: icone per UI
 import { uploadCV } from '@/utils/supabase';
 
-function PositionForm({ jobId }: { jobId?: string }) {
+function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; multipostingEnabled?: boolean }) {
   const experienceLevels = ['Entry Level', 'Mid Level', 'Senior Level', 'Director / Executive'];
   const remoteOptions = ['Onsite', 'Remote', 'Hybrid'];
   const salaryCurrencyOptions = ['EUR', 'USD', 'GBP'];
@@ -483,6 +483,7 @@ function PositionForm({ jobId }: { jobId?: string }) {
                   Career Page
                 </label>
               </div>
+              {multipostingEnabled && (<>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -516,10 +517,13 @@ function PositionForm({ jobId }: { jobId?: string }) {
                   Jooble
                 </label>
               </div>
+              </>)}
             </div>
-            <p className='text-[10px] text-muted-foreground mt-3'>
-              Le posizioni selezionate verranno incluse nel feed XML per gli aggregatori.
-            </p>
+            {multipostingEnabled && (
+              <p className='text-[10px] text-muted-foreground mt-3'>
+                Le posizioni selezionate verranno incluse nel feed XML per gli aggregatori.
+              </p>
+            )}
           </div>
 
           <Button
