@@ -93,12 +93,13 @@ Nessun annuncio è collegato a LinkedIn, Indeed, Jooble o al provider di candida
 - **Riattivare:** impostare `MULTIPOSTING_ENABLED=true` su Vercel e rifare il deploy; servono poi `AGGREGATOR_FEED_TOKEN`, `MULTIPOSTING_WEBHOOK_SECRET` e (LinkedIn) le variabili `LINKEDIN_*`.
 - Da fare lato proprietario: disdire eventuali abbonamenti/approvazioni presso le piattaforme (LinkedIn ATS, account recruiter Indeed/Jooble, provider che invia al webhook) e rimuovere le relative variabili da Vercel.
 
-## 7. RLS automatica sulle nuove tabelle (preparata, NON ancora applicata)
+## 7. RLS automatica sulle nuove tabelle (applicata)
 
 Migrazione `20261111120000_auto_enable_rls_on_new_tables`: un event trigger abilita la RLS a ogni `CREATE TABLE` / `CREATE TABLE AS` / `SELECT INTO` nello schema `public`,
 così una tabella creata da una migrazione Prisma futura non resta esposta via API REST. Prisma (ruolo `postgres`) ignora la RLS: nessun effetto sull'app.
 La funzione `public.rls_auto_enable()` non è richiamabile da `anon`/`authenticated`. Rollback: `prisma/rollbacks/20261111120000_auto_enable_rls_on_new_tables.rollback.sql`.
-Provata in una transazione poi annullata (tabelle in `public` con RLS attiva, altri schemi non toccati, nulla rimasto nel database). In attesa di approvazione per `prisma migrate deploy`.
+Provata in una transazione poi annullata (tabelle in `public` con RLS attiva, altri schemi non toccati, nulla rimasto nel database). Applicata con `prisma migrate deploy`; verificato che l'event trigger `rls_auto_enable` esista (`ddl_command_end`, tag `CREATE TABLE`/`CREATE TABLE AS`/`SELECT INTO`) e sia abilitato.
+Resta comunque buona prassi non fare affidamento solo sul trigger: nessuna policy è definita, quindi le nuove tabelle sono inaccessibili da `anon`/`authenticated` finché non si scrivono policy esplicite.
 
 ## 8. Ancora aperto
 
@@ -111,5 +112,6 @@ Provata in una transazione poi annullata (tabelle in `public` con RLS attiva, al
 - **Default privileges di `supabase_admin`:** non modificabili da `postgres` (vedi sezione 2).
 - **README:** descrive ancora gli URL e il flusso di autenticazione precedenti.
 - **Evento funnel di prova:** durante la prova end-to-end è stato eliminato 1 evento `spontaneous_submitted` selezionato per finestra temporale (non è collegato a un candidato). Il conteggio coincide con l'unico evento atteso e non ne restano altri di quel tipo, ma non è dimostrabile al 100% che fosse quello di prova.
-- **Trigger RLS:** applicare la migrazione della sezione 7 dopo la revisione.
+- **Candidati di prova:** un candidato creato per una prova manuale (1 riga `Candidate`, il suo CV nel bucket `cvs` e 1 riga di `AuditLog` di creazione) è stato eliminato su richiesta; non avevano candidature, note, colloqui né altri dati collegati.
+  I candidati sono ora 309, tutti con `cvUrl` valido.
 - **Capacità:** verificare piano e limiti di Supabase, Vercel e Inngest prima dell'invio di massa agli utenti.
