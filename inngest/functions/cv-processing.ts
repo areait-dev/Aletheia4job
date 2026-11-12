@@ -1,11 +1,16 @@
 import { inngest } from "@/inngest/client";
 import { rateLimitFailureMessage, runAiStepWithRateLimitWait } from "@/lib/aiStepRetry";
 import { GroqTransientError } from "@/lib/groqRetry";
+import {
+  CV_UNREADABLE_MESSAGE,
+  extractCvTextOutcome,
+  handleProcessCvFailure,
+  markApplicationFailed,
+} from "@/lib/cvProcessingOutcome";
 import prisma from "@/utils/db";
 import { runWithTenantContext, setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
 import { downloadCv } from "@/utils/cvStorage";
-import { extractTextFromCV } from "@/lib/cvParser";
 import { isAiConfigured, parseCvWithAI, scoreCandidateWithAI } from "@/lib/aiCv";
 
 type CvProcessingPayload = {
@@ -39,6 +44,15 @@ export const processCV = inngest.createFunction(
     triggers: [{ event: "cv/process.requested" }],
     retries: 5,
     concurrency: CV_PROCESSING_CONCURRENCY,
+    // Rete di sicurezza: se il run fallisce dopo tutti i tentativi la candidatura va in FAILED (con il pulsante
+    // "Riprova Elaborazione") invece di restare in PROCESSING per sempre.
+    onFailure: async (failure) => {
+      const original = (failure.event.data.event?.data ?? {}) as Partial<CvProcessingPayload>;
+      if (!original.organizationId) return handleProcessCvFailure(prisma, failure as never);
+      await runWithTenantContext({ organizationId: original.organizationId, source: "system" }, () =>
+        handleProcessCvFailure(prisma, failure as never),
+      );
+    },
   },
   async ({ event, step }) => {
     const { applicationId, candidateId, jobId, organizationId, filePath, mimeType, cvUrl } =
@@ -62,29 +76,38 @@ export const processCV = inngest.createFunction(
       });
     });
 
-    const cvText = await runStep("extract-cv-text", async () => {
-      let buffer: Buffer;
+    // Download e lettura del file. Download dallo Storage / rete: errore temporaneo, il passo viene ritentato.
+    // File illeggibile (PDF danneggiato, formato non supportato): errore definitivo, esito { ok: false } senza ritentativi.
+    const extracted = await runStep("extract-cv-text", async () =>
+      extractCvTextOutcome(async () => {
+        if (filePath) {
+          const supabase = createServiceClient();
+          const { data: fileData, error: downloadError } = await supabase.storage
+            .from("cvs")
+            .download(filePath);
 
-      if (filePath) {
-        const supabase = createServiceClient();
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from("cvs")
-          .download(filePath);
+          if (downloadError || !fileData) {
+            throw new Error(`Download CV da Supabase fallito: ${downloadError?.message || "file non trovato"}`);
+          }
 
-        if (downloadError || !fileData) {
-          throw new Error(`Download CV da Supabase fallito: ${downloadError?.message || "file non trovato"}`);
+          return Buffer.from(await fileData.arrayBuffer());
         }
-
-        buffer = Buffer.from(await fileData.arrayBuffer());
-      } else if (cvUrl) {
-        // Percorso nel bucket (chiave di servizio) o URL esterno: vedi utils/cvStorage.ts
-        buffer = await downloadCv(cvUrl);
-      } else {
+        if (cvUrl) {
+          // Percorso nel bucket (chiave di servizio) o URL esterno: vedi utils/cvStorage.ts
+          return await downloadCv(cvUrl);
+        }
         throw new Error("Nessun file CV disponibile (mancano filePath e cvUrl)");
-      }
+      }, mimeType),
+    );
 
-      return await extractTextFromCV(buffer, mimeType);
-    });
+    if (!extracted.ok) {
+      console.warn(`[cv-processing] CV illeggibile, application ${applicationId} in FAILED senza ritentativi`);
+      await runStep("mark-failed-unreadable", async () => {
+        await markApplicationFailed(prisma, { applicationId, organizationId, message: CV_UNREADABLE_MESSAGE });
+      });
+      return { ok: false, applicationId, reason: "cv-unreadable" };
+    }
+    const cvText = extracted.text;
 
     // Errori dell'analisi AI rimasti dopo tutti i tentativi: non vanno persi (prima l'esito era "completato" ma vuoto).
     const aiFailures: string[] = [];
@@ -218,6 +241,14 @@ export const processCandidateCV = inngest.createFunction(
     triggers: [{ event: "cv/candidate-process.requested" }],
     retries: 5,
     concurrency: CV_PROCESSING_CONCURRENCY,
+    // Qui non c'è una candidatura da portare in FAILED (l'arricchimento riguarda solo il candidato): si registra il motivo nei log.
+    onFailure: async (failure) => {
+      const original = (failure.event.data.event?.data ?? {}) as Partial<CandidateProcessingPayload>;
+      console.error(
+        `[process-candidate-cv] run fallito dopo tutti i tentativi (candidato ${original.candidateId ?? "?"}):`,
+        failure.error?.message,
+      );
+    },
   },
   async ({ event, step }) => {
     const { candidateId, organizationId, preserveRole } = event.data as CandidateProcessingPayload;

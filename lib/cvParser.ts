@@ -1,4 +1,5 @@
 import mammoth from 'mammoth';
+import { CvUnreadableError } from '@/lib/cvErrors';
 
 // @ts-ignore - pdf-parse v1.x usa module.exports = function
 const pdf = require("pdf-parse");
@@ -42,11 +43,11 @@ async function ocrFallback(buffer: Buffer): Promise<string> {
 
 export async function extractTextFromCV(fileBuffer: Buffer, mimeType?: string): Promise<string> {
   if (fileBuffer.length === 0) {
-    throw new Error('Il file CV è vuoto.');
+    throw new CvUnreadableError('Il file CV è vuoto.');
   }
 
   if (fileBuffer.length > MAX_BUFFER_SIZE) {
-    throw new Error(`File troppo grande (max ${MAX_BUFFER_SIZE / 1024 / 1024}MB).`);
+    throw new CvUnreadableError(`File troppo grande (max ${MAX_BUFFER_SIZE / 1024 / 1024}MB).`);
   }
 
   const resolvedMime = mimeType || detectMimeType(fileBuffer) || 'application/octet-stream';
@@ -88,6 +89,6 @@ export async function extractTextFromCV(fileBuffer: Buffer, mimeType?: string): 
     return sanitizeText(text);
   } catch (error) {
     console.error('[cvParser] Errore nel parsing del CV:', error);
-    throw new Error('Impossibile leggere il contenuto del CV.');
+    throw new CvUnreadableError('Impossibile leggere il contenuto del CV.', { cause: error });
   }
 }
