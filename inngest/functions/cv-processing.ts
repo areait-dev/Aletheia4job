@@ -1,6 +1,6 @@
-import { RetryAfterError } from "inngest";
 import { inngest } from "@/inngest/client";
-import { GroqTransientError, jobRetryDelaySeconds } from "@/lib/groqRetry";
+import { rateLimitFailureMessage, runAiStepWithRateLimitWait } from "@/lib/aiStepRetry";
+import { GroqTransientError } from "@/lib/groqRetry";
 import prisma from "@/utils/db";
 import { runWithTenantContext, setTenantContext } from "@/utils/tenant-context";
 import { createServiceClient } from "@/utils/supabase/service";
@@ -25,17 +25,8 @@ type CvProcessingPayload = {
  */
 export const CV_PROCESSING_CONCURRENCY = 5;
 
-/**
- * Un errore temporaneo di Groq (429, timeout, 5xx) non deve essere perso: si riprogramma il passo
- * più tardi con attesa crescente (RetryAfterError). Gli altri errori restano com'erano.
- */
-function asRetryable(e: unknown, attempt: number): unknown {
-  if (e instanceof GroqTransientError) {
-    const seconds = jobRetryDelaySeconds(attempt, e.retryAfterSeconds);
-    return new RetryAfterError(`${e.message}: nuovo tentativo tra ${seconds}s`, `${seconds}s`, { cause: e });
-  }
-  return e;
-}
+// Gli errori temporanei di Groq (429, timeout, 5xx) non si ritentano con i `retries` di Inngest: il ritardo di ripresa
+// cresce con il tentativo e supera di molto quello richiesto. Vedi lib/aiStepRetry.ts (step.sleep con contatore proprio).
 
 function describeAiFailure(step: string, e: unknown): string {
   const raw = e instanceof Error ? (e.cause instanceof Error ? e.cause.message : e.message) : String(e);
@@ -49,7 +40,7 @@ export const processCV = inngest.createFunction(
     retries: 5,
     concurrency: CV_PROCESSING_CONCURRENCY,
   },
-  async ({ event, step, attempt }) => {
+  async ({ event, step }) => {
     const { applicationId, candidateId, jobId, organizationId, filePath, mimeType, cvUrl } =
       event.data as CvProcessingPayload;
 
@@ -101,13 +92,18 @@ export const processCV = inngest.createFunction(
     let parsedData: Record<string, any> | null = null;
     if (isAiConfigured()) {
       try {
-        parsedData = await runStep("ai-parse-cv", async () => {
-          try {
-            return await parseCvWithAI(cvText);
-          } catch (e) {
-            throw asRetryable(e, attempt);
-          }
+        const parsed = await runAiStepWithRateLimitWait({
+          name: "ai-parse-cv",
+          runStep,
+          sleep: (id, duration) => step.sleep(id, duration),
+          call: () => parseCvWithAI(cvText),
         });
+        if (parsed.ok) {
+          parsedData = parsed.value;
+        } else {
+          console.warn(`[cv-processing] AI CV parsing: rate limit ancora superato dopo ${parsed.attempts} tentativi (application ${applicationId})`);
+          aiFailures.push(rateLimitFailureMessage("lettura del CV", parsed.attempts));
+        }
       } catch (e) {
         console.warn("[cv-processing] AI CV parsing non riuscito:", e);
         aiFailures.push(describeAiFailure("lettura del CV", e));
@@ -139,43 +135,47 @@ export const processCV = inngest.createFunction(
 
     if (isAiConfigured()) {
       try {
-        await runStep("ai-match-score", async () => {
-          const job = await prisma.job.findUnique({
-            where: { id: jobId },
-            select: { title: true, requirements: true, description: true },
-          });
+        const scored = await runAiStepWithRateLimitWait({
+          name: "ai-match-score",
+          runStep,
+          sleep: (id, duration) => step.sleep(id, duration),
+          call: async () => {
+            const job = await prisma.job.findUnique({
+              where: { id: jobId },
+              select: { title: true, requirements: true, description: true },
+            });
 
-          if (!job) {
-            throw new Error(`Job ${jobId} non trovato per AI matching`);
-          }
+            if (!job) {
+              throw new Error(`Job ${jobId} non trovato per AI matching`);
+            }
 
-          let result: Awaited<ReturnType<typeof scoreCandidateWithAI>>;
-          try {
-            result = await scoreCandidateWithAI(cvText, job);
-          } catch (e) {
-            throw asRetryable(e, attempt);
-          }
+            const result = await scoreCandidateWithAI(cvText, job);
 
-          await prisma.candidate.update({
-            where: { id: candidateId },
-            data: {
-              matchingScore: result.matchingScore,
-              matchedKeywords: result.matchedKeywords,
-              missingKeywords: result.missingKeywords,
-              recommendation: result.recommendation,
-            },
-          });
+            await prisma.candidate.update({
+              where: { id: candidateId },
+              data: {
+                matchingScore: result.matchingScore,
+                matchedKeywords: result.matchedKeywords,
+                missingKeywords: result.missingKeywords,
+                recommendation: result.recommendation,
+              },
+            });
 
-          await prisma.application.updateMany({
-            where: { candidateId, jobId, organizationId },
-            data: {
-              matchingScore: result.matchingScore,
-              matchedKeywords: result.matchedKeywords,
-              missingKeywords: result.missingKeywords,
-              recommendation: result.recommendation,
-            },
-          });
+            await prisma.application.updateMany({
+              where: { candidateId, jobId, organizationId },
+              data: {
+                matchingScore: result.matchingScore,
+                matchedKeywords: result.matchedKeywords,
+                missingKeywords: result.missingKeywords,
+                recommendation: result.recommendation,
+              },
+            });
+          },
         });
+        if (!scored.ok) {
+          console.warn(`[cv-processing] AI matching: rate limit ancora superato dopo ${scored.attempts} tentativi (application ${applicationId})`);
+          aiFailures.push(rateLimitFailureMessage("punteggio", scored.attempts));
+        }
       } catch (e) {
         console.warn("[cv-processing] AI matching score non riuscito:", e);
         aiFailures.push(describeAiFailure("punteggio", e));
@@ -219,7 +219,7 @@ export const processCandidateCV = inngest.createFunction(
     retries: 5,
     concurrency: CV_PROCESSING_CONCURRENCY,
   },
-  async ({ event, step, attempt }) => {
+  async ({ event, step }) => {
     const { candidateId, organizationId, preserveRole } = event.data as CandidateProcessingPayload;
 
     setTenantContext({ organizationId, source: "system" });
@@ -245,17 +245,28 @@ export const processCandidateCV = inngest.createFunction(
       return { ok: false, reason: "no-groq-key", candidateId };
     }
 
-    const parsedData = await runStep("ai-parse-candidate", async () => {
-      try {
-        return await parseCvWithAI(candidate.resumeText!);
-      } catch (e) {
-        // errore temporaneo (429, timeout): riprogrammato con attesa crescente; altri errori come prima
-        if (e instanceof GroqTransientError) throw asRetryable(e, attempt);
-        console.warn("[process-candidate-cv] AI parsing non riuscito:", e);
-        return null;
-      }
+    const parsed = await runAiStepWithRateLimitWait({
+      name: "ai-parse-candidate",
+      runStep,
+      sleep: (id, duration) => step.sleep(id, duration),
+      call: async () => {
+        try {
+          return await parseCvWithAI(candidate.resumeText!);
+        } catch (e) {
+          // errore temporaneo (429, timeout): lo gestisce l'helper con step.sleep; gli altri errori come prima
+          if (e instanceof GroqTransientError) throw e;
+          console.warn("[process-candidate-cv] AI parsing non riuscito:", e);
+          return null;
+        }
+      },
     });
 
+    if (!parsed.ok) {
+      console.warn(`[process-candidate-cv] rate limit AI ancora superato dopo ${parsed.attempts} tentativi (candidato ${candidateId})`);
+      return { ok: false, reason: "ai-rate-limited", candidateId };
+    }
+
+    const parsedData = parsed.value;
     if (!parsedData) {
       return { ok: false, reason: "ai-parse-failed", candidateId };
     }
