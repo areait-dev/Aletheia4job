@@ -109,10 +109,59 @@ Si misura solo la versione attuale (al commit precedente i passi fallivano con `
 
 - **Throttling:** per i primi ~6 minuti si completano 14-15 CV al minuto, cioè 28-30 chiamate AI al minuto: la pipeline segue il limite senza crollare e nessun CV viene perso.
 - **Spreco:** il 61% delle chiamate (312 su 512) viene respinto con 429. Con il server finto costa nulla; con Groq reale non so se i 429 contino nel consumo del limite: da verificare.
-- **Coda lunga (da migliorare):** il tempo ideale per 200 chiamate a 30/min sarebbe circa 400 s, ne sono serviti 706. Dal 88° CV (t=425 s) all'89° (t=627 s) passano 202 s.
-  È coerente con l'attesa dei ritentativi (30 s × 2^tentativo, fino a 5 minuti) che cresce con `attempt`. Nell'SDK Inngest installato (4.4.0) `attempt` è per l'intera esecuzione della funzione, non per passo,
-  quindi non si azzera fra `ai-parse-cv` e `ai-match-score`: un CV con qualche ritentativo nel primo passo parte con un'attesa già lunga nel secondo. **Non dimostrato**: il log del dev server di Inngest non registra i ritentativi.
-  Miglioramento possibile (non applicato): limitare l'attesa massima a 60-90 s quando Groq indica un `Retry-After` breve, oppure calcolarla sul numero di tentativi del singolo passo.
+- **Coda lunga (risolta con `step.sleep`, commit `ae1e119`; vedi confronto e diagnosi sotto):** il tempo ideale per 200 chiamate a 30/min sarebbe circa 400 s, ne sono serviti 706. Dal 88° CV (t=425 s) all'89° (t=627 s) passano 202 s.
+  Nell'SDK Inngest installato (4.4.0) `attempt` è per l'intera esecuzione della funzione, non per passo, quindi non si azzera fra `ai-parse-cv` e `ai-match-score`.
+  Primo tentativo di correzione: tetto di 90 s all'attesa (con `Retry-After`: Retry-After + 0-5 s). Risultato nel confronto sotto: **solo -7%**, la coda resta.
+
+### Confronto prima/dopo il tetto di 90 s (100 CV, 30 richieste/min, stesso ambiente)
+
+| | Senza tetto (attesa fino a 300 s) | Con tetto 90 s |
+|---|---|---|
+| Tempo al 25 / 50 / 90 / 100% | 82 / 198 / 637 / 706 s | 97 / 213 / 635 / 656 s |
+| Chiamate AI (riuscite / 429) | 512 (200 / 312) | 497 (200 / 297) |
+| Intervallo massimo fra due completamenti (campionato ogni 3 s) | 246 s | 235 s |
+| `FAILED` / errori registrati | 0 / nessuno | 0 / nessuno |
+
+Il tetto ha ridotto il tempo totale di 49 s (-7%) e di poco i 429; il 25% e il 50% sono arrivati un po' più tardi (rumore o effetto dei tentativi più ravvicinati: non distinguibile con una sola misura per caso).
+**La spiegazione "attesa troppo lunga" è quindi insufficiente.** Nel secondo giro, minuto per minuto: dal minuto 5 le chiamate scendono (153, 96, 96, 57, 28, 31, 11) e **da t=441 s a t=625 s non parte nessuna chiamata AI**
+mentre 11 candidature restano in lavorazione. Con un'attesa calcolata di al massimo 90 s non dovrebbero esserci 180 s senza alcun tentativo: l'attesa effettiva è maggiore di quella richiesta.
+**Indagine con log temporanei (un solo giro, 100 CV, 30 richieste/min; log poi rimossi):** il silenzio è stato di 291 s (da t=390 s a t=682 s dalla prima richiesta), con 25 candidature ferme.
+Il nostro codice aveva chiesto attese brevi: 293 `RetryAfterError` con 9-44 s (mai oltre), formato corretto (`"35s"` → 35 s nell'SDK 4.4.0). Le attese dentro la chiamata (`callWithGroqRetry`) non c'entrano:
+con Retry-After di 20-33 s (> 8 s) la chiamata lancia subito al job, e in tutto il giro ci sono state solo 25 attese interne (di 1-2 s).
+Il ritardo **reale** fra la richiesta di riprogrammazione e la ripresa del passo cresce con il numero del tentativo, indipendentemente da quanto chiesto (media su 285 riprogrammazioni):
+
+| Passaggio | Chiesto da noi | Ripresa reale | Ritardo mediano oltre il chiesto |
+|---|---|---|---|
+| tentativo 0 → 1 | 27 s | 42 s | +20 s |
+| 1 → 2 | 37 s | 56 s | +21 s |
+| 2 → 3 | 37 s | 78 s | +42 s |
+| 3 → 4 | 17 s | 144 s | +132 s |
+| 4 → 5 (ultimo) | 35 s | 318 s | +281 s |
+
+Esempio: il run `NV308W` al tentativo 4 chiede 38 s e riparte al tentativo 5 dopo circa 300 s. **Chi aspettava cosa:** nella finestra non c'erano attese interne né code per la `concurrency` (nessuna chiamata AI, nessun passo avviato):
+erano tutti run riprogrammati dall'esecutore di Inngest, che li ha ripresi più tardi di quanto richiesto. **Causa più probabile: il dev server Inngest (CLI 1.52.0)** applica un proprio ritardo di ritentativo crescente con il tentativo
+(o ignora/prevale sul `RetryAfterError`). Non è dimostrato che sia così anche su Inngest cloud: va verificato lì. Non è un errore di formato nostro.
+**Conseguenza importante:** con `retries: 5` e ritardi che arrivano a ~5 minuti all'ultimo tentativo, sotto rate limit prolungato alcuni CV arrivano al tentativo 5 con Groq ancora in 429 e finiscono `FAILED`
+(in questo giro: 8 su 100, 4 in "lettura del CV" e 4 in "punteggio"; nei due giri precedenti 0, a parità di condizioni: il risultato dipende dal caso e dal carico). Il rilancio dalla scheda del candidato resta disponibile.
+**Correzione applicata (commit `ae1e119`, `lib/aiStepRetry.ts`):** i ritentativi di Inngest non si usano più per il rate limit. Nei passi AI (`ai-parse-cv`, `ai-match-score`, `ai-parse-candidate`) un errore temporaneo di Groq
+non fa fallire il passo: restituisce `{ retry: true, retryAfterSeconds }` e il job attende con `step.sleep` (durata esatta) in un ciclo con contatore proprio, fino a 8 tentativi, con ID di passo unici (`${nome}-${i}`, `wait-${nome}-${i}`).
+Attesa = Retry-After + jitter fra 5 s e max(5, Retry-After/2) s, tetto 90 s; senza Retry-After backoff 30/60/90 s. Esauriti gli 8 tentativi: application `FAILED` con "limite di richieste AI ancora superato dopo 8 tentativi"
+(in `processCandidateCV`: `ok:false`, `reason: "ai-rate-limited"`). Gli errori non temporanei restano soggetti a `retries: 5`.
+
+### Confronto dei quattro giri (100 CV, 30 richieste/min, stesso ambiente)
+
+| | Senza tetto | Tetto 90 s | Log di debug (tetto 90 s) | `step.sleep` |
+|---|---|---|---|---|
+| Tempo al 25 / 50 / 90 / 100% | 82 / 198 / 637 / 706 s | 97 / 213 / 635 / 656 s | 81 / 219 / 707 / 790 s | 85 / 215 / 408 / 423 s |
+| Candidature con punteggio | 100 | 100 | 96 | 100 |
+| `FAILED` | 0 | 0 | 8 | **0** |
+| Chiamate AI (riuscite / 429) | 512 (200 / 312) | 497 (200 / 297) | 510 (192 / 318) | 490 (200 / 290) |
+| Intervallo massimo fra due completamenti | 246 s | 235 s | 308 s | **50 s** |
+| Picco di chiamate AI contemporanee | 5 | 5 | 5 | 5 |
+
+Con `step.sleep` il tempo totale è 423 s contro i ~400 s ideali (200 chiamate a 30/min): la coda lunga è sparita e l'intervallo massimo fra due completamenti scende da 246 s a 50 s. Un solo giro per variante: la differenza fra i primi tre
+è dentro la variabilità, quella con `step.sleep` è netta. **Resta da verificare su Inngest cloud**, dove il comportamento dei ritentativi può essere diverso; gli ID dei passi sono cambiati (`ai-parse-cv` → `ai-parse-cv-0`, ...),
+quindi le esecuzioni già in corso al momento di un deploy potrebbero ripartire dal passo AI.
 - **Connessioni DB:** il picco "1" misura le connessioni lato server dietro il pooler (modalità transazione) e non i client: con `concurrency: 5` il database non è stato il limite.
 
 ### `connection_limit` (`pool-ceiling.ts`, staging, 12/11/2026)
@@ -122,6 +171,14 @@ Si misura solo la versione attuale (al commit precedente i passi fallivano con `
   Con 3 connessioni per istanza, circa 66 istanze serverless contemporanee riempirebbero un tetto di 200: se produzione ha un tetto uguale e si prevedono picchi di traffico sull'interfaccia (non di CV, che sono limitati a 5 alla volta), conviene 2.
   Prima di attivarlo: leggere nel pannello Supabase il limite reale del pooler di produzione e il numero di istanze Vercel atteso.
 - Nota: la prima esecuzione della parte A non misurava nulla (`pg_sleep` restituisce un tipo che Prisma non legge); corretta la query nello script.
+
+## 3ter. Deploy e verifica post-deploy
+
+- **Quando fare il deploy:** quando su Inngest cloud non ci sono run in corso di `process-cv` e `process-candidate-cv`. Gli ID dei passi AI sono cambiati (`ai-parse-cv` → `ai-parse-cv-0`, `ai-match-score` → `ai-match-score-0`, `ai-parse-candidate` → `ai-parse-candidate-0`):
+  i run già avviati rieseguirebbero i passi AI.
+- **Subito dopo il deploy:** caricare 2-3 CV di prova e controllare nella timeline di Inngest che compaiano i passi `ai-parse-cv-0` e `ai-match-score-0`, e che le application arrivino a `COMPLETED` con il punteggio.
+- **Al primo 429 reale di Groq:** controllare nella timeline che i passi `wait-*` durino quanto richiesto (Retry-After + 5 s fino a metà Retry-After, tetto 90 s). È la verifica che la simulazione, fatta sul dev server, non può dare.
+- **Punti ancora aperti dopo il deploy:** `connection_limit=3&pool_timeout=20` (in attesa del limite del pooler di produzione) e il throttle Inngest sulle funzioni CV (da tarare sui limiti reali di Groq). Vedi la tabella del paragrafo 6.
 
 ## 4. Preview e produzione
 
@@ -164,9 +221,10 @@ Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storag
 | Indici `pg_trgm` | pronti in `prisma/pending/`, non applicati; decidere prima di ~50.000 candidati/org |
 | Matching: `resumeText` | opzione A (invariato); opzione C sopra i 5.000 candidati per organizzazione |
 | Separazione Preview/produzione | pianificata; in attesa dello staging eu-west-2 |
-| Punti fragili 1-3 del paragrafo 2 | corretti nel codice e provati con la simulazione (3bis), **non ancora committati né in produzione** |
-| `connection_limit` | proposta `connection_limit=3&pool_timeout=20` (non 1); da decidere dopo aver letto il limite del pooler di produzione |
-| Attesa dei ritentativi AI | coda lunga nella simulazione (706 s contro ~400 s ideali); possibile tetto all'attesa o `attempt` per passo; da decidere |
+| Punti fragili 1-3 del paragrafo 2 | corretti nel codice (commit locali del 12/11/2026, **non ancora pubblicati né in produzione**) e provati con la simulazione (3bis) |
+| Attesa dei ritentativi AI | **risolta nella simulazione** (commit `ae1e119`): attesa con `step.sleep` e contatore proprio (8 tentativi) invece dei ritentativi Inngest, il cui ritardo di ripresa nel dev server cresceva con il tentativo e superava il `RetryAfterError` (fino a 318 s per 35 s chiesti). 100 CV: 706 → 423 s, `FAILED` 0, intervallo massimo 246 → 50 s. Da verificare su Inngest cloud |
+| Throttle Inngest sulle funzioni CV | da aggiungere (`throttle` oltre a `concurrency: 5`) e tarare sui limiti reali del piano Groq, oggi sconosciuti; il valore di 30 richieste/min nella simulazione è solo un parametro |
+| `connection_limit=3&pool_timeout=20` in produzione | proposto, **in attesa** della verifica nel pannello Supabase del limite del pooler di produzione (staging: 200 connessioni client); con 1 si blocca (misurato) |
 | `serveOrigin` Inngest in sviluppo | `INNGEST_SERVE_ORIGIN` rispettato (prima fisso su `127.0.0.1:3000`); commit a parte |
 | Limiti e prezzi Vercel, Inngest, Groq, PITR | da verificare nei pannelli |
 | PITR | da decidere |
