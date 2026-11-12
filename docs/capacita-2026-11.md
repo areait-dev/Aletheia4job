@@ -198,7 +198,22 @@ Prova con tre candidature di prova in produzione (`test-deploy-1/2/3@example.com
   su `processCandidateCV` registra il motivo nei log. Deploy di `ba8125f` in Production e Sync Inngest riusciti il 12/11/2026 alle 13:07 (ora italiana).
 - **Non verificato:** la timeline di Inngest cloud (nomi dei passi `…-0`, durata dei passi `wait-*` al primo 429 reale, che non si è ancora verificato) e il comportamento di `onFailure` su Inngest cloud.
   Una sola lettura riuscita non dimostra che tutti i PDF reali si leggano: da provare con CV reali di tipi diversi (Word esportato in PDF, PDF scansionato).
-- **Le due application di prova vecchie** (`b66e33f1…`, `75559d8e…`) girano con il codice precedente: subito dopo il deploy erano ancora `PROCESSING`. Se i loro ritentativi sono già esauriti non si chiuderanno da sole e vanno sistemate a mano (insieme alla pulizia dei dati di prova, da decidere).
+- **Le due application di prova vecchie** (`b66e33f1…`, `75559d8e…`) giravano con il codice precedente: subito dopo il deploy di `ba8125f` erano ancora `PROCESSING`. Non è stato verificato se si sarebbero chiuse da sole: sono state eliminate nella pulizia qui sotto.
+
+### Pulizia dei dati di prova in produzione (12/11/2026)
+
+Eliminati, con approvazione, solo i dati creati dalla verifica post-deploy, in una sola transazione con controllo preventivo dei conteggi (organizzazione `org_prod_123`):
+- 3 candidati (`test-deploy-1/2/3@example.com`) e le loro 3 application (nessuna nota né colloquio collegati);
+- 3 righe `application_submitted` di `PublicFunnelEvent` generate dalle prove (`job_view` e `apply_click` non toccati);
+- 3 file in `cvs/org_prod_123/` (l'intero prefisso conteneva solo questi);
+- 3 righe `AuditLog` (`DELETE` su `candidate`, utente `system:pulizia-dati-di-prova`) a traccia dell'operazione.
+
+Stato finale verificato: `Application` 0, `Candidate` 311, file nel prefisso 0, `application_submitted` di oggi 0.
+
+**Funzione mancante nell'interfaccia:** l'azione `deleteCandidateAction` esiste (commit `e08ea32`: elimina il candidato e il suo CV dallo Storage, con audit log) ma **non è raggiungibile dall'ATS**.
+Il pulsante "Elimina" è in `components/JobCard.tsx`, che è usato solo da `components/JobsList.tsx`, e nessuna pagina in `app/` o `components/` importa `JobsList`. Inoltre l'azione richiede una sessione utente, quindi non si può chiamare da uno script:
+questa pulizia è stata fatta con una transazione diretta sul database (con gli stessi vincoli per organizzazione), non con l'azione dell'app.
+Serve una vera azione "Elimina candidato" nell'interfaccia (scheda del candidato e archivio), anche per le richieste di cancellazione dei dati (GDPR). **Non implementata**: da decidere insieme alla proposta privacy (`docs/proposta-privacy-2026-11.md`).
 
 ## 4. Preview e produzione
 
@@ -245,6 +260,7 @@ Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storag
 | Attesa dei ritentativi AI | **risolta nella simulazione** (commit `ae1e119`): attesa con `step.sleep` e contatore proprio (8 tentativi) invece dei ritentativi Inngest, il cui ritardo di ripresa nel dev server cresceva con il tentativo e superava il `RetryAfterError` (fino a 318 s per 35 s chiesti). 100 CV: 706 → 423 s, `FAILED` 0, intervallo massimo 246 → 50 s. Da verificare su Inngest cloud |
 | Throttle Inngest sulle funzioni CV | da aggiungere (`throttle` oltre a `concurrency: 5`) e tarare sui limiti reali del piano Groq, oggi sconosciuti; il valore di 30 richieste/min nella simulazione è solo un parametro |
 | `connection_limit=3&pool_timeout=20` in produzione | proposto, **in attesa** della verifica nel pannello Supabase del limite del pooler di produzione (staging: 200 connessioni client); con 1 si blocca (misurato) |
+| Eliminazione di un candidato dall'interfaccia | **manca**: `deleteCandidateAction` esiste ma il pulsante (`JobCard`) non è usato da nessuna pagina; serve per le richieste GDPR; da decidere (vedi paragrafo 3ter) |
 | `serveOrigin` Inngest in sviluppo | `INNGEST_SERVE_ORIGIN` rispettato (prima fisso su `127.0.0.1:3000`); commit a parte |
 | Limiti e prezzi Vercel, Inngest, Groq, PITR | da verificare nei pannelli |
 | PITR | da decidere |
