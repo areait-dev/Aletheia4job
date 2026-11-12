@@ -48,12 +48,16 @@ Per un CV (percorso candidatura a un annuncio):
 Limiti dei piani: **non conosciuti**. Da verificare: esecuzioni/step mensili inclusi su Inngest (300.000 al mese è molto per un piano gratuito),
 limiti di richieste e token al minuto di Groq (probabilmente il primo ostacolo in un'importazione massiva), durata massima delle funzioni su Vercel.
 
-### Punti fragili (non ancora corretti)
+### Punti fragili (stato al 12/11/2026; le correzioni 1-3 sono nel codice ma NON ancora committate né in produzione)
 1. Nessun `concurrency`/`throttle` sulle funzioni Inngest: molti CV insieme significano molte esecuzioni parallele contro Groq e contro il pool del database.
+   **Corretto:** `concurrency: 5` e `retries: 5` su `process-cv` e `process-candidate-cv`; misurato nel paragrafo 3bis (mai più di 5 chiamate AI contemporanee).
 2. Errori AI ingoiati: dopo i tentativi il codice logga e marca la candidatura `COMPLETED` senza analisi né punteggio.
+   **Corretto:** gli errori temporanei di Groq (429, timeout, 5xx) si ritentano con attesa crescente (`lib/groqRetry.ts`); se l'analisi resta non riuscita la candidatura passa a `FAILED`
+   con il motivo in `parsingError`, e la scheda candidato offre già "Riprova Elaborazione". Corretto anche `TenantContextMissingError` nei passi Inngest (ogni passo gira in `runWithTenantContext`).
 3. Upload limitato a 5 MB nell'app, ma Vercel accetta circa 4,5 MB di body: un PDF fra i due valori fallisce con 413 prima del codice.
+   **Corretto:** limite 4 MB (`utils/uploadLimits.ts`), controllo nel browser e 413 con messaggio leggibile dal server.
 4. OCR (`tesseract.js`) in serverless: lento e a rischio timeout su PDF scansionati.
-5. `DATABASE_URL` senza `connection_limit`: molte istanze in parallelo possono esaurire il pool.
+5. `DATABASE_URL` senza `connection_limit`: molte istanze in parallelo possono esaurire il pool. **Misurato e con proposta:** paragrafo 3bis.
 6. Nessuna analisi AI per i form pubblici (spontanea, Long List).
 7. Testo CV molto lungo (fino a 265.000 caratteri) pesa su database e ricerche.
 
@@ -87,6 +91,37 @@ contro lo staging con gli indici: diff vuoto, senza preview feature. Va dichiara
 (2,7 MB di testo a 20.000 candidati; 0,65–0,7 s a caldo dal PC, 4 s a freddo), e `scoreCandidateForJob` usa quel testo per il punteggio delle parole chiave (fino a 60/100 punti):
 toglierlo cambierebbe punteggi e ordine. **Opzione C, da fare sopra i 5.000 candidati per organizzazione:** pre-calcolare le parole chiave del candidato in una colonna al salvataggio del CV
 e non leggere più il testo completo nel matching. Alternativa B: leggere solo i primi N caratteri (cambia leggermente i punteggi dei CV lunghi).
+
+## 3bis. Simulazione di un picco di CV (12/11/2026, staging)
+
+Script in `scripts/loadtest/peak/`. **Cosa è reale e cosa no:** database di staging reale (via pooler); Groq e Storage sono un **server finto locale** (latenza 2-4 s, limite di richieste al minuto
+come parametro: i limiti reali del piano Groq NON sono noti); app Next in modalità sviluppo e dev server di Inngest sul PC. Non dice nulla su Vercel (durata, avvii a freddo, limiti del piano) né su Inngest cloud.
+Si misura solo la versione attuale (al commit precedente i passi fallivano con `TenantContextMissingError`: un "prima" non avrebbe valore).
+
+| | Prova (10 CV, 100 richieste/min) | Carico (100 CV, 30 richieste/min) |
+|---|---|---|
+| Tempo al 25 / 50 / 90 / 100% | 9 / 13 / 19 / 19 s | 82 / 198 / 637 / 706 s |
+| Candidature con punteggio | 10 su 10 | 100 su 100 |
+| Candidature `FAILED` | 0 | 0 (nessun errore registrato) |
+| Chiamate AI (riuscite / 429) | 20 (20 / 0) | 512 (200 / 312) |
+| Picco di chiamate AI contemporanee | 5 | 5 (= `concurrency`) |
+| Picco di connessioni al DB (lato server) | 5 | 1 |
+
+- **Throttling:** per i primi ~6 minuti si completano 14-15 CV al minuto, cioè 28-30 chiamate AI al minuto: la pipeline segue il limite senza crollare e nessun CV viene perso.
+- **Spreco:** il 61% delle chiamate (312 su 512) viene respinto con 429. Con il server finto costa nulla; con Groq reale non so se i 429 contino nel consumo del limite: da verificare.
+- **Coda lunga (da migliorare):** il tempo ideale per 200 chiamate a 30/min sarebbe circa 400 s, ne sono serviti 706. Dal 88° CV (t=425 s) all'89° (t=627 s) passano 202 s.
+  È coerente con l'attesa dei ritentativi (30 s × 2^tentativo, fino a 5 minuti) che cresce con `attempt`. Nell'SDK Inngest installato (4.4.0) `attempt` è per l'intera esecuzione della funzione, non per passo,
+  quindi non si azzera fra `ai-parse-cv` e `ai-match-score`: un CV con qualche ritentativo nel primo passo parte con un'attesa già lunga nel secondo. **Non dimostrato**: il log del dev server di Inngest non registra i ritentativi.
+  Miglioramento possibile (non applicato): limitare l'attesa massima a 60-90 s quando Groq indica un `Retry-After` breve, oppure calcolarla sul numero di tentativi del singolo passo.
+- **Connessioni DB:** il picco "1" misura le connessioni lato server dietro il pooler (modalità transazione) e non i client: con `concurrency: 5` il database non è stato il limite.
+
+### `connection_limit` (`pool-ceiling.ts`, staging, 12/11/2026)
+- **A) Tetto del pooler:** accetta 200 connessioni client contemporanee, poi rifiuta con `EMAXCONN max client connections reached, limit: 200`. È il valore dello staging: **quello di produzione non è misurato** (dipende dalla dimensione di calcolo).
+- **B) `connection_limit=1`:** una transazione interattiva con una query dello stesso client in mezzo resta in attesa e fallisce dopo 5,7 s (`Timed out fetching a new connection from the connection pool`). Con 2 e con 3 funziona (circa 1,4 s).
+- **Proposta (da decidere, non applicata):** `connection_limit=3&pool_timeout=20` in `DATABASE_URL` di produzione. Non 1, perché basta una query nidificata in una transazione (per esempio un controllo di tenant o autorizzazione) per bloccare la richiesta.
+  Con 3 connessioni per istanza, circa 66 istanze serverless contemporanee riempirebbero un tetto di 200: se produzione ha un tetto uguale e si prevedono picchi di traffico sull'interfaccia (non di CV, che sono limitati a 5 alla volta), conviene 2.
+  Prima di attivarlo: leggere nel pannello Supabase il limite reale del pooler di produzione e il numero di istanze Vercel atteso.
+- Nota: la prima esecuzione della parte A non misurava nulla (`pg_sleep` restituisce un tipo che Prisma non legge); corretta la query nello script.
 
 ## 4. Preview e produzione
 
@@ -129,7 +164,10 @@ Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storag
 | Indici `pg_trgm` | pronti in `prisma/pending/`, non applicati; decidere prima di ~50.000 candidati/org |
 | Matching: `resumeText` | opzione A (invariato); opzione C sopra i 5.000 candidati per organizzazione |
 | Separazione Preview/produzione | pianificata; in attesa dello staging eu-west-2 |
-| Punti fragili del paragrafo 2 | non corretti; da decidere (concorrenza Inngest, limite upload a 4 MB, errori AI non più ingoiati, `connection_limit`) |
+| Punti fragili 1-3 del paragrafo 2 | corretti nel codice e provati con la simulazione (3bis), **non ancora committati né in produzione** |
+| `connection_limit` | proposta `connection_limit=3&pool_timeout=20` (non 1); da decidere dopo aver letto il limite del pooler di produzione |
+| Attesa dei ritentativi AI | coda lunga nella simulazione (706 s contro ~400 s ideali); possibile tetto all'attesa o `attempt` per passo; da decidere |
+| `serveOrigin` Inngest in sviluppo | `INNGEST_SERVE_ORIGIN` rispettato (prima fisso su `127.0.0.1:3000`); commit a parte |
 | Limiti e prezzi Vercel, Inngest, Groq, PITR | da verificare nei pannelli |
 | PITR | da decidere |
 | Backup automatico dei file | copia locale incrementale (`backup-cv.bat`): attività "Backup CV Aletheia" creata e provata (ogni giorno alle 13:00, recupera se il PC era spento); piano R2 sospeso (workflow spento) |
