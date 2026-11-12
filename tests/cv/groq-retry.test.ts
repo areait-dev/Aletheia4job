@@ -80,14 +80,28 @@ describe("callWithGroqRetry", () => {
 });
 
 describe("jobRetryDelaySeconds", () => {
-  it("cresce a ogni tentativo del job (30, 60, 120, ... max 300 s)", () => {
+  it("senza Retry-After cresce a ogni tentativo (30, 60, 90 s) e si ferma a 90 s", () => {
     const mid = () => 0.5; // jitter neutro
-    expect([0, 1, 2, 3, 4, 8].map((a) => jobRetryDelaySeconds(a, null, mid))).toEqual([30, 60, 120, 240, 300, 300]);
+    expect([0, 1, 2, 3, 4, 8, 50].map((a) => jobRetryDelaySeconds(a, null, mid))).toEqual([30, 60, 90, 90, 90, 90, 90]);
   });
-  it("non è mai inferiore a Retry-After", () => {
+  it("senza Retry-After e con attempt alto non supera mai 90 s, nemmeno con il jitter massimo", () => {
+    for (const a of [3, 5, 10, 100]) {
+      expect(jobRetryDelaySeconds(a, null, () => 0)).toBeLessThanOrEqual(90);
+      expect(jobRetryDelaySeconds(a, null, () => 1)).toBe(90);
+    }
+  });
+  it("con Retry-After breve l'attesa è Retry-After + 0-5 s, anche con attempt alto", () => {
+    expect(jobRetryDelaySeconds(8, 10, () => 0)).toBe(10);
+    expect(jobRetryDelaySeconds(8, 10, () => 0.5)).toBe(13); // 10 + 2,5 s -> arrotondato per eccesso
+    expect(jobRetryDelaySeconds(8, 10, () => 1)).toBe(15);
+    expect(jobRetryDelaySeconds(0, 10, () => 0.5)).toBe(jobRetryDelaySeconds(8, 10, () => 0.5)); // attempt non conta
+  });
+  it("non è mai inferiore a Retry-After (se entro il tetto) e mai oltre 90 s", () => {
+    expect(jobRetryDelaySeconds(0, 45.4, () => 0)).toBe(46);
     expect(jobRetryDelaySeconds(0, 90, () => 0.5)).toBe(90);
+    expect(jobRetryDelaySeconds(0, 600, () => 0)).toBe(90);
   });
-  it("il jitter resta nel ±20%", () => {
+  it("il jitter senza Retry-After resta nel ±20%", () => {
     expect(jobRetryDelaySeconds(1, null, () => 0)).toBe(48);
     expect(jobRetryDelaySeconds(1, null, () => 1)).toBe(72);
   });

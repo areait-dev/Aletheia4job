@@ -89,13 +89,19 @@ export async function callWithGroqRetry<T>(fn: () => Promise<T>, options: GroqRe
   }
 }
 
+/** Tetto dell'attesa fra due tentativi di un passo del job: oltre, un CV resterebbe fermo troppo a lungo in coda. */
+export const MAX_JOB_RETRY_WAIT_SECONDS = 90;
+
 /**
- * Attesa (in secondi) da usare per riprogrammare un passo del job dopo un errore temporaneo:
- * crescente a ogni tentativo del job (30 s, 60 s, 120 s, ... max 5 minuti), mai inferiore a Retry-After,
- * con jitter ±20%.
+ * Attesa (in secondi) da usare per riprogrammare un passo del job dopo un errore temporaneo, mai oltre 90 s:
+ *  - con Retry-After di Groq: Retry-After + jitter di 0-5 s, indipendente da `attempt` (Groq dice già quando riprovare;
+ *    `attempt` conta l'intera esecuzione e non si azzera fra i passi, quindi farlo crescere allungava la coda senza motivo);
+ *  - senza Retry-After: backoff crescente a ogni tentativo (30 s, 60 s, 90 s, ...) con jitter ±20%.
  */
 export function jobRetryDelaySeconds(attempt: number, retryAfterSeconds: number | null, random: () => number = Math.random): number {
-  const growing = Math.min(300, 30 * 2 ** Math.max(0, attempt));
-  const base = Math.max(growing, retryAfterSeconds ?? 0);
-  return Math.round(base * (0.8 + random() * 0.4));
+  if (retryAfterSeconds != null) {
+    return Math.min(MAX_JOB_RETRY_WAIT_SECONDS, Math.ceil(retryAfterSeconds + random() * 5));
+  }
+  const growing = 30 * 2 ** Math.max(0, attempt);
+  return Math.min(MAX_JOB_RETRY_WAIT_SECONDS, Math.round(growing * (0.8 + random() * 0.4)));
 }
