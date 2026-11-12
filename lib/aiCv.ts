@@ -1,4 +1,5 @@
 import { Groq } from "groq-sdk";
+import { callWithGroqRetry } from "@/lib/groqRetry";
 
 /**
  * Funzioni AI condivise per parsing CV e matching score.
@@ -13,7 +14,9 @@ export function getGroqClient() {
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not defined in environment variables");
   }
-  return new Groq({ apiKey });
+  // maxRetries: 0 -> i tentativi li gestiamo noi (callWithGroqRetry), con attesa crescente e passaggio al job.
+  // GROQ_BASE_URL (letto dall'SDK) permette di puntare a un server finto nei test di carico.
+  return new Groq({ apiKey, maxRetries: 0 });
 }
 
 export function isAiConfigured() {
@@ -62,17 +65,19 @@ export async function parseCvWithAI(cvText: string): Promise<ParsedCV | null> {
   if (!cvText?.trim()) return null;
 
   const groq = getGroqClient();
-  const response = await groq.chat.completions.create({
-    model: AI_CV_MODEL,
-    messages: [
-      { role: "system", content: PARSE_SYSTEM_PROMPT },
-      { role: "user", content: `CV:\n${cvText.substring(0, 8000)}` },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0,
-    reasoning_effort: "low",
-    max_completion_tokens: 1024,
-  });
+  const response = await callWithGroqRetry(() =>
+    groq.chat.completions.create({
+      model: AI_CV_MODEL,
+      messages: [
+        { role: "system", content: PARSE_SYSTEM_PROMPT },
+        { role: "user", content: `CV:\n${cvText.substring(0, 8000)}` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0,
+      reasoning_effort: "low",
+      max_completion_tokens: 1024,
+    }),
+  );
 
   if (response.choices[0]?.finish_reason === "length") {
     throw new Error("Risposta AI troncata: aumentare max_completion_tokens");
@@ -156,17 +161,19 @@ DESCRIZIONE: ${job.description ?? "non specificata"}
 CV:
 ${cvText.substring(0, 8000)}`;
 
-  const response = await groq.chat.completions.create({
-    model: AI_CV_MODEL,
-    messages: [
-      { role: "system", content: SCORE_SYSTEM_PROMPT },
-      { role: "user", content: userPrompt },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0,
-    reasoning_effort: "medium",
-    max_completion_tokens: 2048,
-  });
+  const response = await callWithGroqRetry(() =>
+    groq.chat.completions.create({
+      model: AI_CV_MODEL,
+      messages: [
+        { role: "system", content: SCORE_SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0,
+      reasoning_effort: "medium",
+      max_completion_tokens: 2048,
+    }),
+  );
 
   if (response.choices[0]?.finish_reason === "length") {
     throw new Error("Risposta AI troncata: aumentare max_completion_tokens");
