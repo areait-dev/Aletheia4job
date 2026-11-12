@@ -7,7 +7,7 @@ import {
   GetAllCandidatesActionTypes 
 } from "../types";
 import { AuditAction, Prisma } from "@prisma/client";
-import { canWrite, createAuditLogEntry, getCurrentUserDisplayName } from "../authz";
+import { canDeleteCandidate, canWrite, createAuditLogEntry, getCurrentUserDisplayName } from "../authz";
 import { authenticateAndRedirect } from "./shared";
 import { setTenantContext } from "../tenant-context";
 import { logger } from "../logger";
@@ -381,7 +381,8 @@ export async function getChartsDataAction() {
 
 export async function deleteCandidateAction(candidateId: string): Promise<boolean> {
   const { userId, organizationId, role } = await authenticateAndRedirect();
-  if (!canWrite(role)) return false;
+  // Eliminazione definitiva: solo OWNER e ADMIN (non tutti quelli che possono scrivere).
+  if (!canDeleteCandidate(role)) return false;
   const removed: { cvUrl: string | null } = { cvUrl: null };
   try {
     await prisma.$transaction(async (tx) => {

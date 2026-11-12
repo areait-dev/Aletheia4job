@@ -38,7 +38,7 @@ describe("deleteCandidateAction: elimina anche il CV dallo Storage", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     events.length = 0;
-    mockAuth.mockResolvedValue({ userId: "user-1", organizationId: "org-1", role: MembershipRole.RECRUITER } as never);
+    mockAuth.mockResolvedValue({ userId: "user-1", organizationId: "org-1", role: MembershipRole.ADMIN } as never);
     prismaMock.$transaction.mockImplementation(async (cb: any) => {
       const r = await cb(prismaMock);
       events.push("tx-commit");

@@ -17,7 +17,7 @@ import { cn, getScoreColor, getScoreLabel } from '@/lib/utils';
 import {
   getCandidateNotesAction, createCandidateNoteAction, deleteCandidateNoteAction,
   getCandidateInterviewsAction, createInterviewAction, updateInterviewOutcomeAction, deleteInterviewAction,
-  updateCandidateAction, retryCvParsingAction,
+  updateCandidateAction, retryCvParsingAction, deleteCandidateAction,
   getMatchingJobsForCandidateAction, assignCandidateToJobAction,
 } from '@/utils/actions';
 import { useToast } from './ui/use-toast';
@@ -55,7 +55,7 @@ const interviewTypeIcon: Record<string, React.ReactNode> = {
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────
-export default function CandidateProfilePage({ candidate }: { candidate: CandidateType }) {
+export default function CandidateProfilePage({ candidate, canDelete = false }: { candidate: CandidateType; canDelete?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -149,6 +149,33 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['candidate-interviews', candidate.id] }),
   });
 
+  // Eliminazione definitiva (candidato, CV nello Storage, candidature, note e colloqui). L'azione controlla comunque i permessi sul server.
+  const deleteCandidate = useMutation({
+    mutationFn: () => deleteCandidateAction(candidate.id),
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['candidates-grouped'] });
+        queryClient.invalidateQueries({ queryKey: ['candidates'] });
+        queryClient.invalidateQueries({ queryKey: ['stats'] });
+        toast({ title: 'Candidato eliminato', description: `${candidate.firstName} ${candidate.lastName} è stato rimosso dall'archivio.` });
+        router.push('/archivio');
+        router.refresh();
+      } else {
+        toast({ variant: 'destructive', title: 'Errore', description: 'Impossibile eliminare il candidato. Verifica di avere i permessi e riprova.' });
+      }
+    },
+    onError: () => {
+      toast({ variant: 'destructive', title: 'Errore', description: 'Impossibile eliminare il candidato.' });
+    },
+  });
+
+  const handleDeleteCandidate = () => {
+    const name = `${candidate.firstName} ${candidate.lastName}`;
+    if (window.confirm(`Eliminare definitivamente ${name}?\n\nVerranno eliminati anche il CV, le candidature, le note e i colloqui. L'operazione è irreversibile.`)) {
+      deleteCandidate.mutate();
+    }
+  };
+
   const saveEdit = () => {
     startTransition(async () => {
       const res = await updateCandidateAction(candidate.id, { status: editStatus as any, notes: editNotes });
@@ -207,6 +234,19 @@ export default function CandidateProfilePage({ candidate }: { candidate: Candida
                 <FileText className="w-4 h-4" /> CV
               </Button>
             </a>
+          )}
+          {canDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-xl border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
+              onClick={handleDeleteCandidate}
+              disabled={deleteCandidate.isPending}
+              title="Elimina definitivamente il candidato"
+            >
+              {deleteCandidate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Elimina
+            </Button>
           )}
         </div>
       </div>

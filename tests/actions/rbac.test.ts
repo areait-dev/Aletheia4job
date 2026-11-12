@@ -42,6 +42,7 @@ vi.mock("@/utils/authz", async (importOriginal) => {
 import { authenticateAndRedirect } from "@/utils/actions/shared";
 import { createAuditLogEntry } from "@/utils/authz";
 import { updateCandidateStatusAction, deleteCandidateAction } from "@/utils/actions/candidates";
+import { canDeleteCandidate } from "@/utils/permissions";
 import { createJobAction } from "@/utils/actions/jobs";
 
 const mockAuth = vi.mocked(authenticateAndRedirect);
@@ -99,8 +100,19 @@ describe("RBAC enforcement sulle Server Action di scrittura", () => {
       expect(mockAuditLog).not.toHaveBeenCalled();
     });
 
-    it("RECRUITER: consentita, elimina e scrive l'audit log", async () => {
-      authAs(MembershipRole.RECRUITER);
+    it.each([MembershipRole.RECRUITER, MembershipRole.MANAGER])("%s: bloccata (può scrivere ma non eliminare), nessuna scrittura su DB o audit log", async (role) => {
+      authAs(role);
+
+      const result = await deleteCandidateAction("candidate-1");
+
+      expect(result).toBe(false);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+      expect(prismaMock.candidate.deleteMany).not.toHaveBeenCalled();
+      expect(mockAuditLog).not.toHaveBeenCalled();
+    });
+
+    it.each([MembershipRole.ADMIN, MembershipRole.OWNER])("%s: consentita, elimina e scrive l'audit log", async (role) => {
+      authAs(role);
       prismaMock.candidate.deleteMany.mockResolvedValue({ count: 1 });
 
       const result = await deleteCandidateAction("candidate-1");
@@ -110,6 +122,11 @@ describe("RBAC enforcement sulle Server Action di scrittura", () => {
         where: { id: "candidate-1", organizationId: "org-1" },
       });
       expect(mockAuditLog).toHaveBeenCalledTimes(1);
+    });
+
+    it("canDeleteCandidate: solo OWNER e ADMIN", () => {
+      const allowed = Object.values(MembershipRole).filter((r) => canDeleteCandidate(r));
+      expect(allowed.sort()).toEqual([MembershipRole.ADMIN, MembershipRole.OWNER].sort());
     });
   });
 

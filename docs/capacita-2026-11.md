@@ -210,10 +210,11 @@ Eliminati, con approvazione, solo i dati creati dalla verifica post-deploy, in u
 
 Stato finale verificato: `Application` 0, `Candidate` 311, file nel prefisso 0, `application_submitted` di oggi 0.
 
-**Funzione mancante nell'interfaccia:** l'azione `deleteCandidateAction` esiste (commit `e08ea32`: elimina il candidato e il suo CV dallo Storage, con audit log) ma **non è raggiungibile dall'ATS**.
-Il pulsante "Elimina" è in `components/JobCard.tsx`, che è usato solo da `components/JobsList.tsx`, e nessuna pagina in `app/` o `components/` importa `JobsList`. Inoltre l'azione richiede una sessione utente, quindi non si può chiamare da uno script:
-questa pulizia è stata fatta con una transazione diretta sul database (con gli stessi vincoli per organizzazione), non con l'azione dell'app.
-Serve una vera azione "Elimina candidato" nell'interfaccia (scheda del candidato e archivio), anche per le richieste di cancellazione dei dati (GDPR). **Non implementata**: da decidere insieme alla proposta privacy (`docs/proposta-privacy-2026-11.md`).
+**Eliminazione di un candidato dall'interfaccia (era mancante, ora aggiunta):** l'azione `deleteCandidateAction` esisteva (commit `e08ea32`: elimina il candidato e il suo CV dallo Storage, con audit log) ma **non era raggiungibile dall'ATS**:
+il pulsante "Elimina" era in `components/JobCard.tsx`, usato solo da `components/JobsList.tsx`, che nessuna pagina importa. L'azione richiede una sessione utente, quindi non si può chiamare da uno script:
+la pulizia dei dati di prova qui sopra è stata fatta con una transazione diretta sul database (con gli stessi vincoli per organizzazione), non con l'azione dell'app.
+Ora c'è un pulsante «Elimina» nella scheda del candidato (`/archivio/[id]`), con conferma, visibile e consentito **solo a OWNER e ADMIN** (`canDeleteCandidate`; RECRUITER, MANAGER e VIEWER non possono eliminare, pur potendo scrivere).
+Serve anche per le richieste di cancellazione dei dati (GDPR). Non c'è ancora nell'elenco dell'archivio. Vedi anche `docs/proposta-privacy-2026-11.md`.
 
 ## 4. Preview e produzione
 
@@ -260,7 +261,7 @@ Workflow e istruzioni pronti ma **non attivi**: `.github/workflows/backup-storag
 | Attesa dei ritentativi AI | **risolta nella simulazione** (commit `ae1e119`): attesa con `step.sleep` e contatore proprio (8 tentativi) invece dei ritentativi Inngest, il cui ritardo di ripresa nel dev server cresceva con il tentativo e superava il `RetryAfterError` (fino a 318 s per 35 s chiesti). 100 CV: 706 → 423 s, `FAILED` 0, intervallo massimo 246 → 50 s. Da verificare su Inngest cloud |
 | Throttle Inngest sulle funzioni CV | da aggiungere (`throttle` oltre a `concurrency: 5`) e tarare sui limiti reali del piano Groq, oggi sconosciuti; il valore di 30 richieste/min nella simulazione è solo un parametro |
 | `connection_limit=3&pool_timeout=20` in produzione | proposto, **in attesa** della verifica nel pannello Supabase del limite del pooler di produzione (staging: 200 connessioni client); con 1 si blocca (misurato) |
-| Eliminazione di un candidato dall'interfaccia | **manca**: `deleteCandidateAction` esiste ma il pulsante (`JobCard`) non è usato da nessuna pagina; serve per le richieste GDPR; da decidere (vedi paragrafo 3ter) |
+| Eliminazione di un candidato dall'interfaccia | **aggiunta** il pulsante «Elimina» nella scheda del candidato (`/archivio/[id]`), solo per OWNER e ADMIN (`canDeleteCandidate`, applicato anche in `deleteCandidateAction`); provato in locale su staging prima del push; manca ancora nell'elenco dell'archivio (vedi paragrafo 3ter) |
 | `serveOrigin` Inngest in sviluppo | `INNGEST_SERVE_ORIGIN` rispettato (prima fisso su `127.0.0.1:3000`); commit a parte |
 | Limiti e prezzi Vercel, Inngest, Groq, PITR | da verificare nei pannelli |
 | PITR | da decidere |

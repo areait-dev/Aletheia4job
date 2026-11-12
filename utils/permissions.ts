@@ -4,6 +4,11 @@ export function canWrite(role: MembershipRole): boolean {
   return role !== MembershipRole.VIEWER;
 }
 
+/** Eliminazione definitiva di un candidato (CV, candidature, note e colloqui compresi): solo amministratori dell'organizzazione. */
+export function canDeleteCandidate(role: MembershipRole): boolean {
+  return role === MembershipRole.OWNER || role === MembershipRole.ADMIN;
+}
+
 export function canAccessDocuments(role: MembershipRole): boolean {
   return role === MembershipRole.OWNER || role === MembershipRole.ADMIN || role === MembershipRole.MANAGER;
 }

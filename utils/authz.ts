@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { 
   canWrite, 
+  canDeleteCandidate,
   canAccessDocuments, 
   canManageOrg, 
   canAccessAdmin, 
@@ -14,6 +15,7 @@ import {
 
 export { 
   canWrite, 
+  canDeleteCandidate,
   canAccessDocuments, 
   canManageOrg, 
   canAccessAdmin, 
