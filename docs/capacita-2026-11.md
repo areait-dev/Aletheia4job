@@ -180,6 +180,26 @@ quindi le esecuzioni già in corso al momento di un deploy potrebbero ripartire 
 - **Al primo 429 reale di Groq:** controllare nella timeline che i passi `wait-*` durino quanto richiesto (Retry-After + 5 s fino a metà Retry-After, tetto 90 s). È la verifica che la simulazione, fatta sul dev server, non può dare.
 - **Punti ancora aperti dopo il deploy:** `connection_limit=3&pool_timeout=20` (in attesa del limite del pooler di produzione) e il throttle Inngest sulle funzioni CV (da tarare sui limiti reali di Groq). Vedi la tabella del paragrafo 6.
 
+### Esito della verifica post-deploy (12/11/2026, deploy `a02a617`)
+
+Prova con tre candidature di prova in produzione (`test-deploy-1/2/3@example.com`, organizzazione `org_prod_123`):
+
+| Candidato | CV | Esito |
+|---|---|---|
+| test-deploy-3 | PDF esportato da LibreOffice, 14.355 byte | **`COMPLETED` in 39 s**, punteggio 40, `resumeText` di 349 caratteri, competenze e formazione compilate dall'AI |
+| test-deploy-1, test-deploy-2 | PDF di circa 1,8 KB (`%PDF-1.3`) | `extract-cv-text` fallisce con "bad XRef entry"; application rimaste in `PROCESSING` |
+
+- **Il deploy funziona.** Il file di test-deploy-3 nello Storage è integro (intestazione `%PDF`, nessuna sequenza `EF BF BD`, `startxref` esatto) e `pdf-parse` lo legge. Il percorso dei byte (form → `uploadCV` → `/api/upload-cv` → Storage → `downloadCv`)
+  non li altera, e i commit di questa attività non hanno cambiato come il file viene letto, inviato o scaricato.
+- **Causa del fallimento dei primi due:** i PDF erano **non validi** (tabella xref malformata): `pdf-parse` li rifiuta con lo stesso errore anche in locale. Non è un difetto di caricamento o scaricamento.
+- **Difetto vero, corretto in `ba8125f`:** un CV illeggibile veniva ritentato 5 volte e l'application restava in `PROCESSING` per sempre, senza `parsingError` né pulsante di rilancio (`processCV` non aveva `onFailure`).
+  Ora un CV illeggibile (file vuoto, troppo grande, formato non supportato, PDF/DOCX non leggibile) fa riuscire il passo con `{ ok: false }`, senza ritentativi, e l'application va subito in `FAILED` con "Impossibile leggere il CV: il file potrebbe essere danneggiato o in un formato non supportato. Prova a ricaricarlo in PDF.".
+  Gli errori temporanei (download dallo Storage, rete) restano ritentabili. `onFailure` su `processCV` porta in `FAILED` l'application `PENDING`/`PROCESSING` se il run fallisce dopo tutti i tentativi (senza toccare quelle già `COMPLETED` o `FAILED`);
+  su `processCandidateCV` registra il motivo nei log. Deploy di `ba8125f` in Production e Sync Inngest riusciti il 12/11/2026 alle 13:07 (ora italiana).
+- **Non verificato:** la timeline di Inngest cloud (nomi dei passi `…-0`, durata dei passi `wait-*` al primo 429 reale, che non si è ancora verificato) e il comportamento di `onFailure` su Inngest cloud.
+  Una sola lettura riuscita non dimostra che tutti i PDF reali si leggano: da provare con CV reali di tipi diversi (Word esportato in PDF, PDF scansionato).
+- **Le due application di prova vecchie** (`b66e33f1…`, `75559d8e…`) girano con il codice precedente: subito dopo il deploy erano ancora `PROCESSING`. Se i loro ritentativi sono già esauriti non si chiuderanno da sole e vanno sistemate a mano (insieme alla pulizia dei dati di prova, da decidere).
+
 ## 4. Preview e produzione
 
 Stato al 11/11/2026: le Preview hanno variabili di produzione (`DATABASE_URL`, `DIRECT_URL`, `GROQ_API_KEY`, `NEXT_PUBLIC_SUPABASE_*`, `CRONOFY_*`, `INNGEST_SIGNING_KEY`,
