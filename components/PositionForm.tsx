@@ -43,6 +43,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Sparkles, Loader2, Upload, CheckCircle2, Plus, X } from 'lucide-react'; // 🔥 NUOVO: icone per UI
 import { uploadCV } from '@/utils/supabase';
+import { MAX_UPLOAD_LABEL, fileTooLargeMessage, isFileTooLarge } from '@/utils/uploadLimits';
 
 function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; multipostingEnabled?: boolean }) {
   const experienceLevels = ['Entry Level', 'Mid Level', 'Senior Level', 'Director / Executive'];
@@ -317,8 +318,9 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  if (file.size > 5 * 1024 * 1024) {
-                    toast({ description: 'Il logo non deve superare i 5MB.', variant: 'destructive' });
+                  if (isFileTooLarge(file.size)) {
+                    toast({ description: fileTooLargeMessage(file.size, 'logo'), variant: 'destructive' });
+                    e.target.value = '';
                     return;
                   }
                   setIsUploadingLogo(true);
@@ -352,7 +354,7 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
                 ) : (
                   <>
                     <Upload className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Carica logo (PNG, JPG, SVG, WEBP — max 5MB)</span>
+                    <span className="text-muted-foreground">Carica logo (PNG, JPG, SVG, WEBP — max {MAX_UPLOAD_LABEL})</span>
                   </>
                 )}
               </div>

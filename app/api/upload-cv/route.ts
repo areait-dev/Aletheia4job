@@ -3,6 +3,7 @@ import { createServiceClient } from '@/utils/supabase/service';
 import { dbUnscoped } from '@/utils/db';
 import { getAuthContext } from '@/utils/authz';
 import { CV_BUCKET } from '@/utils/cvStorage';
+import { MAX_UPLOAD_BYTES, fileTooLargeMessage } from '@/utils/uploadLimits';
 import { detectImageType, EXT_FOR_TYPE } from '@/utils/imageSignature';
 
 const LOGO_BUCKET = 'logos';
@@ -16,7 +17,8 @@ const CONTENT_TYPE_FOR_IMAGE = { png: 'image/png', jpeg: 'image/jpeg', webp: 'im
 export const dynamic = 'force-dynamic';
 
 const ALLOWED_BUCKETS = ['candidates', 'cvs', 'logos'] as const;
-const MAX_BYTES = 5 * 1024 * 1024;
+// 4 MB: oltre ~4,5 MB Vercel respinge la richiesta con un 413 prima che arrivi qui (vedi utils/uploadLimits.ts).
+const MAX_BYTES = MAX_UPLOAD_BYTES;
 const ALLOWED_EXT_BY_BUCKET: Record<(typeof ALLOWED_BUCKETS)[number], Set<string>> = {
   candidates: new Set(['pdf', 'doc', 'docx']),
   cvs: new Set(['pdf', 'doc', 'docx']),
@@ -64,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: 'File troppo grande (max 5MB)' }, { status: 400 });
+      return NextResponse.json({ error: fileTooLargeMessage(file.size, bucketName === 'logos' ? 'logo' : 'CV') }, { status: 413 });
     }
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? '';

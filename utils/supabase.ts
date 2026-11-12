@@ -1,3 +1,5 @@
+import { fileTooLargeMessage, isFileTooLarge } from '@/utils/uploadLimits';
+
 /** `candidates` = form pubblico candidature; `cvs` = upload admin (CreateCandidateForm); `logos` = logo azienda cliente su annuncio */
 export type CvUploadBucket = 'candidates' | 'cvs' | 'logos';
 
@@ -15,6 +17,11 @@ export async function uploadCV(
   try {
     console.log('[uploadCV] Tentativo upload bucket:', bucket, 'jobId:', jobId);
 
+    // Controllo prima dell'invio: oltre il limite Vercel rifiuta la richiesta senza un messaggio comprensibile.
+    if (isFileTooLarge(file.size)) {
+      return { url: null, error: fileTooLargeMessage(file.size, bucket === 'logos' ? 'logo' : 'CV') };
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('bucket', bucket);
@@ -22,6 +29,11 @@ export async function uploadCV(
 
     const res = await fetch('/api/upload-cv', { method: 'POST', body: formData });
     const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+
+    // 413 può arrivare dalla piattaforma (corpo non JSON) se il file supera il limite di Vercel.
+    if (res.status === 413) {
+      return { url: null, error: body.error || fileTooLargeMessage(file.size, bucket === 'logos' ? 'logo' : 'CV') };
+    }
 
     if (!res.ok) {
       console.error('[uploadCV] API error:', {

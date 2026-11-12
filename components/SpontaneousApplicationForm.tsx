@@ -7,6 +7,7 @@ import { applySpontaneousApplicationAction } from '@/utils/actions';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Upload, CheckCircle2 } from 'lucide-react';
 import { uploadCV } from '@/utils/supabase';
+import { MAX_UPLOAD_LABEL, fileTooLargeMessage, isFileTooLarge } from '@/utils/uploadLimits';
 import { spontaneousApplicationSchema, SpontaneousApplicationType } from '@/utils/types';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -38,12 +39,13 @@ export default function SpontaneousApplicationForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (isFileTooLarge(file.size)) {
       toast({
         title: 'File troppo grande',
-        description: 'Il CV non deve superare i 5MB.',
+        description: fileTooLargeMessage(file.size, 'CV'),
         variant: 'destructive',
       });
+      e.target.value = '';
       return;
     }
 
@@ -269,7 +271,7 @@ export default function SpontaneousApplicationForm() {
                       <div className="flex flex-col items-center gap-2">
                         <Upload className="w-6 h-6 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Trascina qui il file o clicca per sfogliare</span>
-                        <span className="text-xs text-muted-foreground/60">Massimo 5MB</span>
+                        <span className="text-xs text-muted-foreground/60">Massimo {MAX_UPLOAD_LABEL}</span>
                       </div>
                     )}
                   </div>

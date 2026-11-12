@@ -7,6 +7,7 @@ import { Loader2, Upload, CheckCircle2 } from 'lucide-react';
 import { applyTeacherLongListAction } from '@/utils/actions/teachers';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadCV } from '@/utils/supabase';
+import { MAX_UPLOAD_LABEL, fileTooLargeMessage, isFileTooLarge } from '@/utils/uploadLimits';
 import {
   TEACHER_AREAS,
   TEACHER_DELIVERY_MODES,
@@ -69,8 +70,9 @@ export default function TeacherLongListForm() {
       toast({ title: 'Formato non supportato', description: 'Carica un file PDF o DOC/DOCX.', variant: 'destructive' });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: 'File troppo grande', description: 'Il CV non deve superare i 5 MB.', variant: 'destructive' });
+    if (isFileTooLarge(file.size)) {
+      toast({ title: 'File troppo grande', description: fileTooLargeMessage(file.size, 'CV'), variant: 'destructive' });
+      e.target.value = '';
       return;
     }
 
@@ -342,7 +344,7 @@ export default function TeacherLongListForm() {
           name="cvUrl"
           render={() => (
             <FormItem>
-              <FormLabel>Curriculum vitae * <span className="font-normal text-muted-foreground">(PDF o DOC, max 5 MB)</span></FormLabel>
+              <FormLabel>Curriculum vitae * <span className="font-normal text-muted-foreground">(PDF o DOC, max {MAX_UPLOAD_LABEL})</span></FormLabel>
               <FormControl>
                 <div className="relative">
                   <input
