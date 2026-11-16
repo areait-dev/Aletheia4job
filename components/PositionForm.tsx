@@ -86,6 +86,7 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
   // 🔥 NUOVO: stato per il caricamento AI
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Requisiti come lista di voci singole (una per input), invece di un unico blocco di testo.
   // Salvate nel campo `requirements` unite da '\n', compatibile col rendering esistente in pagina.
@@ -103,6 +104,7 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
       title: '',
       company: '',
       companyLogoUrl: undefined,
+      imageUrl: undefined,
       location: '',
       locationFormatted: '',
       city: '',
@@ -137,6 +139,7 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
         title: jobData.title,
         company: jobData.company,
         companyLogoUrl: jobData.companyLogoUrl || undefined,
+        imageUrl: jobData.imageUrl || undefined,
         location: jobData.location,
         locationFormatted: jobData.locationFormatted || '',
         city: jobData.city || '',
@@ -359,6 +362,71 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
                 )}
               </div>
             </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Immagine annuncio (opzionale)</label>
+            <div className="relative">
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                disabled={isUploadingImage}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (isFileTooLarge(file.size)) {
+                    toast({ description: fileTooLargeMessage(file.size, 'immagine'), variant: 'destructive' });
+                    e.target.value = '';
+                    return;
+                  }
+                  setIsUploadingImage(true);
+                  try {
+                    const { url, error } = await uploadCV(file, { bucket: 'logos', jobId });
+                    if (error || !url) {
+                      toast({ description: error || 'Caricamento immagine fallito.', variant: 'destructive' });
+                      return;
+                    }
+                    form.setValue('imageUrl', url);
+                    toast({ description: 'Immagine caricata correttamente.' });
+                  } finally {
+                    setIsUploadingImage(false);
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className={`border-2 border-dashed rounded-xl px-4 py-2.5 text-sm flex items-center gap-2 ${
+                form.watch('imageUrl') ? 'border-green-500/30 bg-green-500/5' : 'border-border'
+              }`}>
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-muted-foreground">Caricamento...</span>
+                  </>
+                ) : form.watch('imageUrl') ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span className="text-green-600">Immagine caricata — clicca per cambiare</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Carica immagine (PNG, JPG, WEBP — max {MAX_UPLOAD_LABEL})</span>
+                  </>
+                )}
+              </div>
+            </div>
+            {form.watch('imageUrl') && (
+              <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.watch('imageUrl')} alt="Anteprima immagine annuncio" className="h-16 w-auto rounded border" />
+                <button
+                  type="button"
+                  onClick={() => form.setValue('imageUrl', null)}
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Rimuovi
+                </button>
+              </div>
+            )}
           </div>
           <CustomFormField name='location' control={form.control} labelText='località' />
           <CustomFormTextarea
