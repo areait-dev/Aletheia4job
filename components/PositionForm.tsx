@@ -315,12 +315,14 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
             <label className="text-sm font-medium">Logo azienda cliente (opzionale)</label>
             <div className="relative">
               <input
+                id="position-logo-input"
                 type="file"
                 accept=".png,.jpg,.jpeg,.svg,.webp"
                 disabled={isUploadingLogo}
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
+                  const input = e.target;
                   if (isFileTooLarge(file.size)) {
                     toast({ description: fileTooLargeMessage(file.size, 'logo'), variant: 'destructive' });
                     e.target.value = '';
@@ -337,6 +339,7 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
                     toast({ description: 'Logo caricato correttamente.' });
                   } finally {
                     setIsUploadingLogo(false);
+                    input.value = '';
                   }
                 }}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -362,17 +365,33 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
                 )}
               </div>
             </div>
+            {form.watch('companyLogoUrl') && (
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.watch('companyLogoUrl')} alt="Anteprima logo" className="h-16 w-auto rounded border bg-white" />
+                <label htmlFor="position-logo-input" className="text-xs text-primary hover:underline cursor-pointer">Cambia</label>
+                <button
+                  type="button"
+                  onClick={() => form.setValue('companyLogoUrl', null)}
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Rimuovi
+                </button>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Immagine annuncio (opzionale)</label>
             <div className="relative">
               <input
+                id="position-image-input"
                 type="file"
                 accept=".png,.jpg,.jpeg,.webp"
                 disabled={isUploadingImage}
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
+                  const input = e.target;
                   if (isFileTooLarge(file.size)) {
                     toast({ description: fileTooLargeMessage(file.size, 'immagine'), variant: 'destructive' });
                     e.target.value = '';
@@ -389,6 +408,7 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
                     toast({ description: 'Immagine caricata correttamente.' });
                   } finally {
                     setIsUploadingImage(false);
+                    input.value = '';
                   }
                 }}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -415,9 +435,10 @@ function PositionForm({ jobId, multipostingEnabled = false }: { jobId?: string; 
               </div>
             </div>
             {form.watch('imageUrl') && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={form.watch('imageUrl')} alt="Anteprima immagine annuncio" className="h-16 w-auto rounded border" />
+                <img src={form.watch('imageUrl')} alt="Anteprima immagine annuncio" className="h-16 w-auto rounded border bg-white" />
+                <label htmlFor="position-image-input" className="text-xs text-primary hover:underline cursor-pointer">Cambia</label>
                 <button
                   type="button"
                   onClick={() => form.setValue('imageUrl', null)}
